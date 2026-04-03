@@ -35,7 +35,7 @@ import {
   DialogHeader,
   DialogTitle,
 } from "@/components/ui/dialog";
-import { useGetRequestForQuotation } from "@/services/requestForQoutationServices";
+import { useGetRequestForQuotation } from "@/services/requestForQuotationServices";
 import {
   Tooltip,
   TooltipContent,
@@ -247,7 +247,7 @@ export const AbstractItemContentList = () => {
         <CardContent className="border-2 mx-6 p-4 rounded-md">
           <div className="flex gap-2 item-center">
             <ClipboardIcon className="h-6 w-6" />
-            <p className="text-xl">Abstract of Qoutations</p>
+            <p className="text-xl">Abstract of Quotations</p>
           </div>
           <div className="grid grid-cols-8 gap-2 items-center py-2  border-b-2 sticky top-0">
             <p className="text-base">No.</p>

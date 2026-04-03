@@ -13,7 +13,7 @@ import Layout from "./components/Layout/BACDashboardLayout";
 import { Activity, FileText, Loader2 } from "lucide-react";
 import { Bar, BarChart, CartesianGrid, XAxis, YAxis } from "recharts";
 import { usePurchaseRequestIncomingCount } from "@/services/purchaseRequestServices";
-import { useRequestForQuotationCount } from "@/services/requestForQoutationServices";
+import { useRequestForQuotationCount } from "@/services/requestForQuotationServices";
 import { useAbstractOfQuotationCount } from "@/services/AbstractOfQuotationServices";
 
 import {

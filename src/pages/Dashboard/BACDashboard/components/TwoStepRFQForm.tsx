@@ -24,12 +24,12 @@ import {
 } from "@/services/itemServices";
 import {
   useAddItemQuotation,
-  useAddRequestForQoutation,
-} from "@/services/requestForQoutationServices";
+  useAddRequestForQuotation,
+} from "@/services/requestForQuotationServices";
 import {
-  requestForQoutationSchema,
-  requestForQoutationType,
-} from "@/types/request/request_for_qoutation";
+  requestForQuotationSchema,
+  requestForQuotationType,
+} from "@/types/request/request_for_quotation";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { FieldErrors, useFieldArray, useForm } from "react-hook-form";
 import Loading from "../../shared/components/Loading";
@@ -74,7 +74,7 @@ export const TwoStepRFQForm: React.FC<TwoStepRFQFormProps> = ({
   }, [items]);
   const rfq_no = pr_no; //set the initial value rfq_no to pr_no and later in submit handler it have a random Letter
 
-  const { mutate: addRFQMutation } = useAddRequestForQoutation();
+  const { mutate: addRFQMutation } = useAddRequestForQuotation();
   const { mutate: addItemMutation } = useAddItemQuotation();
 
   const {
@@ -85,7 +85,7 @@ export const TwoStepRFQForm: React.FC<TwoStepRFQFormProps> = ({
     formState: { errors },
     reset,
   } = useForm({
-    resolver: zodResolver(requestForQoutationSchema),
+    resolver: zodResolver(requestForQuotationSchema),
     defaultValues: {
       rfq_no: rfq_no,
       purchase_request: pr_no,
@@ -140,7 +140,7 @@ export const TwoStepRFQForm: React.FC<TwoStepRFQFormProps> = ({
   interface RenderFieldProps {
     label: string;
     field_name: RequestForQuotationField;
-    errors: FieldErrors<requestForQoutationType>;
+    errors: FieldErrors<requestForQuotationType>;
   }
 
   const renderField = ({ label, field_name, errors }: RenderFieldProps) => {
@@ -171,11 +171,11 @@ export const TwoStepRFQForm: React.FC<TwoStepRFQFormProps> = ({
   };
 
 
-  const onSubmit = async (data: requestForQoutationType) => {
+  const onSubmit = async (data: requestForQuotationType) => {
     console.log(data);
     setIsLoading(true);
     try {
-      const result = requestForQoutationSchema.safeParse(data);
+      const result = requestForQuotationSchema.safeParse(data);
       if (!result.success) {
         console.error("Validation failed:", result.error);
         return;

@@ -7,8 +7,8 @@ import {
 import { OpenInNewWindowIcon, TrashIcon } from "@radix-ui/react-icons";
 import {
   useDeleteRequestForQuotation,
-  useRequestForQoutation,
-} from "@/services/requestForQoutationServices";
+  useRequestForQuotation,
+} from "@/services/requestForQuotationServices";
 import { formatDate } from "@/services/formatDate";
 import { useNavigate } from "react-router-dom";
 import { Button } from "@/components/ui/button";
@@ -57,7 +57,7 @@ export const AllQuotations: React.FC<QuotationCardProps> = ({ title }) => {
   const [selectedDropdown, setSelectedDropdown] =
     useState<DropdownOption>("purchase_request");
 
-  const { data } = useRequestForQoutation();
+  const { data } = useRequestForQuotation();
   const { mutate, isSuccess } = useDeleteRequestForQuotation();
 
   const quotations = Array.isArray(data?.data) ? data?.data : [];

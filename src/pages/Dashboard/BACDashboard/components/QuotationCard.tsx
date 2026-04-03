@@ -13,14 +13,14 @@ import {
 import {
   useDeleteRequestForQuotation,
   useGetItemQuotation,
-  useRequestForQoutation,
-} from "@/services/requestForQoutationServices";
+  useRequestForQuotation,
+} from "@/services/requestForQuotationServices";
 import { formatDate } from "@/services/formatDate";
 import Loading from "../../shared/components/Loading";
 import { useGetItemInPurchaseRequest } from "@/services/itemServices";
 import { useParams } from "react-router-dom";
 import { ItemType } from "@/types/request/item";
-import { itemQuotationResponseType } from "@/types/response/request-for-qoutation";
+import { itemQuotationResponseType } from "@/types/response/request-for-quotation";
 import { useNavigate } from "react-router-dom";
 import { DeleteDialog } from "../../shared/components/DeleteDialog";
 import { useMemo, useState } from "react";
@@ -80,7 +80,7 @@ export const QuotationCard: React.FC<QuotationCardProps> = ({
   );
 
   const { data: items, isLoading: item_loading } = useGetItemInPurchaseRequest({pr_no:pr_no});
-  const { data } = useRequestForQoutation();
+  const { data } = useRequestForQuotation();
   const { data: item, isLoading } = useGetItemQuotation();
   const { mutate } = useDeleteRequestForQuotation();
 

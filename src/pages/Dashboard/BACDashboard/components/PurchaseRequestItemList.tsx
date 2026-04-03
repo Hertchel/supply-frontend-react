@@ -33,7 +33,7 @@ import {
 } from "@/components/ui/tooltip";
 import { Badge } from "@/components/ui/badge";
 import { Separator } from "@/components/ui/separator";
-import { generateRFQPDF } from "@/services/requestForQoutationServices";
+import { generateRFQPDF } from "@/services/requestForQuotationServices";
 import {
   Card,
   CardContent,

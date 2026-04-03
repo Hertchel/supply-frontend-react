@@ -76,7 +76,7 @@ export const inventoryColumns: ColumnDef<_itemsDeliveredType>[] = [
 
             {/* <p className="font-thin text-sm">
               {
-                row.original.item_details.item_qoutation_details.item_details
+                row.original.item_details.item_quotation_details.item_details
                   .unit_cost
               }
             </p> */}

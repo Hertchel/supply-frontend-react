@@ -4,11 +4,11 @@ import {
   CardHeader,
   CardContent,
 } from "@/components/ui/card";
-import { qoutationType } from "@/types/request/request_for_qoutation";
+import { quotationType } from "@/types/request/request_for_quotation";
 import { BuildingIcon, CreditCardIcon, MapPinIcon } from "lucide-react";
 
 interface SupplierCardProps {
-  supplier: qoutationType;
+  supplier: quotationType;
   isSelected: boolean;
   onToggle: () => void;
 }

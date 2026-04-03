@@ -9,7 +9,7 @@ import { CheckIcon, Cross2Icon } from "@radix-ui/react-icons";
 import {
   useGetItemQuotation,
   useGetRequestForQuotation,
-} from "@/services/requestForQoutationServices";
+} from "@/services/requestForQuotationServices";
 import { formatDate } from "@/services/formatDate";
 import Loading from "../../shared/components/Loading";
 import { useParams } from "react-router-dom";

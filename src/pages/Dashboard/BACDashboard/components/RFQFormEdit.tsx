@@ -20,11 +20,11 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import {
   useEditItemQuotation,
   useEditRequestForQuotation,
-} from "@/services/requestForQoutationServices";
+} from "@/services/requestForQuotationServices";
 import {
-  requestForQoutationSchema,
-  requestForQoutationType,
-} from "@/types/request/request_for_qoutation";
+  requestForQuotationSchema,
+  requestForQuotationType,
+} from "@/types/request/request_for_quotation";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { FieldErrors, useFieldArray, useForm } from "react-hook-form";
 import Loading from "../../shared/components/Loading";
@@ -34,7 +34,7 @@ import { Textarea } from "@/components/ui/textarea";
 import {
   itemQuotationResponseType,
   quotationResponseType,
-} from "@/types/response/request-for-qoutation";
+} from "@/types/response/request-for-quotation";
 import { MessageDialog } from "../../shared/components/MessageDialog";
 import { AxiosError } from "axios";
 
@@ -79,7 +79,7 @@ export const RFQFormEdit: React.FC<RFQFormEditProps> = ({
     formState: { errors },
     reset,
   } = useForm({
-    resolver: zodResolver(requestForQoutationSchema),
+    resolver: zodResolver(requestForQuotationSchema),
     defaultValues: {
       rfq_no: quotation?.rfq_no,
       purchase_request: quotation?.purchase_request,
@@ -136,7 +136,7 @@ export const RFQFormEdit: React.FC<RFQFormEditProps> = ({
   interface RenderFieldProps {
     label: string;
     field_name: RequestForQuotationField;
-    errors: FieldErrors<requestForQoutationType>;
+    errors: FieldErrors<requestForQuotationType>;
   }
 
   const renderField = ({ label, field_name, errors }: RenderFieldProps) => (
@@ -151,10 +151,10 @@ export const RFQFormEdit: React.FC<RFQFormEditProps> = ({
     </div>
   );
 
-  const onSubmit = async (data: requestForQoutationType) => {
+  const onSubmit = async (data: requestForQuotationType) => {
     setIsLoading(true);
     try {
-      const result = requestForQoutationSchema.safeParse(data);
+      const result = requestForQuotationSchema.safeParse(data);
       if (!result.success) {
         console.error("Validation failed:", result.error);
         return;
@@ -229,7 +229,7 @@ export const RFQFormEdit: React.FC<RFQFormEditProps> = ({
         <DialogContent className="max-w-full w-[70rem]">
           <DialogHeader>
             <DialogTitle className="text-2xl">
-              Edit Request for Qoutation
+              Edit Request for Quotation
             </DialogTitle>
           </DialogHeader>
           <ScrollArea className="h-[30rem] mb-9">

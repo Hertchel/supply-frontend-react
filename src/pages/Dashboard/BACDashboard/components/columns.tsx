@@ -4,7 +4,7 @@ import { purchaseRequestType } from "@/types/response/puchase-request";
 import { DataTableColumnHeader } from "./data-table-column-header";
 import { DataTableRowActions } from "./data-table-row-actions";
 import { Badge } from "@/components/ui/badge";
-import { useRequestForQoutationCount } from "@/services/requestForQoutationServices";
+import { useRequestForQuotationCount } from "@/services/requestForQuotationServices";
 import { useNavigate } from "react-router-dom";
 import { formatDate } from "@/services/formatDate";
 
@@ -15,7 +15,7 @@ export const columns: ColumnDef<purchaseRequestType>[] = [
       <DataTableColumnHeader column={column} title="PR No." />
     ),
     cell: ({ row }) => {
-      const rfqCount = useRequestForQoutationCount(row.getValue("pr_no"));
+      const rfqCount = useRequestForQuotationCount(row.getValue("pr_no"));
       const navigate = useNavigate();
       const pr_no = row.getValue("pr_no");
       return (

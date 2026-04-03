@@ -1,12 +1,12 @@
 import api from "@/api";
 import {
   itemQuotationRequestType,
-  qoutationType,
-} from "@/types/request/request_for_qoutation";
+  quotationType,
+} from "@/types/request/request_for_quotation";
 import {
   itemQuotationResponseType,
   quotationResponseType,
-} from "@/types/response/request-for-qoutation";
+} from "@/types/response/request-for-quotation";
 import { ApiResponse } from "@/types/response/api-response";
 import { handleError, handleSucess } from "@/utils/apiHelper";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
@@ -14,12 +14,12 @@ import { toast } from "sonner";
 
 import { PDFDocument, StandardFonts, rgb } from "pdf-lib";
 
-export const getAllRequestForQoutation = async (): Promise<
+export const getAllRequestForQuotation = async (): Promise<
   ApiResponse<quotationResponseType[]>
 > => {
   try {
     const response = await api.get<quotationResponseType[]>(
-      "/api/request-for-qoutation/"
+      "/api/request-for-quotation/"
     );
     return handleSucess(response);
   } catch (error) {
@@ -27,15 +27,15 @@ export const getAllRequestForQoutation = async (): Promise<
   }
 };
 
-export const useRequestForQoutation = () => {
+export const useRequestForQuotation = () => {
   return useQuery<ApiResponse<quotationResponseType[]>, Error>({
-    queryFn: getAllRequestForQoutation,
-    queryKey: ["request-for-qoutations"],
+    queryFn: getAllRequestForQuotation,
+    queryKey: ["request-for-quotations"],
   });
 };
 
 export const useRequestForQuotationCount = () => {
-  const { data, isLoading } = useRequestForQoutation()
+  const { data, isLoading } = useRequestForQuotation()
   const requestForQuotationCount = data?.data?.length ?? 0
   return { requestForQuotationCount, isLoading}
 }
@@ -45,7 +45,7 @@ export const getRequestForQuotation = async (
 ): Promise<ApiResponse<quotationResponseType>> => {
   try {
     const response = await api.get<quotationResponseType>(
-      `/api/request-for-qoutation/${rfq_no}`
+      `/api/request-for-quotation/${rfq_no}`
     );
     return handleSucess(response);
   } catch (error) {
@@ -55,7 +55,7 @@ export const getRequestForQuotation = async (
 
 export const useGetRequestForQuotation = (rfq_no: string) => {
   return useQuery<ApiResponse<quotationResponseType>, Error>({
-    queryKey: ["request-for-qoutations", rfq_no],
+    queryKey: ["request-for-quotations", rfq_no],
     queryFn: () => getRequestForQuotation(rfq_no),
     enabled: !!rfq_no,
   });
@@ -64,20 +64,20 @@ export const useGetRequestForQuotation = (rfq_no: string) => {
 export const useGetPurchaseRequestRequestBySupplier = (
   supplier_name: string
 ) => {
-  const { data } = useRequestForQoutation();
-  const requestForQoutationWithPr = data?.data
+  const { data } = useRequestForQuotation();
+  const requestForQuotationWithPr = data?.data
     ?.map((data) => data)
     .filter((data) => data.supplier_name === supplier_name);
 
-  return requestForQoutationWithPr;
+  return requestForQuotationWithPr;
 };
 
-export const addRequestForQoutation = async (
-  data: qoutationType
-): Promise<ApiResponse<qoutationType>> => {
+export const addRequestForQuotation = async (
+  data: quotationType
+): Promise<ApiResponse<quotationType>> => {
   try {
-    const response = await api.post<qoutationType>(
-      "/api/request-for-qoutation/",
+    const response = await api.post<quotationType>(
+      "/api/request-for-quotation/",
       data
     );
     return handleSucess(response);
@@ -86,22 +86,22 @@ export const addRequestForQoutation = async (
   }
 };
 
-export const useAddRequestForQoutation = () => {
+export const useAddRequestForQuotation = () => {
   const queryClient = useQueryClient();
-  return useMutation<ApiResponse<qoutationType>, Error, qoutationType>({
-    mutationFn: (data) => addRequestForQoutation(data),
+  return useMutation<ApiResponse<quotationType>, Error, quotationType>({
+    mutationFn: (data) => addRequestForQuotation(data),
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["request-for-qoutations"] });
+      queryClient.invalidateQueries({ queryKey: ["request-for-quotations"] });
     },
   });
 };
 
 export const editRequestForQuotation = async (
-  data: qoutationType
-): Promise<ApiResponse<qoutationType>> => {
+  data: quotationType
+): Promise<ApiResponse<quotationType>> => {
   try {
-    const response = await api.put<qoutationType>(
-      `/api/request-for-qoutation/${data.rfq_no}`,
+    const response = await api.put<quotationType>(
+      `/api/request-for-quotation/${data.rfq_no}`,
       data
     );
     return handleSucess(response);
@@ -112,10 +112,10 @@ export const editRequestForQuotation = async (
 
 export const useEditRequestForQuotation = () => {
   const queryClient = useQueryClient();
-  return useMutation<ApiResponse<qoutationType>, Error, qoutationType>({
+  return useMutation<ApiResponse<quotationType>, Error, quotationType>({
     mutationFn: editRequestForQuotation,
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["request-for-qoutations"] });
+      queryClient.invalidateQueries({ queryKey: ["request-for-quotations"] });
       toast.success("Successfully Edit", {
         description: "Edit Request for Quotation Successfully",
       });
@@ -125,9 +125,9 @@ export const useEditRequestForQuotation = () => {
 
 export const deleteRequestForQuotation = async (
   rfq_no: string
-): Promise<ApiResponse<qoutationType>> => {
+): Promise<ApiResponse<quotationType>> => {
   try {
-    const response = await api.delete(`/api/request-for-qoutation/${rfq_no}`);
+    const response = await api.delete(`/api/request-for-quotation/${rfq_no}`);
     return handleSucess(response);
   } catch (error) {
     return handleError(error);
@@ -139,9 +139,9 @@ export const useDeleteRequestForQuotation = () => {
   return useMutation({
     mutationFn: deleteRequestForQuotation,
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["request-for-qoutations"] });
+      queryClient.invalidateQueries({ queryKey: ["request-for-quotations"] });
       toast.success("Success", {
-        description: "Request For Qoutation successfully deleted",
+        description: "Request For Quotation successfully deleted",
       });
     },
   });
@@ -222,9 +222,9 @@ export const useAddItemQuotation = () => {
     },
   });
 };
-
+/*
 export const useRequestForQoutationCount = (pr_no: string) => {
-  const { data } = useRequestForQoutation();
+  const { data } = useRequestForQuotation();
 
   const rfqCount = data?.data
     ?.map((data) => data)
@@ -233,6 +233,13 @@ export const useRequestForQoutationCount = (pr_no: string) => {
   return rfqCount;
 };
 
+export const useRequestForQuotationCountByPR = (pr_no: string) => {
+  const { data } = useRequestForQuotation();
+  const rfqCount = data?.data
+    ?.filter((data) => data.purchase_request === pr_no).length;
+  return rfqCount;
+};
+*/
 export const generateRFQPDF = async () => {
   const pdfDoc = await PDFDocument.create();
   const page = pdfDoc.addPage([615.12, 936]);
@@ -711,12 +718,17 @@ export const generateRFQPDF = async () => {
     thickness: 1,
     color: rgb(0, 0, 0),
   });
-
+/*
   const headerjpg = "/header.jpeg";
   const headerjpgBytes = await fetch(headerjpg).then((res) =>
     res.arrayBuffer()
   );
   const headerimage = await pdfDoc.embedJpg(headerjpgBytes);
+  */
+  const headerjpg = "/header.jpeg";
+  const headerjpgResponse = await fetch(headerjpg);
+  const headerjpgBuffer = await headerjpgResponse.arrayBuffer();
+  const headerimage = await pdfDoc.embedJpg(new Uint8Array(headerjpgBuffer));
   page.drawImage(headerimage, {
     x: 145,
     y: 808,
@@ -767,10 +779,15 @@ export const generateRFQPDF = async () => {
     size: 7,
     font: timesRomanFont,
   });
-
+/*
   const jpgUrl = "/footer.jpeg";
   const jpgImageBytes = await fetch(jpgUrl).then((res) => res.arrayBuffer());
   const jpgImage = await pdfDoc.embedJpg(jpgImageBytes);
+  */
+  const jpgUrl = "/footer.jpeg";
+  const jpgResponse = await fetch(jpgUrl);
+  const jpgBuffer = await jpgResponse.arrayBuffer();
+  const jpgImage = await pdfDoc.embedJpg(new Uint8Array(jpgBuffer));
   const jpgDims = jpgImage.scale(0.2);
 
   page.drawImage(jpgImage, {
@@ -781,6 +798,7 @@ export const generateRFQPDF = async () => {
   });
   const pdfBytes = await pdfDoc.save();
   const blob = new Blob([pdfBytes], { type: "application/pdf" });
+  //const blob = new Blob([pdfBytes], { type: "application/pdf" });
   const pdfBlobUrl = URL.createObjectURL(blob);
   return pdfBlobUrl;
 };

@@ -40,8 +40,8 @@ export type itemQuotationRequestType = {
   is_low_price: boolean;
 }
 
-export const requestForQoutationSchema = z.intersection(quotationSchema, itemQuotationSchema)
+export const requestForQuotationSchema = z.intersection(quotationSchema, itemQuotationSchema)
 
 export type itemQuotationType = z.infer<typeof itemQuotationSchema>;
-export type requestForQoutationType = z.infer<typeof requestForQoutationSchema>;
-export type qoutationType = z.infer<typeof quotationSchema>
+export type requestForQuotationType = z.infer<typeof requestForQuotationSchema>;
+export type quotationType = z.infer<typeof quotationSchema>

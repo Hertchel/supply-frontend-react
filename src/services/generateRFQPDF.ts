@@ -1,4 +1,4 @@
-import { itemQuotationResponseType, quotationResponseType } from "@/types/response/request-for-qoutation";
+import { itemQuotationResponseType, quotationResponseType } from "@/types/response/request-for-quotation";
 import { PDFDocument, PDFFont, PDFPage, StandardFonts, rgb } from "pdf-lib";
 
 export const generateRFQPDF = async (item: itemQuotationResponseType[], rfq: quotationResponseType) => {

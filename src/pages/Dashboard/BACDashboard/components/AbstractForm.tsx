@@ -15,9 +15,9 @@ import {
 import { ScrollArea } from "@/components/ui/scroll-area";
 import {
   useGetItemQuotation,
-  useRequestForQoutation,
-} from "@/services/requestForQoutationServices";
-import { qoutationType } from "@/types/request/request_for_qoutation";
+  useRequestForQuotation,
+} from "@/services/requestForQuotationServices";
+import { quotationType } from "@/types/request/request_for_quotation";
 import { useEffect, useMemo, useState } from "react";
 import { Loader2 } from "lucide-react";
 import { SupplierCard } from "./SupplierCard";
@@ -50,7 +50,7 @@ import { useParams } from "react-router-dom";
 import { v4 as uuidv4 } from "uuid";
 import { Empty } from "../../shared/components/Empty";
 import Loading from "../../shared/components/Loading";
-import { itemQuotationResponseType } from "@/types/response/request-for-qoutation";
+import { itemQuotationResponseType } from "@/types/response/request-for-quotation";
 import {
   Carousel,
   CarouselContent,
@@ -115,7 +115,7 @@ export const AbstractForm: React.FC<AbstractFormProps> = ({
   //use the purchase request no from params if the purchase request number from props is undefined
   const purchaseNumber = prNoFromProps ? prNoFromProps : pr_no;
 
-  const { data: rfqs } = useRequestForQoutation();
+  const { data: rfqs } = useRequestForQuotation();
   const { data: items_, isLoading: item_loading } = useGetItemQuotation();
   const purchaseItems = FilteredItemInPurchaseRequest(purchaseNumber!);
   const _items = useMemo(() => {
@@ -217,7 +217,7 @@ export const AbstractForm: React.FC<AbstractFormProps> = ({
     );
   };
 
-  const handleToggle = (supplier: qoutationType) => {
+  const handleToggle = (supplier: quotationType) => {
     setSelectedSupplier(
       supplier.rfq_no === selectedSupplier ? null : supplier.rfq_no
     );

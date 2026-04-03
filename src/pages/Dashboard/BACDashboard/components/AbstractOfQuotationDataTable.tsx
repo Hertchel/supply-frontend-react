@@ -2,12 +2,12 @@ import { usePurchaseRequestInProgress } from "@/services/purchaseRequestServices
 import { DataTable } from "./data-table";
 import { AbstractColumn } from "./abstract-columns";
 import Loading from "../../shared/components/Loading";
-import { useRequestForQoutation } from "@/services/requestForQoutationServices";
+import { useRequestForQuotation } from "@/services/requestForQuotationServices";
 import { useMemo } from "react";
 
 export default function AbstractOfQuotationDataTable() {
   const {purchaseRequestInProgress, isLoading} = usePurchaseRequestInProgress()
-  const { data } = useRequestForQoutation();
+  const { data } = useRequestForQuotation();
 
   const dataHasRFQ = useMemo(() => {
     const data_ = Array.isArray(data?.data) ? data?.data : []
