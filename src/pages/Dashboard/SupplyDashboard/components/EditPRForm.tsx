@@ -74,7 +74,7 @@ const EditPRForm: React.FC<EditPRFormProps> = ({
     defaultValues: {
       purpose: purchaseData?.purpose,
       office: purchaseData?.office,
-      requisitioner: purchaseData?.requisitioner_details.requisition_id,
+      requisitioner: purchaseData?.requisitioner_details?.requisition_id,
     },
   });
 
@@ -87,12 +87,12 @@ const EditPRForm: React.FC<EditPRFormProps> = ({
       const requisitioners = await getAllRequisitioner();
       return (
         requisitioners.data
-          ?.filter((requisitioner) =>
-            requisitioner.name.toLowerCase().includes(inputValue.toLowerCase())
+          ?.filter((requisitioner) => 
+            requisitioner?.name?.toLowerCase().includes(inputValue.toLowerCase())
           )
           .map((requisitioner) => ({
             value: requisitioner.requisition_id,
-            label: requisitioner.name,
+            label: requisitioner.name || "Unknown", // Fallback if name is undefined
           })) || []
       );
     } catch (error) {
@@ -199,9 +199,8 @@ const EditPRForm: React.FC<EditPRFormProps> = ({
                       <AsyncSelect
                         defaultValue={{
                           value:
-                            purchaseData?.requisitioner_details
-                              .requisition_id ?? "",
-                          label: purchaseData?.requisitioner_details.name ?? "",
+                            purchaseData?.requisitioner_details?.requisition_id ?? "",
+                          label: purchaseData?.requisitioner_details?.name ?? "Select requisitioner",
                         }}
                         defaultOptions
                         loadOptions={loadRequisitionerOptions}

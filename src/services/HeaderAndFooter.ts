@@ -43,58 +43,65 @@ export const HeaderAndFooter = async (
     page.drawText('WINNING PRICE  ', {x: 795, y: 380, size: 11, font: timesBoldFont });
   
   
-    //text signature
-    page.drawText(bac_members[0].name, {x: 80.39, y: footerYPosition - 57.15, size: 11, font: timesBoldFont });
-    page.drawText(bac_members[0].designation, {x: 96.92, y: footerYPosition - 72.32, size: 11, font: timesRomanFont });
-    page.drawText(bac_members[1].name, {x: 334.72, y: footerYPosition - 57.15, size: 11, font: timesBoldFont });
-    page.drawText(bac_members[1].designation, {x: 381.93, y: footerYPosition - 72.32, size: 11, font: timesRomanFont });
+    //text signature - FIXED with optional chaining and fallback values
+    page.drawText(bac_members[0]?.name || "N/A", {x: 80.39, y: footerYPosition - 57.15, size: 11, font: timesBoldFont });
+    page.drawText(bac_members[0]?.designation || "N/A", {x: 96.92, y: footerYPosition - 72.32, size: 11, font: timesRomanFont });
+    page.drawText(bac_members[1]?.name || "N/A", {x: 334.72, y: footerYPosition - 57.15, size: 11, font: timesBoldFont });
+    page.drawText(bac_members[1]?.designation || "N/A", {x: 381.93, y: footerYPosition - 72.32, size: 11, font: timesRomanFont });
   
     page.drawText('End-user', {x: 726.77, y: footerYPosition - 72.32 , size: 11, font: timesRomanFont });
   
-    page.drawText(bac_members[2].name, {x: 68.57, y: footerYPosition - 130.07, size: 11, font: timesBoldFont });
-    page.drawText(bac_members[2].designation, {x: 96.92, y: footerYPosition - 145.2 , size: 11, font: timesRomanFont });
-    page.drawText(bac_members[3].name, {x: 331.46, y: footerYPosition - 130.07, size: 11, font: timesBoldFont });
-    page.drawText(bac_members[3].designation, {x: 371.14, y: footerYPosition - 140.2  , size: 11, font: timesRomanFont });
+    page.drawText(bac_members[2]?.name || "N/A", {x: 68.57, y: footerYPosition - 130.07, size: 11, font: timesBoldFont });
+    page.drawText(bac_members[2]?.designation || "N/A", {x: 96.92, y: footerYPosition - 145.2 , size: 11, font: timesRomanFont });
+    page.drawText(bac_members[3]?.name || "N/A", {x: 331.46, y: footerYPosition - 130.07, size: 11, font: timesBoldFont });
+    page.drawText(bac_members[3]?.designation || "N/A", {x: 371.14, y: footerYPosition - 140.2  , size: 11, font: timesRomanFont });
   
-    page.drawText(bac_members[4].name, {x: 200, y:  footerYPosition - 91.32, size: 11, font: timesBoldFont });
-    page.drawText(bac_members[4].designation, {x: 225.14, y:  footerYPosition - 105.07   , size: 11, font: timesRomanFont });
+    page.drawText(bac_members[4]?.name || "N/A", {x: 200, y:  footerYPosition - 91.32, size: 11, font: timesBoldFont });
+    page.drawText(bac_members[4]?.designation || "N/A", {x: 225.14, y:  footerYPosition - 105.07   , size: 11, font: timesRomanFont });
   
-    page.drawText(data.supplier_details.aoq_details.pr_details.campus_director_details.name, {x: 658.44, y: footerYPosition - 130.07, size: 11, font: timesBoldFont });
-    page.drawText(data.supplier_details.aoq_details.pr_details.campus_director_details.designation, {x: 665, y:  footerYPosition - 140.2 , size: 11, font: timesRomanFont });
-     //Horizontal Line
-     page.drawLine({start: { x: 29.53  , y: 401.57 }, end: { x: 898.98, y: 401.57 }, thickness: 1.5 , color: rgb(0, 0, 0)});
-     page.drawLine({start: { x: 29.53  , y: 368.57 }, end: { x: 898.98, y: 368.57 }, thickness: 1.5 , color: rgb(0, 0, 0)});  
-     //logos
-     const headerjpg = '/header.jpeg';
-     const headerjpgBytes = await fetch(headerjpg).then((res) => res.arrayBuffer());
-     const headerimage = await pdfDoc.embedJpg(headerjpgBytes);
-     page.drawImage(headerimage, {
-         x: 235,
-         y: 510,
-         width: 462,
-         height: 85,
-     });
-     page.drawText('Republic of the Philippines', { x: 391, y: 580, size: 12, font: timesRomanFont });
-     page.drawText('CEBU TECHNOLOGICAL UNIVERSITY', { x: 348, y: 565, size: 12, font: boldFont });
-     page.drawText('ARGAO CAMPUS', { x: 411, y: 553, size: 12, font: timesRomanFont });
-     page.drawText('Ed Kintanar Street, Lamacan, Argao Cebu Philippines', { x: 348, y: 543, size: 10, font: timesRomanFont });
-     page.drawText('Website:', { x: 348, y: 533, size: 8, font: timesRomanFont});
-     page.drawText('http://www.argao.ctu.edu.ph ', { x: 380, y: 533, size: 8, font: timesRomanFont, color: rgb(0, 0, 1)});
-     page.drawText('E-mail: cdargao@ctu.edu.ph', { x: 483, y: 533, size: 8, font: timesRomanFont});
-     page.drawText('Phone No.: (032) 485-8290/485-5109 loc 1700Fax. N0.: (032)4858-290', { x: 343, y: 523, size: 8, font: timesRomanFont });
+    // FIXED: Add optional chaining for nested data
+    page.drawText(data?.supplier_details?.aoq_details?.pr_details?.campus_director_details?.name || "N/A", {x: 658.44, y: footerYPosition - 130.07, size: 11, font: timesBoldFont });
+    page.drawText(data?.supplier_details?.aoq_details?.pr_details?.campus_director_details?.designation || "N/A", {x: 665, y:  footerYPosition - 140.2 , size: 11, font: timesRomanFont });
     
-     const jpgUrl = '/footer.jpeg';
-     const jpgImageBytes = await fetch(jpgUrl).then((res) => res.arrayBuffer());
-     const jpgImage = await pdfDoc.embedJpg(jpgImageBytes);
-     const jpgDims = jpgImage.scale(0.3);
+    //Horizontal Line
+    page.drawLine({start: { x: 29.53  , y: 401.57 }, end: { x: 898.98, y: 401.57 }, thickness: 1.5 , color: rgb(0, 0, 0)});
+    page.drawLine({start: { x: 29.53  , y: 368.57 }, end: { x: 898.98, y: 368.57 }, thickness: 1.5 , color: rgb(0, 0, 0)});  
+    
+    //logos - FIXED with proper ArrayBuffer handling
+    const headerjpg = '/header.jpeg';
+    const headerjpgResponse = await fetch(headerjpg);
+    const headerjpgBuffer = await headerjpgResponse.arrayBuffer();
+    const headerimage = await pdfDoc.embedJpg(new Uint8Array(headerjpgBuffer));
+    page.drawImage(headerimage, {
+        x: 235,
+        y: 510,
+        width: 462,
+        height: 85,
+    });
+    page.drawText('Republic of the Philippines', { x: 391, y: 580, size: 12, font: timesRomanFont });
+    page.drawText('CEBU TECHNOLOGICAL UNIVERSITY', { x: 348, y: 565, size: 12, font: boldFont });
+    page.drawText('ARGAO CAMPUS', { x: 411, y: 553, size: 12, font: timesRomanFont });
+    page.drawText('Ed Kintanar Street, Lamacan, Argao Cebu Philippines', { x: 348, y: 543, size: 10, font: timesRomanFont });
+    page.drawText('Website:', { x: 348, y: 533, size: 8, font: timesRomanFont});
+    page.drawText('http://www.argao.ctu.edu.ph ', { x: 380, y: 533, size: 8, font: timesRomanFont, color: rgb(0, 0, 1)});
+    page.drawText('E-mail: cdargao@ctu.edu.ph', { x: 483, y: 533, size: 8, font: timesRomanFont});
+    page.drawText('Phone No.: (032) 485-8290/485-5109 loc 1700Fax. N0.: (032)4858-290', { x: 343, y: 523, size: 8, font: timesRomanFont });
+    
+    // FIXED: Footer image with proper ArrayBuffer handling
+    const jpgUrl = '/footer.jpeg';
+    const jpgResponse = await fetch(jpgUrl);
+    const jpgBuffer = await jpgResponse.arrayBuffer();
+    const jpgImage = await pdfDoc.embedJpg(new Uint8Array(jpgBuffer));
+    const jpgDims = jpgImage.scale(0.3);
  
-     page.drawImage(jpgImage, {
-         x: 240,
-         y: 10,
-         width: jpgDims.width,
-         height: jpgDims.height,
-     });
-      //Vertical Line
+    page.drawImage(jpgImage, {
+        x: 240,
+        y: 10,
+        width: jpgDims.width,
+        height: jpgDims.height,
+    });
+    
+    //Vertical Line
     page.drawLine({start: { x: 29.53 , y:401.57  }, end: { x: 29.53 , y:  368.57 }, thickness: 1.5 , color: rgb(0, 0, 0)});
     page.drawLine({start: { x: 64.96 , y:401.57  }, end: { x: 64.96 , y:  368.57 }, thickness: 1.5 , color: rgb(0, 0, 0)});
     page.drawLine({start: { x: 356.14 , y:401.57 }, end: { x: 356.14 , y:  368.57  }, thickness: 1.5 , color: rgb(0, 0, 0)});
@@ -102,6 +109,4 @@ export const HeaderAndFooter = async (
     page.drawLine({start: { x: 480.31 , y:401.57  }, end: { x: 480.31 , y:  368.57 }, thickness: 1.5 , color: rgb(0, 0, 0)});
     page.drawLine({start: { x: 780.38 , y:401.57  }, end: { x: 780.38 , y:  368.57}, thickness: 1.5 , color: rgb(0, 0, 0)});
     page.drawLine({start: { x: 898.50, y:401.57  }, end: { x: 898.50 , y:  368.57  }, thickness: 1.5 , color: rgb(0, 0, 0)});
-    
-   
 };

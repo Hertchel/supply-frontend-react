@@ -4,9 +4,16 @@ import { purchaseRequestType } from "@/types/response/puchase-request";
 import { DataTableColumnHeader } from "./data-table-column-header";
 import { DataTableRowActions } from "./data-table-row-actions";
 import { Badge } from "@/components/ui/badge";
-import { useRequestForQuotationCount } from "@/services/requestForQuotationServices";
+import { useRequestForQuotation } from "@/services/requestForQuotationServices"; // CHANGED: import the main hook
 import { useNavigate } from "react-router-dom";
 import { formatDate } from "@/services/formatDate";
+
+// ADD THIS HELPER FUNCTION
+const useRFQCountByPR = (pr_no: string) => {
+  const { data } = useRequestForQuotation();
+  const count = data?.data?.filter(rfq => rfq.purchase_request === pr_no).length || 0;
+  return count;
+};
 
 export const columns: ColumnDef<purchaseRequestType>[] = [
   {
@@ -15,19 +22,20 @@ export const columns: ColumnDef<purchaseRequestType>[] = [
       <DataTableColumnHeader column={column} title="PR No." />
     ),
     cell: ({ row }) => {
-      const rfqCount = useRequestForQuotationCount(row.getValue("pr_no"));
+      // FIXED: Use the helper function instead
+      const rfqCount = useRFQCountByPR(row.getValue("pr_no"));
       const navigate = useNavigate();
       const pr_no = row.getValue("pr_no");
       return (
         <div className="flex space-x-2 items-center">
           <span
-            className="max-w-[500px] truncate font-medium hover:underline"
+            className="max-w-[500px] truncate font-medium hover:underline cursor-pointer"
             onClick={() => navigate(`/bac/purchase-request/${pr_no}`)}
           >
             {row.getValue("pr_no")}
           </span>
           <Badge className="m-2 p-2 w-6 h-6 flex items-center justify-center bg-orange-200 border-2 text-slate-950">
-            {!rfqCount ? "0" : rfqCount}
+            {rfqCount === 0 ? "0" : rfqCount}
           </Badge>
         </div>
       );

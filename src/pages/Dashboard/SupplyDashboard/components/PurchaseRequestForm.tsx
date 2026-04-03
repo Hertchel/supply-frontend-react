@@ -66,6 +66,7 @@ const PurchaseRequestForm: React.FC<PurchaseRequestFormProps> = ({
     resolver: zodResolver(purchaseRequestFormSchema),
   });
 
+  // FIXED: Added optional chaining and fallback for undefined name
   const loadRequisitionerOptions = async (
     inputValue: string
   ): Promise<option[]> => {
@@ -74,11 +75,11 @@ const PurchaseRequestForm: React.FC<PurchaseRequestFormProps> = ({
       return (
         requisitioners.data
           ?.filter((requisitioner) =>
-            requisitioner.name.toLowerCase().includes(inputValue.toLowerCase())
+            requisitioner?.name?.toLowerCase().includes(inputValue.toLowerCase())
           )
           .map((requisitioner) => ({
             value: requisitioner.requisition_id,
-            label: requisitioner.name,
+            label: requisitioner.name || "Unknown", // Fixed: ensure label is always string
           })) || []
       );
     } catch (error) {
@@ -87,6 +88,7 @@ const PurchaseRequestForm: React.FC<PurchaseRequestFormProps> = ({
     }
   };
 
+  // FIXED: Added optional chaining and fallback for undefined name
   const loadCampusDirectorOptions = async (
     inputValue: string
   ): Promise<option[]> => {
@@ -95,13 +97,13 @@ const PurchaseRequestForm: React.FC<PurchaseRequestFormProps> = ({
       return (
         campus_directors.data
           ?.filter((campus_director) =>
-            campus_director.name
-              .toLowerCase()
+            campus_director?.name
+              ?.toLowerCase()
               .includes(inputValue.toLowerCase())
           )
           .map((campus_director) => ({
             value: campus_director.cd_id,
-            label: campus_director.name,
+            label: campus_director.name || "Unknown", // Fixed: ensure label is always string
           })) || []
       );
     } catch (error) {
@@ -239,6 +241,7 @@ const PurchaseRequestForm: React.FC<PurchaseRequestFormProps> = ({
                   <Button
                     className="text-slate-950 bg-orange-200 hover:bg-orange-300"
                     type="submit"
+                    disabled={isLoading}
                   >
                     {isLoading ? (
                       <p className="flex gap-2"><Loader2 className="animate-spin" /> Processing...</p>
