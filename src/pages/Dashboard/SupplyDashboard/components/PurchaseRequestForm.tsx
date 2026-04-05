@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { Dialog, DialogContent, DialogTitle } from "@/components/ui/dialog";
@@ -17,9 +17,12 @@ import {
 } from "@/services/purchaseRequestServices";
 import { generatePrNo } from "@/services/generatePrNo";
 import AsyncSelect from "react-select/async";
+import Select from "react-select"; // Added for dropdowns
 import { getAllRequisitioner } from "@/services/requisitionerServices";
 import { Loader2 } from "lucide-react";
 import { getAllCampusDirector } from "@/services/campusDirectorServices";
+import { getAllFundClusters, FundCluster } from "@/services/fundClusterServices"; // Add this
+import { getAllOffices, Office } from "@/services/officeServices"; // Add this
 import { MessageDialog } from "../../shared/components/MessageDialog";
 
 interface PurchaseRequestFormProps {
@@ -46,6 +49,9 @@ const PurchaseRequestForm: React.FC<PurchaseRequestFormProps> = ({
   lastPrNo,
 }) => {
   const [isLoading, setIsLoading] = useState<boolean>(false);
+  const [fundClusters, setFundClusters] = useState<option[]>([]);
+  const [offices, setOffices] = useState<option[]>([]);
+  const [loadingData, setLoadingData] = useState<boolean>(false);
   const [messageDialog, setMessageDialog] = useState<messageDialogProps>({
     open: false,
     message: "",
@@ -66,7 +72,43 @@ const PurchaseRequestForm: React.FC<PurchaseRequestFormProps> = ({
     resolver: zodResolver(purchaseRequestFormSchema),
   });
 
-  // FIXED: Added optional chaining and fallback for undefined name
+  // Load dropdown data when dialog opens
+  useEffect(() => {
+    if (isDialogOpen) {
+      loadDropdownData();
+    }
+  }, [isDialogOpen]);
+
+  const loadDropdownData = async () => {
+  setLoadingData(true);
+  try {
+    // Load fund clusters
+    const fundClusterRes = await getAllFundClusters();
+    if (fundClusterRes.status === "success" && fundClusterRes.data) {
+      setFundClusters(
+        fundClusterRes.data.map((fc: FundCluster) => ({
+          value: fc.id.toString(),
+          label: `${fc.code} - ${fc.name}`,
+        }))
+      );
+    }
+
+    // Load offices
+    const officeRes = await getAllOffices();
+    if (officeRes.status === "success" && officeRes.data) {
+      setOffices(
+        officeRes.data.map((office: Office) => ({
+          value: office.id.toString(),
+          label: `${office.code} - ${office.name}`,
+        }))
+      );
+    }
+  } catch (error) {
+    console.error("Error loading dropdown data:", error);
+  } finally {
+    setLoadingData(false);
+  }
+};
   const loadRequisitionerOptions = async (
     inputValue: string
   ): Promise<option[]> => {
@@ -79,7 +121,7 @@ const PurchaseRequestForm: React.FC<PurchaseRequestFormProps> = ({
           )
           .map((requisitioner) => ({
             value: requisitioner.requisition_id,
-            label: requisitioner.name || "Unknown", // Fixed: ensure label is always string
+            label: requisitioner.name || "Unknown",
           })) || []
       );
     } catch (error) {
@@ -88,7 +130,6 @@ const PurchaseRequestForm: React.FC<PurchaseRequestFormProps> = ({
     }
   };
 
-  // FIXED: Added optional chaining and fallback for undefined name
   const loadCampusDirectorOptions = async (
     inputValue: string
   ): Promise<option[]> => {
@@ -103,7 +144,7 @@ const PurchaseRequestForm: React.FC<PurchaseRequestFormProps> = ({
           )
           .map((campus_director) => ({
             value: campus_director.cd_id,
-            label: campus_director.name || "Unknown", // Fixed: ensure label is always string
+            label: campus_director.name || "Unknown",
           })) || []
       );
     } catch (error) {
@@ -118,6 +159,14 @@ const PurchaseRequestForm: React.FC<PurchaseRequestFormProps> = ({
 
   const handleCampusDirectorChange = (selectedOption: option | null) => {
     setValue("campus_director", selectedOption?.value ?? "");
+  };
+
+  const handleFundClusterChange = (selectedOption: option | null) => {
+    setValue("fund_cluster", selectedOption?.value ?? "");
+  };
+
+  const handleOfficeChange = (selectedOption: option | null) => {
+    setValue("office", selectedOption?.value ?? "");
   };
 
   const onSubmit = async (data: PurchaseRequestData) => {
@@ -185,73 +234,94 @@ const PurchaseRequestForm: React.FC<PurchaseRequestFormProps> = ({
         <DialogContent className="max-w-full w-[45rem]">
           <DialogTitle className="pb-6">Create Purchase Request</DialogTitle>
           <ScrollArea className="h-[30rem] mb-8">
-            <form onSubmit={handleSubmit(onSubmit)}>
-              <div className="grid gap-4">
-                <div className="flex gap-4">
+            {loadingData ? (
+              <div className="flex justify-center items-center h-64">
+                <Loader2 className="animate-spin" />
+              </div>
+            ) : (
+              <form onSubmit={handleSubmit(onSubmit)}>
+                <div className="grid gap-4">
+                  <div className="flex gap-4">
+                    {renderField(
+                      "PR No.",
+                      "pr_no",
+                      <Input
+                        {...register("pr_no")}
+                        value={generatePrNo(currentPurchaseNumber)}
+                        readOnly
+                      />
+                    )}
+                    {renderField(
+                      "Fund Cluster",
+                      "fund_cluster",
+                      <Select
+                        options={fundClusters}
+                        onChange={handleFundClusterChange}
+                        placeholder="Select Fund Cluster..."
+                        className="text-sm"
+                        isClearable
+                      />
+                    )}
+                  </div>
+
                   {renderField(
-                    "PR No.",
-                    "pr_no",
-                    <Input
-                      {...register("pr_no")}
-                      value={generatePrNo(currentPurchaseNumber)}
-                      readOnly
+                    "Office",
+                    "office",
+                    <Select
+                      options={offices}
+                      onChange={handleOfficeChange}
+                      placeholder="Select Office..."
+                      className="text-sm"
+                      isClearable
                     />
                   )}
+
                   {renderField(
-                    "Fund Cluster",
-                    "fund_cluster",
-                    <Input {...register("fund_cluster")} />
+                    "Purpose",
+                    "purpose",
+                    <Textarea {...register("purpose")} />
                   )}
+                  
+                  {renderField(
+                    "Requested By",
+                    "requisitioner",
+                    <AsyncSelect
+                      defaultOptions
+                      loadOptions={loadRequisitionerOptions}
+                      onChange={handleRequisitionerChange}
+                      placeholder="Search for a Requisitioner..."
+                      className="text-sm"
+                    />
+                  )}
+                  
+                  {renderField(
+                    "Approved By",
+                    "campus_director",
+                    <AsyncSelect
+                      defaultOptions
+                      loadOptions={loadCampusDirectorOptions}
+                      onChange={handleCampusDirectorChange}
+                      placeholder="Search for a Campus Director..."
+                      className="text-sm"
+                    />
+                  )}
+                  
+                  <div className="mt-6 fixed bottom-6 right-10">
+                    <Button
+                      className="text-slate-950 bg-orange-200 hover:bg-orange-300"
+                      type="submit"
+                      disabled={isLoading}
+                    >
+                      {isLoading ? (
+                        <p className="flex gap-2"><Loader2 className="animate-spin" /> Processing...</p>
+                      ) : (
+                        "Submit Purchase Request"
+                      )}
+                    </Button>
+                  </div>
                 </div>
-
-                {renderField(
-                  "Office",
-                  "office",
-                  <Input {...register("office")} />
-                )}
-
-                {renderField(
-                  "Purpose",
-                  "purpose",
-                  <Textarea {...register("purpose")} />
-                )}
-                {renderField(
-                  "Requested By",
-                  "requisitioner",
-                  <AsyncSelect
-                    defaultOptions
-                    loadOptions={loadRequisitionerOptions}
-                    onChange={handleRequisitionerChange}
-                    placeholder="Search for a Requisitioner..."
-                    className="text-sm"
-                  />
-                )}
-                {renderField(
-                  "Approved By",
-                  "campus_director",
-                  <AsyncSelect
-                    defaultOptions
-                    loadOptions={loadCampusDirectorOptions}
-                    onChange={handleCampusDirectorChange}
-                    placeholder="Search for a Campus Director..."
-                    className="text-sm"
-                  />
-                )}
-                <div className="mt-6 fixed bottom-6 right-10">
-                  <Button
-                    className="text-slate-950 bg-orange-200 hover:bg-orange-300"
-                    type="submit"
-                    disabled={isLoading}
-                  >
-                    {isLoading ? (
-                      <p className="flex gap-2"><Loader2 className="animate-spin" /> Processing...</p>
-                    ) : (
-                      "Submit Purchase Request"
-                    )}
-                  </Button>
-                </div>
-              </div>
-            </form>
+              </form>
+            )}
           </ScrollArea>
         </DialogContent>
       </Dialog>

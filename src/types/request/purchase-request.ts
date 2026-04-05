@@ -3,7 +3,7 @@ import { z } from 'zod';
 export const purchaseRequestFormSchema = z.object({
   pr_no: z.string().min(1, 'Required'),
   office: z.string().min(1, 'Required'),
-  fund_cluster: z.string().optional(),
+  fund_cluster: z.string().min(1, 'Required'),  // Changed from optional to required
   purpose: z.string().min(1, 'Required'),
   status: z.string().min(1, 'Required').default("Pending for Approval"),
   mode_of_procurement: z.string().default("Direct Contracting"),
@@ -12,7 +12,6 @@ export const purchaseRequestFormSchema = z.object({
 });
 
 export type PurchaseRequestData = z.infer<typeof purchaseRequestFormSchema>;
-
 
 export const EditPRFormSchema = z.object({
   office: z.string().min(1, 'Required'),
