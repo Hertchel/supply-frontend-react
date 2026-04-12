@@ -3,7 +3,7 @@ import { Link } from "react-router-dom";
 import { Label } from "@/components/ui/label";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
-import { Loader2, Eye, EyeOff } from "lucide-react";
+import { Loader2, Eye, EyeOff, Package } from "lucide-react";
 import { InputOTPForm } from "@/pages/Forms/InputOTPForm";
 import { FieldErrors, useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
@@ -61,14 +61,14 @@ const Login = () => {
 
   const renderField = ({ label, field_name, errors }: RenderFieldProps) => (
     <div className="w-full relative">
-      <Label>{label}</Label>
-      <div className="relative">
+      <Label className="text-gray-700 text-sm font-medium">{label}</Label>
+      <div className="relative mt-1">
         <Input
           type={
             field_name === "password" && !showPassword ? "password" : "text"
           }
           {...register(field_name)}
-          className="w-full pr-10"
+          className="w-full h-11 rounded-xl border-gray-200 focus:border-orange-400 focus:ring-orange-400"
         />
         {field_name === "password" && (
           <button
@@ -87,7 +87,7 @@ const Login = () => {
         )}
       </div>
       {errors && errors[field_name as keyof typeof errors] && (
-        <span className="text-xs text-red-500">
+        <span className="text-xs text-red-500 mt-1">
           {errors[field_name as keyof typeof errors]?.message}
         </span>
       )}
@@ -99,66 +99,130 @@ const Login = () => {
   };
 
   return (
-    <div className="relative flex h-screen justify-center items-center">
+    <div className="relative min-h-screen flex items-center justify-center p-4 bg-gradient-to-br from-orange-400 to-orange-600">
+      {/* Background with blur - improved for mobile */}
       <div
-        className="absolute top-0 left-0 w-full h-full bg-cover bg-center"
+        className="absolute inset-0 bg-cover bg-center bg-no-repeat"
         style={{
           backgroundImage: "url('/image2.jpg')",
-          filter: "blur(8px )",
+          filter: "blur(8px)",
+          transform: "scale(1.05)",
         }}
       ></div>
 
-      <div className="relative flex border border-[#FDE3CF] rounded-lg w-[800px] shadow-lg bg-white z-10">
-        <div className="flex justify-center items-center w-1/2 border-r border-[#FDE3CF] p-5 shadow-lg bg-blue-50">
-          <img
-            src="/CTU_new_logotransparent.svg"
-            alt="Illustration"
-            className="w-full h-auto object-contain"
-          />
-        </div>
-        <div className="flex justify-center items-center w-1/2 p-7">
-          {!otpSent ? (
-            <div className="w-full flex flex-col justify-between space-y-4">
-              <div>
-                <p className="text-3xl font-normal text-gray-900 text-center mt-0 mb-6">
-                  Sign in to Supply Office
-                </p>
+      {/* Login Card - Responsive */}
+      <div className="relative w-full max-w-md md:max-w-lg lg:max-w-4xl bg-white rounded-2xl md:rounded-3xl shadow-2xl overflow-hidden">
+        <div className="flex flex-col md:flex-row">
+          {/* Left Side - Branding (hidden on mobile, visible on desktop) */}
+          <div className="hidden md:flex md:w-1/2 bg-gradient-to-br from-orange-500 to-orange-600 p-8 flex-col justify-between">
+            <div>
+              <div className="inline-flex items-center justify-center w-16 h-16 bg-white/20 rounded-2xl mb-6">
+                <Package className="w-10 h-10 text-white" />
+              </div>
+              <h2 className="text-2xl font-bold text-white mb-2">
+                Supply Management System
+              </h2>
+              <p className="text-orange-100 text-sm">
+                Cebu Technological University - Argao Campus
+              </p>
+            </div>
+            <p className="text-orange-100/60 text-xs mt-8">
+              © 2024 Supply Management System
+            </p>
+          </div>
 
+          {/* Right Side - Login Form */}
+          <div className="w-full md:w-1/2 p-6 md:p-8">
+            {/* Mobile Logo */}
+            <div className="md:hidden flex justify-center mb-6">
+              <div className="inline-flex items-center justify-center w-16 h-16 bg-gradient-to-br from-orange-500 to-orange-600 rounded-2xl shadow-lg">
+                <Package className="w-8 h-8 text-white" />
+              </div>
+            </div>
+
+            <div className="text-center mb-6">
+              <h1 className="text-2xl md:text-3xl font-bold text-gray-800">
+                Welcome Back
+              </h1>
+              <p className="text-gray-500 text-sm mt-2">
+                Sign in to your account
+              </p>
+            </div>
+
+            {!otpSent ? (
+              <div className="space-y-5">
                 {errorMessage && (
-                  <Alert variant={"destructive"}>
+                  <Alert variant="destructive" className="rounded-xl">
                     <AlertDescription>
-                      <p className="text-red-500">{errorMessage}</p>
+                      <p className="text-red-500 text-sm">{errorMessage}</p>
                     </AlertDescription>
                   </Alert>
                 )}
 
-                <form onSubmit={handleSubmit(onSubmit)}>
+                <form onSubmit={handleSubmit(onSubmit)} className="space-y-4">
                   {renderField({ label: "Email", field_name: "email", errors })}
                   {renderField({
                     label: "Password",
                     field_name: "password",
                     errors,
                   })}
+                  
                   <Button
                     type="submit"
-                    className="w-full mt-4"
+                    className="w-full h-11 rounded-xl bg-orange-500 hover:bg-orange-600 text-white font-semibold transition-all duration-200"
                     disabled={isLoading}
                   >
-                    {isLoading ? <Loader2 className="animate-spin" /> : "Login"}
+                    {isLoading ? (
+                      <Loader2 className="animate-spin" />
+                    ) : (
+                      "Sign In"
+                    )}
                   </Button>
                 </form>
-              </div>
 
-              <p className="mt-4 text-center">
-                Don't have an account?{" "}
-                <span className="text-orange-300">
-                  <Link to="/register">Register</Link>
-                </span>
-              </p>
-            </div>
-          ) : (
-            <InputOTPForm />
-          )}
+                <div className="text-center pt-4">
+                  <p className="text-gray-600 text-sm">
+                    Don't have an account?{" "}
+                    <Link
+                      to="/register"
+                      className="text-orange-500 hover:text-orange-600 font-medium"
+                    >
+                      Register
+                    </Link>
+                  </p>
+                </div>
+
+                {/* Demo Credentials - Helpful for presentation */}
+                <div className="mt-6 p-3 bg-gray-50 rounded-xl">
+                  <p className="text-xs text-gray-500 text-center mb-2">
+                    Demo Credentials
+                  </p>
+                  <div className="space-y-1 text-xs text-gray-600">
+                    <div className="flex justify-between">
+                      <span>Supply Officer:</span>
+                      <span className="font-mono">supply@ctu.edu.ph</span>
+                    </div>
+                    <div className="flex justify-between">
+                      <span>BAC Officer:</span>
+                      <span className="font-mono">bac@ctu.edu.ph</span>
+                    </div>
+                    <div className="flex justify-between">
+                      <span>Admin:</span>
+                      <span className="font-mono">admin@ctu.edu.ph</span>
+                    </div>
+                    <div className="flex justify-between">
+                      <span>Password:</span>
+                      <span className="font-mono">password123</span>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            ) : (
+              <div className="animate-in fade-in duration-300">
+                <InputOTPForm />
+              </div>
+            )}
+          </div>
         </div>
       </div>
     </div>
