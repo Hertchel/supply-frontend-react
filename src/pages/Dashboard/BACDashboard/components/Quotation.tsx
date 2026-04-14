@@ -5,7 +5,6 @@ import {
   CardHeader,
   CardTitle,
 } from "@/components/ui/card";
-import { CheckIcon, Cross2Icon } from "@radix-ui/react-icons";
 import { useGetRFQDetail } from "@/services/requestForQuotationServices";
 import { formatDate } from "@/services/formatDate";
 import Loading from "../../shared/components/Loading";
