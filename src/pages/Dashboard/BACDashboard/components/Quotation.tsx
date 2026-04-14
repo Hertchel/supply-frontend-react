@@ -36,20 +36,20 @@ export const Quotation = () => {
   const { rfq_no } = useParams();
 
   const { data, isLoading, isError } = useGetRFQDetail(rfq_no!);
-  console.log(data);
-  
+
   if (isLoading) return <Loading />;
   if (isError) return <div>Error loading data</div>;
 
-  const quotation = data?.data?.rfq;
+  const quotation = data?.data;
   const itemQuotation = data?.data?.items || [];
+
+  if (!data?.data) return <div>No data</div>;
 
   const handlePrint = async () => {
     const url = await generateRFQPDF(itemQuotation, quotation);
     return window.open(url, "_blank");
   };
-  console.log("RFQ:", quotation);
-console.log("Items:", itemQuotation);
+  console.log("FULL DATA:", data);
 
   return (
     <div className="w-full">
