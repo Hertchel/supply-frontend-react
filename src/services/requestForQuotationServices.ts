@@ -53,15 +53,14 @@ export const getRequestForQuotation = async (
   }
 };
 
-export const getRFQDetail = async (rfq_no: string) => {
-  const encodedRFQ = encodeURIComponent(rfq_no);
-  return api.get(`/api/rfq/${encodedRFQ}/full/`);
-};
-
 export const useGetRFQDetail = (rfq_no: string) => {
   return useQuery({
     queryKey: ["rfq-detail", rfq_no],
-    queryFn: () => getRFQDetail(rfq_no),
+    queryFn: async () => {
+      const encodedRFQ = encodeURIComponent(rfq_no);
+      const res = await api.get(`/api/rfq/${encodedRFQ}/full/`);
+      return res.data; // ✅ THIS IS THE FIX
+    },
     enabled: !!rfq_no,
   });
 };

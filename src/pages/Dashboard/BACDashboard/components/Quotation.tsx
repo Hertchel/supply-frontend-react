@@ -35,15 +35,14 @@ export const Quotation = () => {
   const [isDialogOpen, setIsDialogOpen] = useState<boolean>(false);
   const { rfq_no } = useParams();
 
-  const { data, isLoading, isError } = useGetRFQDetail(rfq_no!);
+ const { data, isLoading, isError } = useGetRFQDetail(rfq_no!);
 
   if (isLoading) return <Loading />;
   if (isError) return <div>Error loading data</div>;
+  if (!data) return <div>No data</div>;
 
-  const quotation = data?.data;
-  const itemQuotation = data?.data?.items || [];
-
-  if (!data?.data) return <div>No data</div>;
+  const quotation = data;
+  const itemQuotation = data?.items || [];
 
   const handlePrint = async () => {
     const url = await generateRFQPDF(itemQuotation, quotation);
