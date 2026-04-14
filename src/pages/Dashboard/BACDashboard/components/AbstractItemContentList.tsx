@@ -35,7 +35,7 @@ import {
   DialogHeader,
   DialogTitle,
 } from "@/components/ui/dialog";
-import { useGetRequestForQuotation } from "@/services/requestForQuotationServices";
+import { useGetRFQDetail } from "@/services/requestForQuotationServices";
 import {
   Tooltip,
   TooltipContent,
@@ -336,8 +336,10 @@ export const SupplierInformation: React.FC<SupplierInformationProps> = ({
   isInformationDialogOpen,
   setIsInformationDialogOpen,
 }) => {
-  const { data, isLoading } = useGetRequestForQuotation(rfqNo);
-  const rfqData = data?.data;
+  if (!rfqNo) return null;
+
+  const { data, isLoading } = useGetRFQDetail(rfqNo);
+  const rfqData = data?.data?.rfq;
 
   return (
     <Dialog

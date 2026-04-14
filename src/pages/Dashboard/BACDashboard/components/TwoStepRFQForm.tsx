@@ -17,7 +17,6 @@ import { Label } from "@/components/ui/label";
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { generateRandomString } from "@/services/generateRandomString";
 import {
   arraySort,
   FilteredItemInPurchaseRequest,
@@ -182,7 +181,7 @@ export const TwoStepRFQForm: React.FC<TwoStepRFQFormProps> = ({
       }
 
       const quotationData = {
-        rfq_no: `${rfq_no}(${generateRandomString()})`,
+        rfq_no: pr_no,
         purchase_request: data.purchase_request!,
         supplier_name: data.supplier_name ?? "",
         supplier_address: data.supplier_address ?? "",

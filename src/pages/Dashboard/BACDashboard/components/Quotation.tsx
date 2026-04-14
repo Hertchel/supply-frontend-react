@@ -6,10 +6,7 @@ import {
   CardTitle,
 } from "@/components/ui/card";
 import { CheckIcon, Cross2Icon } from "@radix-ui/react-icons";
-import {
-  useGetItemQuotation,
-  useGetRequestForQuotation,
-} from "@/services/requestForQuotationServices";
+import { useGetRFQDetail } from "@/services/requestForQuotationServices";
 import { formatDate } from "@/services/formatDate";
 import Loading from "../../shared/components/Loading";
 import { useParams } from "react-router-dom";
@@ -38,146 +35,178 @@ export const Quotation = () => {
   const [isDialogOpen, setIsDialogOpen] = useState<boolean>(false);
   const { rfq_no } = useParams();
 
-  const { data, isLoading: item_loading } = useGetRequestForQuotation(rfq_no!);
-  const { data: items, isLoading } = useGetItemQuotation();
+  const { data, isLoading, isError } = useGetRFQDetail(rfq_no!);
+  console.log(data);
+  
+  if (isLoading) return <Loading />;
+  if (isError) return <div>Error loading data</div>;
 
-  const itemQuotation = items?.data?.filter((data) => data.rfq === rfq_no);
-  const quotation = data && data.data;
-  const rfqData = data?.data
+  const quotation = data?.data?.rfq;
+  const itemQuotation = data?.data?.items || [];
 
   const handlePrint = async () => {
-    const url = await generateRFQPDF(itemQuotation!, rfqData!);
+    const url = await generateRFQPDF(itemQuotation, quotation);
     return window.open(url, "_blank");
   };
-
-  if (isLoading || item_loading) return <Loading />;
+  console.log("RFQ:", quotation);
+console.log("Items:", itemQuotation);
 
   return (
-    <div className=" w-full">
+    <div className="w-full">
       <Card className="w-full bg-slate-100">
-        <CardHeader className="flex flex-col">
-          <CardTitle className="">
-            <div>
-              <div className="flex items-center justify-between">
-                <div className="">
+        <CardHeader>
+          <CardTitle>
+            <div className="flex flex-col gap-3">
+              
+              {/* HEADER */}
+              <div className="flex flex-col md:flex-row md:justify-between gap-3">
+                <div>
                   <p className="font-thin">{quotation?.supplier_name}</p>
-                  <div className="flex items-center pt-2">
+                  <div className="flex items-center pt-1">
                     <CalendarIcon className="w-3 h-3 mr-1" />
-                    <p className="text-base font-thin">
+                    <p className="text-sm md:text-base font-thin">
                       {quotation?.created_at &&
-                        formatDate(quotation?.created_at)}
+                        formatDate(quotation.created_at)}
                     </p>
                   </div>
                 </div>
 
-                <div className="flex gap-4">
-                  <TooltipProvider delayDuration={100} skipDelayDuration={200}>
+                {/* ACTION BUTTONS */}
+                <div className="flex flex-wrap gap-2">
+                  <TooltipProvider>
                     <Tooltip>
                       <TooltipTrigger asChild>
                         <Button onClick={() => setIsDialogOpen(true)}>
-                          <PenBoxIcon width={20} height={20} className="mx-2" />{" "}
+                          <PenBoxIcon className="mr-2" />
                           Edit
                         </Button>
                       </TooltipTrigger>
-                      <TooltipContent side="top">
-                        Edit RFQ Details
-                      </TooltipContent>
+                      <TooltipContent>Edit RFQ</TooltipContent>
                     </Tooltip>
 
                     <Tooltip>
                       <TooltipTrigger asChild>
-                        <Button variant={"outline"} onClick={handlePrint}>
-                          <PrinterIcon
-                            width={20}
-                            height={20}
-                            className="mx-2"
-                          />
+                        <Button variant="outline" onClick={handlePrint}>
+                          <PrinterIcon className="mr-2" />
                           Print
                         </Button>
                       </TooltipTrigger>
-                      <TooltipContent side="top">Print RFQ Form</TooltipContent>
+                      <TooltipContent>Print RFQ</TooltipContent>
                     </Tooltip>
                   </TooltipProvider>
                 </div>
               </div>
-              <Separator className="mt-3" />
-              <div className="flex items-center gap-4 mt-2">
+
+              <Separator />
+
+              {/* DETAILS */}
+              <div className="flex flex-col md:flex-row md:items-center gap-3">
                 <div className="flex items-center">
                   <MapPinIcon className="w-4 h-4 mr-1" />
-                  <p className="text-lg font-thin">
+                  <p className="text-sm md:text-lg font-thin">
                     {quotation?.supplier_address}
                   </p>
                 </div>
-                <Separator orientation="vertical" className="h-6" />
+
                 <div className="flex items-center">
                   <CreditCardIcon className="w-4 h-4 mr-1" />
-                  <p className="text-lg font-thin">{quotation?.tin}</p>
-                </div>
-                <Separator orientation="vertical" className="h-6" />
-                <Badge variant={"outline"} className="flex items-center">
-                  <p className="text-lg font-thin">
-                    {quotation?.is_VAT ? "VAT" : "non_VAT"}
+                  <p className="text-sm md:text-lg font-thin">
+                    {quotation?.tin}
                   </p>
+                </div>
+
+                <Badge variant="outline">
+                  {quotation?.is_VAT ? "VAT" : "Non-VAT"}
                 </Badge>
               </div>
             </div>
-            <div className="mb-5">
-              <div className="flex justify-end gap-1"></div>
-            </div>
           </CardTitle>
         </CardHeader>
-        <CardContent className="border-2 mx-6 rounded-md p-4 ">
-          <div className=" my-2 flex gap-3 items-center">
-            <ClipboardIcon className="h-6 w-6" />
-            <p className="text-xl">Quotations</p>
+
+        <CardContent className="mx-2 md:mx-6 p-3 md:p-4 border rounded-md">
+
+          {/* TITLE */}
+          <div className="flex items-center gap-2 mb-3">
+            <ClipboardIcon className="h-5 w-5" />
+            <p className="text-lg md:text-xl">Quotations</p>
           </div>
-          <div className="grid grid-cols-8 gap-2 items-center py-2  border-b-2 sticky top-0">
-            <p className="text-base">UNIT</p>
-            <p className="text-base col-span-2">ITEM DESCRIPTION</p>
-            <p className="text-base">QUANTITY</p>
-            <p className="text-base">UNIT COST</p>
-            <p className="text-base col-span-2">BRAND / MODEL</p>
-            <p className="text-base">UNIT PRICE</p>
+
+          {/* MOBILE VIEW */}
+          <div className="space-y-3 md:hidden">
+            {itemQuotation.map((item: any) => (
+              <Card key={item.item_details.item_no}>
+                <CardContent className="p-3 text-sm">
+                  <p><strong>{item.item_details.item_description}</strong></p>
+                  <p>Unit: {item.item_details.unit}</p>
+                  <p>Qty: {item.item_details.quantity}</p>
+                  <p>Cost: {item.item_details.unit_cost}</p>
+                  <p>Brand: {item.brand_model}</p>
+                  <p>
+                    Price:{" "}
+                    <span
+                      className={
+                        item.is_low_price
+                          ? "text-green-500"
+                          : "text-red-500"
+                      }
+                    >
+                      {item.unit_price}
+                    </span>
+                  </p>
+                </CardContent>
+              </Card>
+            ))}
           </div>
-          {itemQuotation && itemQuotation?.length > 0 ? (
-            itemQuotation?.map((item) => {
-              return (
-                <div
-                  className="grid grid-cols-8 gap-2 items-center py-6 border-b-2"
-                  key={item.item_details.item_no}
+
+          {/* DESKTOP TABLE */}
+          <div className="hidden md:block">
+            <div className="grid grid-cols-8 gap-2 border-b py-2 font-medium">
+              <p>UNIT</p>
+              <p className="col-span-2">DESCRIPTION</p>
+              <p>QTY</p>
+              <p>COST</p>
+              <p className="col-span-2">BRAND</p>
+              <p>PRICE</p>
+            </div>
+
+            {itemQuotation.map((item: any) => (
+              <div
+                key={item.item_details.item_no}
+                className="grid grid-cols-8 gap-2 py-3 border-b text-sm"
+              >
+                <p>{item.item_details.unit}</p>
+                <p className="col-span-2">
+                  {item.item_details.item_description}
+                </p>
+                <p>{item.item_details.quantity}</p>
+                <p>{item.item_details.unit_cost}</p>
+                <p className="col-span-2">{item.brand_model}</p>
+                <p
+                  className={
+                    item.is_low_price
+                      ? "text-green-500"
+                      : "text-red-500"
+                  }
                 >
-                  <p className="text-gray-500">{item.item_details.unit}</p>
-                  <p className="text-gray-500 col-span-2">
-                    {item.item_details.item_description}
-                  </p>
-                  <p className="text-gray-500">{item.item_details.quantity}</p>
-                  <p className="text-gray-500">{item.item_details.unit_cost}</p>
+                  {item.unit_price}
+                </p>
+              </div>
+            ))}
+          </div>
 
-                  <p className="text-gray-500 col-span-2">{item.brand_model}</p>
-
-                  <p
-                    className={`${
-                      item.is_low_price ? "text-green-400" : "text-red-400"
-                    } flex gap-2 items-center`}
-                  >
-                    {item.is_low_price ? <CheckIcon /> : <Cross2Icon />}
-                    {item.unit_price}
-                  </p>
-                </div>
-              );
-            })
-          ) : (
-            <Loading />
-          )}
         </CardContent>
-        <CardFooter className="flex justify-between"></CardFooter>
+
+        <CardFooter />
       </Card>
-      <RFQFormEdit
-        isDialogOpen={isDialogOpen}
-        setIsDialogOpen={setIsDialogOpen}
-        itemQuotation={itemQuotation!}
-        quotation={quotation!}
-      />
+
+      {quotation && (
+        <RFQFormEdit
+          isDialogOpen={isDialogOpen}
+          setIsDialogOpen={setIsDialogOpen}
+          itemQuotation={itemQuotation}
+          quotation={quotation}
+        />
+      )}
     </div>
   );
 };

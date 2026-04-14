@@ -60,7 +60,7 @@ export const RFQFormEdit: React.FC<RFQFormEditProps> = ({
 }) => {
   const [isLoading, setIsLoading] = useState<boolean>(false);
   const [selectedOption, setSelectedOption] = useState<string>(
-    quotation.is_VAT ? "vat" : "non-VAT"
+  quotation?.is_VAT ? "vat" : "non-VAT"
   );
   const [messageDialog, setMessageDialog] = useState<messageDialogProps>({
     open: false,
@@ -86,7 +86,7 @@ export const RFQFormEdit: React.FC<RFQFormEditProps> = ({
       supplier_name: quotation?.supplier_name,
       supplier_address: quotation?.supplier_address,
       tin: quotation?.tin,
-      is_VAT: quotation.is_VAT,
+      is_VAT: quotation?.is_VAT,
       items: itemQuotation?.map((item) => ({
         item_quotation_no: item.item_quotation_no,
         purchase_request: item.purchase_request,
@@ -109,7 +109,7 @@ export const RFQFormEdit: React.FC<RFQFormEditProps> = ({
         supplier_name: quotation.supplier_name,
         supplier_address: quotation.supplier_address,
         tin: quotation.tin,
-        is_VAT: quotation.is_VAT,
+        is_VAT: quotation?.is_VAT,
         items: itemQuotation.map((item) => ({
           item_quotation_no:item.item_quotation_no,
           purchase_request: item.purchase_request,

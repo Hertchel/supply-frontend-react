@@ -53,13 +53,19 @@ export const getRequestForQuotation = async (
   }
 };
 
-export const useGetRequestForQuotation = (rfq_no: string) => {
-  return useQuery<ApiResponse<quotationResponseType>, Error>({
-    queryKey: ["request-for-quotations", rfq_no],
-    queryFn: () => getRequestForQuotation(rfq_no),
+export const getRFQDetail = async (rfq_no: string) => {
+  const encodedRFQ = encodeURIComponent(rfq_no);
+  return api.get(`/api/rfq/${encodedRFQ}/full/`);
+};
+
+export const useGetRFQDetail = (rfq_no: string) => {
+  return useQuery({
+    queryKey: ["rfq-detail", rfq_no],
+    queryFn: () => getRFQDetail(rfq_no),
     enabled: !!rfq_no,
   });
 };
+
 
 export const useGetPurchaseRequestRequestBySupplier = (
   supplier_name: string
@@ -797,7 +803,12 @@ export const generateRFQPDF = async () => {
     height: jpgDims.height,
   });
   const pdfBytes = await pdfDoc.save();
-  const blob = new Blob([pdfBytes], { type: "application/pdf" });
+  const uint8Array = new Uint8Array(pdfBytes);
+
+  const blob = new Blob([uint8Array.buffer], {
+    type: "application/pdf",
+  });
+  //const blob = new Blob([pdfBytes], { type: "application/pdf" });
   //const blob = new Blob([pdfBytes], { type: "application/pdf" });
   const pdfBlobUrl = URL.createObjectURL(blob);
   return pdfBlobUrl;
