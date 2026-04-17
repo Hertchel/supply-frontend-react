@@ -227,6 +227,7 @@ const PurchaseRequestForm: React.FC<PurchaseRequestFormProps> = ({
           }
         },
         onError: () => {
+          console.log("ERROR:", errors);
           reset()
           setIsDialogOpen(false);
           setIsLoading(false);
