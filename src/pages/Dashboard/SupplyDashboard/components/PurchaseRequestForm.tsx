@@ -7,6 +7,7 @@ import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { Button } from "@/components/ui/button";
 import { ScrollArea } from "@/components/ui/scroll-area";
+import { getUsers } from "@/services/userServices";
 
 import {
   purchaseRequestFormSchema,
@@ -158,6 +159,28 @@ const PurchaseRequestForm: React.FC<PurchaseRequestFormProps> = ({
     }
   };
 
+  const loadUserOptions = async (inputValue: string): Promise<option[]> => {
+  try {
+    const users = await getUsers(); // API call
+
+    return (
+      users.data
+        ?.filter((user: any) =>
+          `${user.first_name} ${user.last_name}`
+            .toLowerCase()
+            .includes(inputValue.toLowerCase())
+        )
+        .map((user: any) => ({
+          value: user.id,
+          label: `${user.first_name} ${user.last_name}`,
+        })) || []
+    );
+  } catch (error) {
+    console.log(error);
+    return [];
+  }
+  };
+
   const handleRequisitionerChange = (selectedOption: option | null) => {
     setValue("requisitioner", selectedOption?.value ?? "");
   };
@@ -300,7 +323,7 @@ const PurchaseRequestForm: React.FC<PurchaseRequestFormProps> = ({
                     "reviewed_by",
                     <AsyncSelect
                       defaultOptions
-                      loadOptions={loadRequisitionerOptions}
+                      loadOptions={loadUserOptions}
                       onChange={(option) =>
                         setValue("reviewed_by", option?.value ?? "")
                       }
