@@ -21,7 +21,7 @@ import Select from "react-select"; // Added for dropdowns
 import { getAllRequisitioner } from "@/services/requisitionerServices";
 import { Loader2 } from "lucide-react";
 import { getAllCampusDirector } from "@/services/campusDirectorServices";
-import { getAllFundClusters, FundCluster } from "@/services/fundClusterServices"; // Add this
+// import { getAllFundClusters, FundCluster } from "@/services/fundClusterServices"; // Add this
 import { getAllOffices, Office } from "@/services/officeServices"; // Add this
 import { MessageDialog } from "../../shared/components/MessageDialog";
 
@@ -49,7 +49,7 @@ const PurchaseRequestForm: React.FC<PurchaseRequestFormProps> = ({
   lastPrNo,
 }) => {
   const [isLoading, setIsLoading] = useState<boolean>(false);
-  const [fundClusters, setFundClusters] = useState<option[]>([]);
+  // const [fundClusters, setFundClusters] = useState<option[]>([]);
   const [offices, setOffices] = useState<option[]>([]);
   const [loadingData, setLoadingData] = useState<boolean>(false);
   const [messageDialog, setMessageDialog] = useState<messageDialogProps>({
@@ -87,6 +87,7 @@ const PurchaseRequestForm: React.FC<PurchaseRequestFormProps> = ({
   setLoadingData(true);
   try {
     // Load fund clusters
+    /*
     const fundClusterRes = await getAllFundClusters();
     if (fundClusterRes.status === "success" && fundClusterRes.data) {
       setFundClusters(
@@ -96,7 +97,7 @@ const PurchaseRequestForm: React.FC<PurchaseRequestFormProps> = ({
         }))
       );
     }
-
+    */
     // Load offices
     const officeRes = await getAllOffices();
     if (officeRes.status === "success" && officeRes.data) {
@@ -164,11 +165,10 @@ const PurchaseRequestForm: React.FC<PurchaseRequestFormProps> = ({
   const handleCampusDirectorChange = (selectedOption: option | null) => {
     setValue("campus_director", selectedOption?.value ?? "");
   };
-
+/*
   const handleFundClusterChange = (selectedOption: option | null) => {
-    setValue("fund_cluster", selectedOption?.value ?? "");
-  };
-
+    setValue("fund_cluster", selectedOption?.value ?? "");};
+*/
   const handleOfficeChange = (selectedOption: option | null) => {
     setValue("office", selectedOption?.value ?? "");
   };
