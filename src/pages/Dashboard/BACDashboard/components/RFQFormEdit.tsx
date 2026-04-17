@@ -151,6 +151,7 @@ export const RFQFormEdit: React.FC<RFQFormEditProps> = ({
     </div>
   );
 
+
   const onSubmit = async (data: requestForQuotationType) => {
     setIsLoading(true);
     try {
@@ -306,7 +307,7 @@ export const RFQFormEdit: React.FC<RFQFormEditProps> = ({
                     </CardContent>
                   </Card>
                 </TabsContent>
-                <TabsContent value="items">
+                <TabsContent value="items" >
                   <Card>
                     <CardHeader>
                       <CardTitle>Items</CardTitle>

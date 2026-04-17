@@ -63,14 +63,18 @@ const PurchaseRequestForm: React.FC<PurchaseRequestFormProps> = ({
   const currentPurchaseNumber = lastPrNo && lastPrNo;
 
   const {
-    register,
-    handleSubmit,
-    setValue,
-    formState: { errors },
-    reset,
-  } = useForm<PurchaseRequestData>({
-    resolver: zodResolver(purchaseRequestFormSchema),
-  });
+  register,
+  handleSubmit,
+  setValue,
+  formState: { errors },
+  reset,
+} = useForm<PurchaseRequestData>({
+  resolver: zodResolver(purchaseRequestFormSchema),
+  defaultValues: {
+    fund_cluster: "",     
+    reviewed_by: "",      
+  },
+});
 
   // Load dropdown data when dialog opens
   useEffect(() => {
@@ -254,12 +258,9 @@ const PurchaseRequestForm: React.FC<PurchaseRequestFormProps> = ({
                     {renderField(
                       "Fund Cluster",
                       "fund_cluster",
-                      <Select
-                        options={fundClusters}
-                        onChange={handleFundClusterChange}
-                        placeholder="Select Fund Cluster..."
-                        className="text-sm"
-                        isClearable
+                      <Input
+                        {...register("fund_cluster")}
+                        placeholder="Enter Fund Cluster"
                       />
                     )}
                   </div>
@@ -290,6 +291,20 @@ const PurchaseRequestForm: React.FC<PurchaseRequestFormProps> = ({
                       loadOptions={loadRequisitionerOptions}
                       onChange={handleRequisitionerChange}
                       placeholder="Search for a Requisitioner..."
+                      className="text-sm"
+                    />
+                  )}
+
+                  {renderField(
+                    "Reviewed By",
+                    "reviewed_by",
+                    <AsyncSelect
+                      defaultOptions
+                      loadOptions={loadRequisitionerOptions}
+                      onChange={(option) =>
+                        setValue("reviewed_by", option?.value ?? "")
+                      }
+                      placeholder="Search for Reviewer..."
                       className="text-sm"
                     />
                   )}
