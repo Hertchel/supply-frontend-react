@@ -32,8 +32,13 @@ interface PurchaseRequestFormProps {
   lastPrNo: string | undefined;
 }
 
-type option = {
+type stringOption = {
   value: string;
+  label: string;
+};
+
+type numberOption = {
+  value: number;
   label: string;
 };
 
@@ -51,7 +56,7 @@ const PurchaseRequestForm: React.FC<PurchaseRequestFormProps> = ({
 }) => {
   const [isLoading, setIsLoading] = useState<boolean>(false);
   // const [fundClusters, setFundClusters] = useState<option[]>([]);
-  const [offices, setOffices] = useState<option[]>([]);
+  const [offices, setOffices] = useState<numberOption[]>([]);
   const [loadingData, setLoadingData] = useState<boolean>(false);
   const [messageDialog, setMessageDialog] = useState<messageDialogProps>({
     open: false,
@@ -73,7 +78,7 @@ const PurchaseRequestForm: React.FC<PurchaseRequestFormProps> = ({
   resolver: zodResolver(purchaseRequestFormSchema),
   defaultValues: {
     fund_cluster: "",     
-    reviewed_by: "",      
+    reviewed_by: null,      
   },
 });
 
@@ -104,7 +109,7 @@ const PurchaseRequestForm: React.FC<PurchaseRequestFormProps> = ({
     if (officeRes.status === "success" && officeRes.data) {
       setOffices(
         officeRes.data.map((office: Office) => ({
-          value: office.id.toString(),
+          value: office.id,
           label: `${office.code} - ${office.name}`,
         }))
       );
@@ -117,7 +122,7 @@ const PurchaseRequestForm: React.FC<PurchaseRequestFormProps> = ({
 };
   const loadRequisitionerOptions = async (
     inputValue: string
-  ): Promise<option[]> => {
+  ): Promise<stringOption[]> => {
     try {
       const requisitioners = await getAllRequisitioner();
       return (
@@ -138,7 +143,7 @@ const PurchaseRequestForm: React.FC<PurchaseRequestFormProps> = ({
 
   const loadCampusDirectorOptions = async (
     inputValue: string
-  ): Promise<option[]> => {
+  ): Promise<stringOption[]> => {
     try {
       const campus_directors = await getAllCampusDirector();
       return (
@@ -159,7 +164,7 @@ const PurchaseRequestForm: React.FC<PurchaseRequestFormProps> = ({
     }
   };
 
-  const loadUserOptions = async (inputValue: string): Promise<option[]> => {
+  const loadUserOptions = async (inputValue: string): Promise<numberOption[]> => {
   try {
     const users = await getUsers(); // API call
 
@@ -181,19 +186,19 @@ const PurchaseRequestForm: React.FC<PurchaseRequestFormProps> = ({
   }
   };
 
-  const handleRequisitionerChange = (selectedOption: option | null) => {
+  const handleRequisitionerChange = (selectedOption: stringOption | null) => {
     setValue("requisitioner", selectedOption?.value ?? "");
   };
 
-  const handleCampusDirectorChange = (selectedOption: option | null) => {
+  const handleCampusDirectorChange = (selectedOption: stringOption | null) => {
     setValue("campus_director", selectedOption?.value ?? "");
   };
 /*
-  const handleFundClusterChange = (selectedOption: option | null) => {
+  const handleFundClusterChange = (selectedOption: stringOption | null) => {
     setValue("fund_cluster", selectedOption?.value ?? "");};
 */
-  const handleOfficeChange = (selectedOption: option | null) => {
-    setValue("office", selectedOption?.value ?? "");
+  const handleOfficeChange = (selectedOption: numberOption | null) => {
+    setValue("office", selectedOption?.value ?? null);
   };
 
   const onSubmit = async (data: PurchaseRequestData) => {
@@ -327,7 +332,7 @@ const PurchaseRequestForm: React.FC<PurchaseRequestFormProps> = ({
                       defaultOptions
                       loadOptions={loadUserOptions}
                       onChange={(option) =>
-                        setValue("reviewed_by", option?.value ?? "")
+                        setValue("reviewed_by", option?.value ?? null)
                       }
                       placeholder="Search for Reviewer..."
                       className="text-sm"
