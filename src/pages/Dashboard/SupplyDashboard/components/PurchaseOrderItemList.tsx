@@ -50,7 +50,7 @@ export default function PurchaseOrderItemList() {
       pr_no: pr_no,
       purpose: purchaseData?.purpose,
       status: purchaseData?.status,
-      office: purchaseData?.office,
+      office: purchaseData?.office ? Number(purchaseData.office): null,
       requisitioner: purchaseData?.requisitioner_details.name,
       campus_director: purchaseData?.campus_director_details.name,
     },
@@ -59,7 +59,8 @@ export default function PurchaseOrderItemList() {
   useEffect(() => {
     if (purchaseData) {
       setValue("purpose", purchaseData?.purpose ?? "");
-      setValue("office", purchaseData?.office ?? "");
+      setValue("office", purchaseData?.office ? Number(purchaseData.office) : null
+);
       setValue("requisitioner", purchaseData?.requisitioner_details.name ?? "");
       setValue(
         "campus_director",

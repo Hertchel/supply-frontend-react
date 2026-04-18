@@ -73,7 +73,7 @@ const EditPRForm: React.FC<EditPRFormProps> = ({
     resolver: zodResolver(EditPRFormSchema),
     defaultValues: {
       purpose: purchaseData?.purpose,
-      office: purchaseData?.office,
+      office: purchaseData?.office ? Number(purchaseData.office): undefined,
       requisitioner: purchaseData?.requisitioner_details?.requisition_id,
     },
   });
@@ -186,7 +186,7 @@ const EditPRForm: React.FC<EditPRFormProps> = ({
                     {renderField(
                       "Office",
                       "office",
-                      <Input {...register("office")} />
+                      <Input type="number"{...register("office", {valueAsNumber: true,})}/>
                     )}
                     {renderField(
                       "Purpose",
