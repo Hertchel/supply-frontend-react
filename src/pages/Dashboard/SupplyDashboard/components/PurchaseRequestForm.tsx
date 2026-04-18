@@ -7,7 +7,7 @@ import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { Button } from "@/components/ui/button";
 import { ScrollArea } from "@/components/ui/scroll-area";
-import { getUsers } from "@/services/userServices";
+import { getReviewers } from "@/services/userServices";
 
 import {
   purchaseRequestFormSchema,
@@ -164,9 +164,9 @@ const PurchaseRequestForm: React.FC<PurchaseRequestFormProps> = ({
     }
   };
 
-  const loadUserOptions = async (inputValue: string): Promise<numberOption[]> => {
+ const loadUserOptions = async (inputValue: string): Promise<numberOption[]> => {
   try {
-    const users = await getUsers(); // API call
+    const users = await getReviewers();
 
     return (
       users.data
@@ -184,7 +184,7 @@ const PurchaseRequestForm: React.FC<PurchaseRequestFormProps> = ({
     console.log(error);
     return [];
   }
-  };
+};
 
   const handleRequisitionerChange = (selectedOption: stringOption | null) => {
     setValue("requisitioner", selectedOption?.value ?? "");

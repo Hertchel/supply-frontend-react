@@ -84,3 +84,12 @@ export const useUserCount = () => {
   const UserCount = data?.data?.length;
   return { UserCount, isLoading };
 };
+
+export const getReviewers = async (): Promise<ApiResponse<UsersType[]>> => {
+  try {
+    const response = await api.get<UsersType[]>("/api/reviewers/");
+    return handleSucess(response);
+  } catch (error) {
+    return handleError(error);
+  }
+};
