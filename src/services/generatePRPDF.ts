@@ -61,47 +61,120 @@ export const generatePRPDF = async (
         font: timesRomanFont,
       });
     });
+
+    const left = 119;
+    const right = 564;
+    const columnWidth = (right - left) / 3;
+
+    const col1 = left + columnWidth / 2;
+    const col2 = left + columnWidth * 1.5;
+    const col3 = left + columnWidth * 2.5;
+
+    const lineWidth = 120;
+
     const requestby1 = (item[0].pr_details.requisitioner_details.name ?? "").toUpperCase();
     const requestbywidth = Helveticabold.widthOfTextAtSize(requestby1, 10);
-    const requestbyplace = (119 + 365) / 2;
+    const requestbyplace = col1 //(119 + 365) / 2;
     page.drawText(requestby1, {
       x: requestbyplace - requestbywidth / 2,
       y: 65,
       size: 9,
       font: Helveticabold,
     });
-    const underlineStartX = requestbyplace - requestbywidth / 2; // Start position of the underline
-    const underlineEndX = requestbyplace + requestbywidth / 2.4; // End position of the underline
-    const underlineY = 63; // Slightly below the text position
+    page.drawText("Requested by:", {
+      x: col1 - 40,
+      y: 92,
+      size: 12,
+      font: timesBoldFont,
+    });
 
+    page.drawLine({
+      start: { x: requestbyplace - lineWidth / 2, y: 63 },
+      end: { x: requestbyplace + lineWidth / 2, y: 63 },
+      thickness: 1,
+      color: rgb(0, 0, 0),
+    });
+    
+    //const underlineStartX = requestbyplace - requestbywidth / 2; // Start position of the underline
+    //const underlineEndX = requestbyplace + requestbywidth / 2.4; // End position of the underline
+    //const underlineY = 63; // Slightly below the text position
+/*
     page.drawLine({
       start: { x: underlineStartX, y: underlineY },
       end: { x: underlineEndX, y: underlineY },
       thickness: 1, // Adjust line thickness as needed
       color: rgb(0, 0, 0), // Black color
     });
-    const approvedby1 = (item[0].pr_details.campus_director_details.name || "").toUpperCase();
-    const approvedbywidth = Helveticabold.widthOfTextAtSize(approvedby1, 10);
-    const approvedbyplace = (365 + 564) / 2;
-    page.drawText(approvedby1, {
-      x: approvedbyplace - approvedbywidth / 2,
+*/
+
+    const reviewedby1 = (
+      item[0].pr_details.reviewed_by_details
+        ? `${item[0].pr_details.reviewed_by_details.first_name} ${item[0].pr_details.reviewed_by_details.last_name}`
+        : "N/A"
+    ).toUpperCase();
+
+    const reviewedbywidth = Helveticabold.widthOfTextAtSize(reviewedby1, 10);
+    const reviewedbyplace = col2;
+    page.drawText("Reviewed by:", {
+      x: col2 - 40,
+      y: 92,
+      size: 12,
+      font: timesBoldFont,
+    });
+
+    // NAME
+    page.drawText(reviewedby1, {
+      x: reviewedbyplace - reviewedbywidth / 2,
       y: 65,
       size: 9,
       font: Helveticabold,
     });
-    const approvedbyStartX = approvedbyplace - approvedbywidth / 2; // Start position of the underline
-    const approvedbyEndX = approvedbyplace + approvedbywidth / 2.4; // End position of the underline
 
+    // LINE (use FIXED WIDTH)
+    page.drawLine({
+      start: { x: reviewedbyplace - lineWidth / 2, y: 63 },
+      end: { x: reviewedbyplace + lineWidth / 2, y: 63 },
+      thickness: 1,
+      color: rgb(0, 0, 0),
+    });
+
+    const approvedby1 = (item[0].pr_details.campus_director_details.name || "").toUpperCase();
+    //const approvedbywidth = Helveticabold.widthOfTextAtSize(approvedby1, 10);
+    const approvedbyplace = col3 //(480 + 564) / 2;
+    page.drawText("Approved by:", {
+      x: col3 - 40,
+      y: 92,
+      size: 12,
+      font: timesBoldFont,
+    });
+    page.drawText(approvedby1, {
+      x: approvedbyplace - Helveticabold.widthOfTextAtSize(approvedby1, 10) / 2,
+      y: 65,
+      size: 9,
+      font: Helveticabold,
+    });
+    //const approvedbyStartX = approvedbyplace - approvedbywidth / 2; // Start position of the underline
+    //const approvedbyEndX = approvedbyplace + approvedbywidth / 2.4; // End position of the underline
+
+    page.drawLine({
+      start: { x: approvedbyplace - lineWidth / 2, y: 63 },
+      end: { x: approvedbyplace + lineWidth / 2, y: 63 },
+      thickness: 1,
+      color: rgb(0, 0, 0),
+    });
+/*
     page.drawLine({
       start: { x: approvedbyStartX, y: underlineY },
       end: { x: approvedbyEndX, y: underlineY },
       thickness: 1, // Adjust line thickness as needed
       color: rgb(0, 0, 0), // Black color
     });
+*/
 
     const designation1 = item[0].pr_details.requisitioner_details.designation ?? "";
     const designationwidth = Helveticafont.widthOfTextAtSize(designation1, 11);
-    const designationplace = (119 + 365) / 2;
+    const designationplace = col1;
+    //const designationplace = (119 + 365) / 2;
     page.drawText(designation1, {
       x: designationplace - designationwidth / 2,
       y: 53,
@@ -111,13 +184,28 @@ export const generatePRPDF = async (
 
     const designation2 = item[0].pr_details.campus_director_details.designation || "";
     const designationwidth2 = Helveticafont.widthOfTextAtSize(designation2, 11);
-    const designationplace2 = (385 + 564) / 2;
+    const designationplace2 = col3;
+    // const designationplace2 = (385 + 564) / 2;
     page.drawText(designation2, {
       x: designationplace2 - designationwidth2 / 2,
       y: 53,
       size: 8,
       font: Helveticafont,
     });
+
+    const designation3 = item[0].pr_details.reviewed_by_details
+  ? item[0].pr_details.reviewed_by_details.designation || ""
+  : "";
+
+const designationwidth3 = Helveticafont.widthOfTextAtSize(designation3, 11);
+
+  page.drawText(designation3, {
+    x: reviewedbyplace - designationwidth3 / 2,
+    y: 53,
+    size: 8,
+    font: Helveticafont,
+  });
+
     const Budgetname = "BETHANY B. URACA";
     const Bugdetofficer = Budgetname || "";
     const Bugdetofficerwidth = Helveticabold.widthOfTextAtSize(
@@ -302,7 +390,10 @@ export const generatePRPDF = async (
   }
   // Serialize the PDF to bytes
   const pdfBytes = await pdfDoc.save();
-  const blob = new Blob([pdfBytes], { type: "application/pdf" });
+  const fixedBuffer = new Uint8Array(pdfBytes).buffer;
+  const blob = new Blob([fixedBuffer], { type: "application/pdf" });
+  // const blob = new Blob([pdfBytes.buffer], { type: "application/pdf" });
+  //const blob = new Blob([pdfBytes], { type: "application/pdf" });
   const url = URL.createObjectURL(blob);
 
   return url;
@@ -503,13 +594,14 @@ const textandlines = async (
     size: 10,
     font: Helveticafont,
   });
-
+/*
   page.drawText("Requested by:", {
     x: 125,
     y: 92,
     size: 12,
     font: timesBoldFont,
   });
+  */
   page.drawText("Signature:", { x: 26, y: 80, size: 12, font: timesBoldFont });
   page.drawText("Printed Name:", {
     x: 26,
@@ -523,12 +615,15 @@ const textandlines = async (
     size: 12,
     font: timesBoldFont,
   });
+  /*
   page.drawText("Approved by:", {
     x: 367,
     y: 92,
     size: 12,
     font: timesBoldFont,
   });
+  */
+ 
   //Vertical Lines
   page.drawLine({
     start: { x: 22.68, y: 680 },

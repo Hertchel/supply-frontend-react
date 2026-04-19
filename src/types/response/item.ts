@@ -11,6 +11,11 @@ export type itemType = {
       name: string;
       designation: string;
     };
+    reviewed_by_details?: {
+      first_name: string;
+      last_name: string;
+      designation?: string;
+    };
     created_at: Date;
   };
   item_no: string;
