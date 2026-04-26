@@ -17,8 +17,8 @@ export const itemQuotationSchema = z.object({
 export const quotationSchema = z.object({
   rfq_no: z.string().min(1, "Required"),
   purchase_request: z.string().min(1, "Required"),
-  supplier_name: z.string().min(1, "Required"),
-  supplier_address: z.string().min(1, "Required"),
+  supplier_name: z.string().optional().or(z.literal("")),
+  supplier_address: z.string().optional().or(z.literal("")),
   tin: z.string().optional().superRefine((val, ctx) => {
     if (val !== undefined && val.trim() !== '' && !/^\d{3}-\d{3}-\d{3}-\d{3}$/.test(val)) {
       ctx.addIssue({

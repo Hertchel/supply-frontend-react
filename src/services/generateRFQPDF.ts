@@ -90,7 +90,9 @@ export const generateRFQPDF = async (item: itemQuotationResponseType[], rfq: quo
     );
   }
   const pdfBytes = await pdfDoc.save();
-  const blob = new Blob([pdfBytes], { type: "application/pdf" });
+  const fixedBuffer = new Uint8Array(pdfBytes).buffer;
+  const blob = new Blob([fixedBuffer], { type: "application/pdf" });
+  //const blob = new Blob([pdfBytes], { type: "application/pdf" });
   const url = URL.createObjectURL(blob);
 
   return url; // Return the URL for preview/download
