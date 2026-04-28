@@ -120,9 +120,16 @@ export const AbstractItemContentList = () => {
   status=== "Ready to Order";
 
   const handleGenerateAOQPDF = async () => {
-    const url = await generateAOQPDF(filteredSupplierItemData!, bacMembersData);
-    return window.open(url!, "_blank");
-  };
+  const url = await generateAOQPDF(filteredSupplierItemData!, bacMembersData);
+  console.log("PDF URL:", url);
+
+  if (!url) {
+    console.error("PDF generation failed: URL is null");
+    return;
+  }
+
+  window.open(url, "_blank");
+};
 
   // const handleGenerateNOAPDF = async () => {
   //   try {

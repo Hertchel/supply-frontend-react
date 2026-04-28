@@ -128,7 +128,9 @@ export const generateAOQPDF = async (data: supplierItemType_[], bac_members: BAC
   }
 
   const pdfBytes = await pdfDoc.save();
-  const blob = new Blob([pdfBytes], { type: "application/pdf" });
+  const fixedBuffer = new Uint8Array(pdfBytes).buffer;
+  const blob = new Blob([fixedBuffer], { type: "application/pdf" });
+  //const blob = new Blob([pdfBytes], { type: "application/pdf" });
   const pdfBlobUrl = URL.createObjectURL(blob);
   return pdfBlobUrl;
 };
