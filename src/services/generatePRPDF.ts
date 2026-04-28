@@ -86,7 +86,7 @@ const drawFooter = (
   total: number,
   font: PDFFont
 ) => {
-  const dims = footerImage.scale(0.2);
+  const dims = footerImage.scale(0.25);
 
   page.drawImage(footerImage, {
     x: 145,
@@ -101,14 +101,14 @@ const drawFooter = (
   }).format(total);
 
   page.drawText("Total Amount:", {
-    x: 260,
+    x: 320,
     y: 220,
     size: 12,
     font,
   });
 
   page.drawText(formattedTotal, {
-    x: 500,
+    x: 560 - font.widthOfTextAtSize(formattedTotal, 12),
     y: 220,
     size: 12,
     font,
@@ -132,7 +132,7 @@ const drawSignatures = (
     const col2 = left + columnWidth * 1.5;
     const col3 = left + columnWidth * 2.5;
 
-    const lineWidth = 120;
+    const lineWidth = 150;
 
 
 
@@ -141,13 +141,13 @@ const drawSignatures = (
     const requestbyplace = col1 //(119 + 365) / 2;
     page.drawText(requestby1, {
       x: requestbyplace - requestbywidth / 2,
-      y: 65,
+      y: 60,
       size: 9,
       font: Helveticabold,
     });
     page.drawText("Requested by:", {
       x: col1 - 40,
-      y: 92,
+      y: 85,
       size: 12,
       font: timesBoldFont,
     });
@@ -158,18 +158,6 @@ const drawSignatures = (
       thickness: 1,
       color: rgb(0, 0, 0),
     });
-    
-    //const underlineStartX = requestbyplace - requestbywidth / 2; // Start position of the underline
-    //const underlineEndX = requestbyplace + requestbywidth / 2.4; // End position of the underline
-    //const underlineY = 63; // Slightly below the text position
-/*
-    page.drawLine({
-      start: { x: underlineStartX, y: underlineY },
-      end: { x: underlineEndX, y: underlineY },
-      thickness: 1, // Adjust line thickness as needed
-      color: rgb(0, 0, 0), // Black color
-    });
-*/
 
     const reviewedby1 = (
       item[0].pr_details.reviewed_by_details
@@ -181,7 +169,7 @@ const drawSignatures = (
     const reviewedbyplace = col2;
     page.drawText("Reviewed by:", {
       x: col2 - 40,
-      y: 92,
+      y: 85,
       size: 12,
       font: timesBoldFont,
     });
@@ -189,7 +177,7 @@ const drawSignatures = (
     // NAME
     page.drawText(reviewedby1, {
       x: reviewedbyplace - reviewedbywidth / 2,
-      y: 65,
+      y: 60,
       size: 9,
       font: Helveticabold,
     });
@@ -207,13 +195,13 @@ const drawSignatures = (
     const approvedbyplace = col3 //(480 + 564) / 2;
     page.drawText("Approved by:", {
       x: col3 - 40,
-      y: 92,
+      y: 85,
       size: 12,
       font: timesBoldFont,
     });
     page.drawText(approvedby1, {
       x: approvedbyplace - Helveticabold.widthOfTextAtSize(approvedby1, 10) / 2,
-      y: 65,
+      y: 60,
       size: 9,
       font: Helveticabold,
     });
@@ -226,14 +214,7 @@ const drawSignatures = (
       thickness: 1,
       color: rgb(0, 0, 0),
     });
-/*
-    page.drawLine({
-      start: { x: approvedbyStartX, y: underlineY },
-      end: { x: approvedbyEndX, y: underlineY },
-      thickness: 1, // Adjust line thickness as needed
-      color: rgb(0, 0, 0), // Black color
-    });
-*/
+
 
     const designation1 = item[0].pr_details.requisitioner_details.designation ?? "";
     const designationwidth = Helveticafont.widthOfTextAtSize(designation1, 11);
@@ -241,7 +222,7 @@ const drawSignatures = (
     //const designationplace = (119 + 365) / 2;
     page.drawText(designation1, {
       x: designationplace - designationwidth / 2,
-      y: 53,
+      y: 48,
       size: 8,
       font: Helveticafont,
     });
@@ -252,7 +233,7 @@ const drawSignatures = (
     // const designationplace2 = (385 + 564) / 2;
     page.drawText(designation2, {
       x: designationplace2 - designationwidth2 / 2,
-      y: 53,
+      y: 48,
       size: 8,
       font: Helveticafont,
     });
@@ -265,43 +246,10 @@ const designationwidth3 = Helveticafont.widthOfTextAtSize(designation3, 11);
 
   page.drawText(designation3, {
     x: reviewedbyplace - designationwidth3 / 2,
-    y: 53,
+    y: 48,
     size: 8,
     font: Helveticafont,
   });
-
-    const Budgetname = "BETHANY B. URACA";
-    const Bugdetofficer = Budgetname || "";
-    const Bugdetofficerwidth = Helveticabold.widthOfTextAtSize(
-      Bugdetofficer,
-      11
-    );
-    const Bugdetofficerplace = (119 + 365) / 2;
-    page.drawText(Bugdetofficer, {
-      x: Bugdetofficerplace - Bugdetofficerwidth / 2,
-      y: 185,
-      size: 10,
-      font: Helveticabold,
-    });
-
-    const BugdetofficerStartX = Bugdetofficerplace - Bugdetofficerwidth / 2; // Start position of the underline
-    const BugdetofficerEndX = Bugdetofficerplace + Bugdetofficerwidth / 2.4; // End position of the underline
-    const budgetlabel = "Bugdet Officer II";
-    const budgetlabelwidth = Helveticafont.widthOfTextAtSize(budgetlabel, 11);
-    page.drawText(budgetlabel, {
-      x: Bugdetofficerplace - budgetlabelwidth / 2,
-      y: 172,
-      size: 10,
-      font: Helveticafont,
-    });
-
-    page.drawLine({
-      start: { x: BugdetofficerStartX, y: 183 },
-      end: { x: BugdetofficerEndX, y: 183 },
-      thickness: 1, // Adjust line thickness as needed
-      color: rgb(0, 0, 0), // Black color
-    });
-
 };
 
 
@@ -323,12 +271,13 @@ export const generatePRPDF = async (
   const Helveticabold = await pdfDoc.embedFont(StandardFonts.HelveticaBold);
   const maxWidth = 240;
   const lineHeight = 12;
-  const footerHeight = 260;
+  const footerHeight = 280;
   const pageHeight = 792;
 
   let runningTotal = 0;
-  const wrapText = (text: string, maxWidth: number, fontSize: number) => {
-    const words = text.split(" ");
+  const wrapText = (text: string = "", maxWidth: number, fontSize: number) => {
+  const safeText = String(text || "");
+  const words = safeText.split(" ");
     const lines = [];
     let currentLine = "";
 
@@ -350,55 +299,92 @@ export const generatePRPDF = async (
   let page = pdfDoc.addPage([612, pageHeight]);
 
   drawHeader(page, headerImage, timesBoldFont, timesRomanFont);
-  drawSignatures(page, item, timesBoldFont, Helveticafont, Helveticabold);
-  const tableTopY = 550;
+
+await textandlines(
+  page,
+  timesBoldFont,
+  timesRomanFont,
+  timesRomanFont, 
+  item[0]
+);
+const purposeLines = wrapText(
+  item[0].pr_details.purpose || "",
+  400,
+  9
+);
+
+purposeLines.forEach((line, i) => {
+  page.drawText(line, {
+    x: 120,
+    y: 132 - i * 12,
+    size: 9,
+    font: timesRomanFont,
+  });
+});
+
+drawSignatures(page, item, timesBoldFont, Helveticafont, Helveticabold);
+  const tableTopY = 580;
   let yPosition = tableTopY;
-
-  const colX = {
-    stock: 40,
-    unit: 90,
-    description: 130,
-    quantity: 380,
-    unitCost: 460,
-    totalCost: 530,
-  };
-
-  // DRAW HEADER ROW
-  page.drawText("Stock No.", { x: colX.stock, y: tableTopY + 15, size: 10, font: timesBoldFont });
-  page.drawText("Unit", { x: colX.unit, y: tableTopY + 15, size: 10, font: timesBoldFont });
-  page.drawText("Description", { x: colX.description, y: tableTopY + 15, size: 10, font: timesBoldFont });
-  page.drawText("Qty", { x: colX.quantity, y: tableTopY + 15, size: 10, font: timesBoldFont });
-  page.drawText("Unit Cost", { x: colX.unitCost, y: tableTopY + 15, size: 10, font: timesBoldFont });
-  page.drawText("Total", { x: colX.totalCost, y: tableTopY + 15, size: 10, font: timesBoldFont });
-  const purposewidth = 580;
   pages.push(page);
 
 
-  const purposesplit = wrapText(item[0].pr_details.purpose, purposewidth, 12);
+  // ✅ COLUMN BOUNDARIES (MATCH GRID)
+const colBounds = {
+  stock: [22.68, 70],
+  unit: [70, 119],
+  description: [119, 365],
+  quantity: [365, 416],
+  unitCost: [416, 480],
+  totalCost: [480, 564],
+};
 
-      purposesplit.forEach((line, lineIndex) => {
-        page.drawText(line, {
-          x: 123,
-          y: 132 - lineIndex * lineHeight,
-          size: 9,
-          font: timesRomanFont,
-        });
-      });
+// ✅ CENTER FUNCTION
+const drawCenteredText = (
+  page: PDFPage,
+  text: any,
+  xStart: number,
+  xEnd: number,
+  y: number,
+  font: PDFFont,
+  size: number
+) => {
+  const safeText = String(text ?? "");
+  const textWidth = font.widthOfTextAtSize(safeText, size);
+  const centerX = (xStart + xEnd) / 2;
+
+  page.drawText(safeText, {
+    x: centerX - textWidth / 2,
+    y,
+    size,
+    font,
+  });
+};
 
 // repeat headers
   for (const entry of item) {
+
     const { stock_property_no, unit, item_description, quantity, unit_cost } =
       entry;
+      
+      const safeUnitCost = Number(unit_cost) || 0;
+      const safeQuantity = Number(quantity) || 0;
 
     const wrappedDescription = wrapText(item_description, maxWidth, 9);
-    const descriptionHeight = wrappedDescription.length * lineHeight;
-    const rowHeight = Math.max(descriptionHeight, 14);
+    // const descriptionHeight = wrappedDescription.length * lineHeight;
+    const rowHeight = 16;
 
 
     // Calculate total height required for the current item
     if (yPosition - rowHeight < footerHeight) {
       // Add footer to current page
       drawFooter(page, footerImage, runningTotal, timesRomanFont);
+
+      page.drawLine({
+  start: { x: 22.68, y: yPosition - 2 },
+  end: { x: 564, y: yPosition - 2 },
+  thickness: 0.5,
+  color: rgb(0, 0, 0),
+});
 
       page.drawText(`Subtotal`, {
         x: 260,
@@ -425,80 +411,109 @@ export const generatePRPDF = async (
       pages.push(page);
 
       drawHeader(page, headerImage, timesBoldFont, timesRomanFont);
-      drawSignatures(page, item, timesBoldFont, Helveticafont, Helveticabold);
+
+await textandlines(
+  page,
+  timesBoldFont,
+  timesRomanFont,
+  timesRomanFont, // or italic if you embed it
+  item[0]
+);
+
+const purposeLines = wrapText(
+  item[0].pr_details.purpose || "",
+  400,
+  9
+);
+
+purposeLines.forEach((line, i) => {
+  page.drawText(line, {
+    x: 120,
+    y: 132 - i * 12,
+    size: 9,
+    font: timesRomanFont,
+  });
+});
+
+drawSignatures(page, item, timesBoldFont, Helveticafont, Helveticabold);
       yPosition = tableTopY;
 
-      // redraw table header
-      page.drawText("Stock No.", { x: colX.stock, y: tableTopY + 15, size: 10, font: timesBoldFont });
-      page.drawText("Unit", { x: colX.unit, y: tableTopY + 15, size: 10, font: timesBoldFont });
-      page.drawText("Description", { x: colX.description, y: tableTopY + 15, size: 10, font: timesBoldFont });
-      page.drawText("Qty", { x: colX.quantity, y: tableTopY + 15, size: 10, font: timesBoldFont });
-      page.drawText("Unit Cost", { x: colX.unitCost, y: tableTopY + 15, size: 10, font: timesBoldFont });
-      page.drawText("Total", { x: colX.totalCost, y: tableTopY + 15, size: 10, font: timesBoldFont });
-
       pageIndex++;
-      yPosition -= lineHeight;
+
     }
     const totalamount = quantity * unit_cost;
     runningTotal += totalamount || 0;
     // STOCK
-    page.drawText(stock_property_no.toString(), {
-      x: colX.stock,
-      y: yPosition,
-      size: 10,
-      font: timesRomanFont,
-    });
+drawCenteredText(
+  page,
+  stock_property_no,
+  colBounds.stock[0],
+  colBounds.stock[1],
+  yPosition,
+  timesRomanFont,
+  10
+);
 
-    // UNIT
-    page.drawText(unit || "", {
-      x: colX.unit,
-      y: yPosition,
-      size: 10,
-      font: timesRomanFont,
-    });
+// UNIT
+drawCenteredText(
+  page,
+  unit,
+  colBounds.unit[0],
+  colBounds.unit[1],
+  yPosition,
+  timesRomanFont,
+  10
+);
 
-    // DESCRIPTION
-    wrappedDescription.forEach((line, i) => {
-      page.drawText(line, {
-        x: colX.description,
-        y: yPosition - i * lineHeight,
-        size: 9,
-        font: timesRomanFont,
-      });
-    });
+// DESCRIPTION (LEFT-ALIGNED)
+wrappedDescription.forEach((line, i) => {
+  page.drawText(line, {
+    x: colBounds.description[0] + 5,
+    y: yPosition - i * lineHeight,
+    size: 9,
+    font: timesRomanFont,
+  });
+});
 
-    // QUANTITY
-    page.drawText(quantity.toString(), {
-      x: colX.quantity,
-      y: yPosition,
-      size: 10,
-      font: timesRomanFont,
-    });
+// QUANTITY
+drawCenteredText(
+  page,
+  quantity,
+  colBounds.quantity[0],
+  colBounds.quantity[1],
+  yPosition,
+  timesRomanFont,
+  10
+);
 
-    // UNIT COST
-    const safeUnitCost = Number(unit_cost) || 0;
-    page.drawText(safeUnitCost.toFixed(2), {
-      x: colX.unitCost,
-      y: yPosition,
-      size: 10,
-      font: timesRomanFont,
-    });
+// UNIT COST
+drawCenteredText(
+  page,
+  safeUnitCost.toFixed(2),
+  colBounds.unitCost[0],
+  colBounds.unitCost[1],
+  yPosition,
+  timesRomanFont,
+  10
+);
 
-    // TOTAL
-    const safeQuantity = Number(quantity) || 0;
-    page.drawText((safeQuantity * safeUnitCost).toFixed(2), {
-      x: colX.totalCost,
-      y: yPosition,
-      size: 10,
-      font: timesRomanFont,
-    });
-    page.drawLine({
-      start: { x: 30, y: yPosition + 5 },
-      end: { x: 580, y: yPosition + 5 },
-      thickness: 0.5,
-      color: rgb(0, 0, 0),
-    });
-        yPosition -= rowHeight + 5;
+// TOTAL
+drawCenteredText(
+  page,
+  (safeQuantity * safeUnitCost).toFixed(2),
+  colBounds.totalCost[0],
+  colBounds.totalCost[1],
+  yPosition,
+  timesRomanFont,
+  10
+);
+page.drawLine({
+  start: { x: 22.68, y: yPosition - 3 },
+  end: { x: 564, y: yPosition - 3 },
+  thickness: 0.5,
+  color: rgb(0, 0, 0),
+});
+       yPosition -= rowHeight;
       }
 
 
@@ -519,18 +534,17 @@ const textandlines = async (
   timesBoldFont: PDFFont,
   timesRomanFont: PDFFont,
   timesRomanItalicFont: PDFFont,
-  Helveticafont: PDFFont,
   item: itemType
 ) => {
   page.drawText("PURCHASE REQUEST", {
-    x: 201,
-    y: 725,
+    x: 210,
+    y: 718,
     size: 14,
     font: timesBoldFont,
   });
   page.drawText("Appendix 60", {
-    x: 490,
-    y: 760,
+    x: 470,
+    y: 750,
     size: 9,
     font: timesRomanItalicFont,
   });
@@ -643,14 +657,14 @@ const textandlines = async (
     size: 11,
     font: timesBoldFont,
   });
-  page.drawText(item.pr_details.office, {
+  page.drawText(String(item.pr_details.office || ""), {
     x: 30,
     y: 650,
     size: 11,
     font: timesBoldFont,
   });
   page.drawText("PR No.:", { x: 125, y: 663, size: 11, font: timesBoldFont });
-  page.drawText(item.pr_details.pr_no, {
+  page.drawText(String(item.pr_details.pr_no || ""), {
     x: 170,
     y: 663,
     size: 11,
@@ -671,7 +685,7 @@ const textandlines = async (
     font: timesBoldFont,
   });
   page.drawText("Date :", { x: 418, y: 663, size: 11, font: timesBoldFont });
-  page.drawText(formatPrDate(item.pr_details.created_at), {
+  page.drawText(String(formatPrDate(item.pr_details.created_at) || ""), {
     x: 450,
     y: 663,
     size: 11,
@@ -690,34 +704,19 @@ const textandlines = async (
   page.drawText("No.", { x: 35, y: 595, size: 11, font: timesBoldFont });
   page.drawText("Unit", { x: 80, y: 610, size: 11, font: timesBoldFont });
   page.drawText("Item Description", {
-    x: 206,
-    y: 610,
+     x: 200,
+  y: 605,
     size: 11,
     font: timesBoldFont,
   });
-  page.drawText("Quantity", { x: 370, y: 610, size: 11, font: timesBoldFont });
-  page.drawText("Unit Cost", { x: 425, y: 610, size: 11, font: timesBoldFont });
+  page.drawText("Quantity", { x: 372, y: 605, size: 11, font: timesBoldFont });
+  page.drawText("Unit Cost", { x: 430, y: 605, size: 11, font: timesBoldFont });
   page.drawText("Total Cost", {
-    x: 495,
-    y: 610,
+    x: 500, y: 605,
     size: 11,
     font: timesBoldFont,
   });
   page.drawText("Purpose:", { x: 53, y: 138, size: 12, font: timesBoldFont });
-  page.drawText("Allotment Available:", {
-    x: 122,
-    y: 210,
-    size: 10,
-    font: Helveticafont,
-  });
-/*
-  page.drawText("Requested by:", {
-    x: 125,
-    y: 92,
-    size: 12,
-    font: timesBoldFont,
-  });
-  */
   page.drawText("Signature:", { x: 26, y: 80, size: 12, font: timesBoldFont });
   page.drawText("Printed Name:", {
     x: 26,
@@ -731,14 +730,6 @@ const textandlines = async (
     size: 12,
     font: timesBoldFont,
   });
-  /*
-  page.drawText("Approved by:", {
-    x: 367,
-    y: 92,
-    size: 12,
-    font: timesBoldFont,
-  });
-  */
  
   //Vertical Lines
   page.drawLine({
