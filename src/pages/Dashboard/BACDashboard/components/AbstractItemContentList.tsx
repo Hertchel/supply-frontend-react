@@ -120,11 +120,16 @@ export const AbstractItemContentList = () => {
   status=== "Ready to Order";
 
   const handleGenerateAOQPDF = async () => {
-  const url = await generateAOQPDF(filteredSupplierItemData!, bacMembersData);
-  console.log("PDF URL:", url);
+  if (!filteredSupplierItemData || filteredSupplierItemData.length === 0) {
+    console.log("Filtered AOQ items:", filteredSupplierItemData);
+    console.error("No AOQ data found");
+    return;
+  }
+
+  const url = await generateAOQPDF(filteredSupplierItemData, bacMembersData);
 
   if (!url) {
-    console.error("PDF generation failed: URL is null");
+    console.error("PDF generation failed");
     return;
   }
 
