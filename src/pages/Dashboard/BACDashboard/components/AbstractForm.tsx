@@ -254,9 +254,15 @@ export const AbstractForm: React.FC<AbstractFormProps> = ({
         return;
       }
 
+      console.log("AOQ PAYLOAD:", data);
+
       await addAOQMutation(data as abstractType, {
         onSuccess: async (AOQResponse) => {
+
+          console.log("AOQ RESPONSE:", AOQResponse); 
+          
           const aoqNo = AOQResponse?.data?.aoq_no;
+          console.log("AOQ NO:", aoqNo);
 
           const suppliersWithItems = quotations.map((quotation, index) => ({
             supplier_no: uuidv4(),
@@ -287,6 +293,7 @@ export const AbstractForm: React.FC<AbstractFormProps> = ({
                 console.error(
                   "Failed to retrieve supplier number from the response."
                 );
+                
                 continue;
               }
 
@@ -322,7 +329,9 @@ export const AbstractForm: React.FC<AbstractFormProps> = ({
             type: "success",
           });
         },
-        onError: () => {
+        onError: (error: any) => {
+          console.error("AOQ ERROR FULL:", error);
+          console.error("AOQ ERROR DATA:", error?.error?.response?.data);
           setIsDialogOpen(false);
           setIsLoading(false);
           setMessageDialog({
