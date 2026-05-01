@@ -86,10 +86,14 @@ export const AbstractItemContentList = () => {
   const supplierItemData = useMemo(() => {
     return Array.isArray(items?.data) ? items.data : [];
   }, [items]);
+  
+  console.log("RAW supplierItemData:", supplierItemData);
+  console.log("FIRST ITEM:", supplierItemData[0]);
 
   const filteredSupplierItemData = useMemo(() => {
     return supplierItemData.filter(
       (data) => data.supplier_details.aoq_details.aoq_no === aoq_no
+      
     );
   }, [supplierItemData, aoq_no]);
   console.log(filteredSupplierItemData);
@@ -122,6 +126,7 @@ export const AbstractItemContentList = () => {
   const handleGenerateAOQPDF = async () => {
   if (!filteredSupplierItemData || filteredSupplierItemData.length === 0) {
     console.log("Filtered AOQ items:", filteredSupplierItemData);
+    console.log("aoq_no param:", aoq_no);
     console.error("No AOQ data found");
     return;
   }
