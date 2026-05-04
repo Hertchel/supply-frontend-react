@@ -430,14 +430,14 @@ const textandlines = async (
     font: timesRomanFont,
   });
   page.drawText("LOT ", {
-    x: 315,
+    x: 310,
     y: 173,
     size: 11,
     font: timesRomanFont,
     color: rgb(0, 0, 0.9),
   });
   page.drawText("basis.", {
-    x: 340,
+    x: 335,
     y: 173,
     size: 11,
     font: timesRomanFont,
@@ -450,7 +450,12 @@ const textandlines = async (
   });
   page.drawText(
     "After having carefully read and accepted your General Conditions, I/We quote on the item at prices noted above:",
-    { x: 50, y: 160, size: 11, font: timesRomanFont },
+    {
+      x: 50,
+      y: 147,
+      size: 11,
+      font: timesRomanFont,
+    },
   );
 
   page.drawText("Canvassed by:", {
