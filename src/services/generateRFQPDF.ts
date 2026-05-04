@@ -490,12 +490,7 @@ const textandlines = async (
     thickness: 1,
     color: rgb(0, 0, 0),
   });
-  page.drawLine({
-    start: { x: 430, y: 541 },
-    end: { x: 585, y: 541 },
-    thickness: 1,
-    color: rgb(0, 0, 0),
-  });
+
   page.drawLine({
     start: { x: 30.52, y: 527 },
     end: { x: 585, y: 527 },
