@@ -316,7 +316,7 @@ const textandlines = async (
     font: timesBoldFont,
   });
   page.drawText("Brand/Model", {
-    x: 382,
+    x: 375,
     y: 545,
     size: 10,
     font: timesBoldFont,
@@ -326,7 +326,7 @@ const textandlines = async (
     x: 373,
     y: 535,
     size: 10,
-    font: timesBoldFont,
+    font: timesRomanFont,
     color: rgb(0, 0, 0.9),
   });
   page.drawText("Unit Price", {
@@ -345,7 +345,7 @@ const textandlines = async (
     x: 521,
     y: 535,
     size: 10,
-    font: timesBoldFont,
+    font: timesRomanFont,
     color: rgb(0, 0, 0.9),
   });
   //text lower
