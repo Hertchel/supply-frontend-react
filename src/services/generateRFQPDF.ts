@@ -417,18 +417,36 @@ const textandlines = async (
     font: timesRomanFont,
     color: rgb(0, 0, 0.9),
   });
-  page.drawText("Note: Award to the Lowest Complying Supplier shall be on ", {
+  page.drawText("Note: ", {
     x: 50,
     y: 186,
     size: 11,
     font: timesRomanFont,
   });
-  page.drawText("ITEM BASIS.", {
+  page.drawText("[ ] Award to the Lowest Complying Supplier shall be on a ", {
+    x: 50,
+    y: 173,
+    size: 11,
+    font: timesRomanFont,
+  });
+  page.drawText("LOT ", {
     x: 315,
-    y: 186,
+    y: 173,
     size: 11,
     font: timesRomanFont,
     color: rgb(0, 0, 0.9),
+  });
+  page.drawText("basis.", {
+    x: 340,
+    y: 173,
+    size: 11,
+    font: timesRomanFont,
+  });
+  page.drawText("[ ] Award Line Item Basis ", {
+    x: 50,
+    y: 160,
+    size: 11,
+    font: timesRomanFont,
   });
   page.drawText(
     "After having carefully read and accepted your General Conditions, I/We quote on the item at prices noted above:",
