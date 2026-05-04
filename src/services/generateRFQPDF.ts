@@ -196,8 +196,8 @@ const textandlines = async (
     color: rgb(0, 0, 0),
   });
   page.drawRectangle({
-    x: 120,
-    y: 642,
+    x: 230,
+    y: 664,
     width: 10,
     height: 10,
     borderWidth: 1,
@@ -206,16 +206,16 @@ const textandlines = async (
 
   // Label
   page.drawText("VAT", {
-    x: 135,
-    y: 645,
+    x: 245,
+    y: 664,
     size: 11,
     font: timesRomanFont,
   });
 
   // Draw checkbox for Non-VAT
   page.drawRectangle({
-    x: 170,
-    y: 642,
+    x: 290,
+    y: 664,
     width: 10,
     height: 10,
     borderWidth: 1,
@@ -224,8 +224,8 @@ const textandlines = async (
 
   // Label
   page.drawText("NON-VAT", {
-    x: 185,
-    y: 645,
+    x: 305,
+    y: 664,
     size: 11,
     font: timesRomanFont,
   });
