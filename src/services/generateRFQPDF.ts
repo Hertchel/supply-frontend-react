@@ -201,7 +201,7 @@ const textandlines = async (
     width: 10,
     height: 10,
     borderWidth: 1,
-    color: rgb(0, 0, 0),
+    bordercolor: rgb(0, 0, 0),
   });
 
   // Label
@@ -219,7 +219,7 @@ const textandlines = async (
     width: 10,
     height: 10,
     borderWidth: 1,
-    color: rgb(0, 0, 0),
+    bordercolor: rgb(0, 0, 0),
   });
 
   // Label
