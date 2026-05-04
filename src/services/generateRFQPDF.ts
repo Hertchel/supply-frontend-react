@@ -1,15 +1,20 @@
-import { itemQuotationResponseType, quotationResponseType } from "@/types/response/request-for-quotation";
+import {
+  itemQuotationResponseType,
+  quotationResponseType,
+} from "@/types/response/request-for-quotation";
 import { PDFDocument, PDFFont, PDFPage, StandardFonts, rgb } from "pdf-lib";
 
-export const generateRFQPDF = async (item: itemQuotationResponseType[], rfq: quotationResponseType) => {
-
+export const generateRFQPDF = async (
+  item: itemQuotationResponseType[],
+  rfq: quotationResponseType,
+) => {
   const pdfDoc = await PDFDocument.create();
-  console.log(rfq)
+  console.log(rfq);
 
   const timesBoldFont = await pdfDoc.embedFont(StandardFonts.TimesRomanBold);
   const timesRomanFont = await pdfDoc.embedFont(StandardFonts.TimesRoman);
   const timesRomanItalicFont = await pdfDoc.embedFont(
-    StandardFonts.TimesRomanItalic
+    StandardFonts.TimesRomanItalic,
   );
   // text upper
   const itemperpage = 15;
@@ -18,10 +23,9 @@ export const generateRFQPDF = async (item: itemQuotationResponseType[], rfq: quo
     const page = pdfDoc.addPage([615.12, 936]);
     const pageItems = item.slice(
       pageIndex * itemperpage,
-      (pageIndex + 1) * itemperpage
+      (pageIndex + 1) * itemperpage,
     );
     pageItems.forEach((entry, index) => {
-
       const yPosition1 = 505 - index * 14.3;
 
       // Safely handle itemnum
@@ -43,7 +47,10 @@ export const generateRFQPDF = async (item: itemQuotationResponseType[], rfq: quo
       });
 
       // Safely handle qty
-      const quantitytext = entry.item_details.quantity !== undefined ? entry.item_details.quantity.toString() : "-";
+      const quantitytext =
+        entry.item_details.quantity !== undefined
+          ? entry.item_details.quantity.toString()
+          : "-";
       const quantitywidth = timesRomanFont.widthOfTextAtSize(quantitytext, 11);
       const quantityplace = (235 + 393) / 2;
       page.drawText(quantitytext, {
@@ -65,7 +72,10 @@ export const generateRFQPDF = async (item: itemQuotationResponseType[], rfq: quo
       });
 
       // Safely handle ABC with formatting
-      const ABCValue = entry.item_details.unit_cost !== undefined ? entry.item_details.unit_cost : 0;
+      const ABCValue =
+        entry.item_details.unit_cost !== undefined
+          ? entry.item_details.unit_cost
+          : 0;
       const ABCFormatted = new Intl.NumberFormat("en-US", {
         minimumFractionDigits: 2,
         maximumFractionDigits: 2,
@@ -86,7 +96,7 @@ export const generateRFQPDF = async (item: itemQuotationResponseType[], rfq: quo
       timesBoldFont,
       timesRomanFont,
       timesRomanItalicFont,
-      rfq
+      rfq,
     );
   }
   const pdfBytes = await pdfDoc.save();
@@ -98,14 +108,13 @@ export const generateRFQPDF = async (item: itemQuotationResponseType[], rfq: quo
   return url; // Return the URL for preview/download
 };
 
-
 const textandlines = async (
   pdfDoc: PDFDocument,
   page: PDFPage,
   timesBoldFont: PDFFont,
   timesRomanFont: PDFFont,
   timesRomanItalicFont: PDFFont,
-  rfq: quotationResponseType
+  rfq: quotationResponseType,
 ) => {
   page.drawText("REQUEST FOR QUOTATION", {
     x: 215,
@@ -128,6 +137,12 @@ const textandlines = async (
   page.drawText("Quotation No.:", {
     x: 357.49,
     y: 736.33,
+    size: 11,
+    font: timesRomanFont,
+  });
+  page.drawText("Mode of Procurement:", {
+    x: 357.49,
+    y: 722.33,
     size: 11,
     font: timesRomanFont,
   });
@@ -164,7 +179,12 @@ const textandlines = async (
     thickness: 1.5,
     color: rgb(0, 0, 0),
   });
-  page.drawText(rfq.supplier_address, { x: 32.5, y: 695, size: 11, font: timesRomanFont });
+  page.drawText(rfq.supplier_address, {
+    x: 32.5,
+    y: 695,
+    size: 11,
+    font: timesRomanFont,
+  });
 
   page.drawText("Address", { x: 32.5, y: 678, size: 11, font: timesRomanFont });
   page.drawText("TIN:", { x: 32.5, y: 664, size: 11, font: timesRomanFont });
@@ -175,7 +195,40 @@ const textandlines = async (
     thickness: 1,
     color: rgb(0, 0, 0),
   });
+  page.drawRectangle({
+    x: 120,
+    y: 642,
+    width: 10,
+    height: 10,
+    borderWidth: 1,
+    color: rgb(0, 0, 0),
+  });
 
+  // Label
+  page.drawText("VAT", {
+    x: 135,
+    y: 645,
+    size: 11,
+    font: timesRomanFont,
+  });
+
+  // Draw checkbox for Non-VAT
+  page.drawRectangle({
+    x: 170,
+    y: 642,
+    width: 10,
+    height: 10,
+    borderWidth: 1,
+    color: rgb(0, 0, 0),
+  });
+
+  // Label
+  page.drawText("NON-VAT", {
+    x: 185,
+    y: 645,
+    size: 11,
+    font: timesRomanFont,
+  });
   page.drawText("Sir/Madam:", {
     x: 32.5,
     y: 635,
@@ -203,7 +256,7 @@ const textandlines = async (
   });
   page.drawText(
     "your quotation duly signed by you or your authorized representative. Insert your duly accomplished quotation on the attached ",
-    { x: 35, y: 608, size: 11, font: timesRomanFont }
+    { x: 35, y: 608, size: 11, font: timesRomanFont },
   );
   page.drawText("return envelope and seal the same.", {
     x: 35,
@@ -213,7 +266,7 @@ const textandlines = async (
   });
   page.drawText(
     "We reserve the right to reject any and/or all bids/quotations submitted.",
-    { x: 50, y: 584, size: 11, font: timesRomanFont }
+    { x: 50, y: 584, size: 11, font: timesRomanFont },
   );
 
   page.drawText("LEVI U. PANGAN, LPT", {
@@ -323,11 +376,11 @@ const textandlines = async (
 
   page.drawText(
     "Please be advised that in the event that you will be declared as the Lowest Complying and Responsive Supplier, said items",
-    { x: 50, y: 238, size: 11, font: timesRomanFont }
+    { x: 50, y: 238, size: 11, font: timesRomanFont },
   );
   page.drawText(
     "will be awarded to you subject to submission of the documentary requirements: ",
-    { x: 35, y: 225, size: 11, font: timesRomanFont }
+    { x: 35, y: 225, size: 11, font: timesRomanFont },
   );
   page.drawText("(1)  PHILGEPS   Registration  Certificate;  2.", {
     x: 390,
@@ -338,7 +391,7 @@ const textandlines = async (
   });
   page.drawText(
     "Mayor's  Permit;  3.  Income  Tax   Return,  &  4.  Omnibus Sworn Statement. A Notice of Award and Purchase Order will be",
-    { x: 35, y: 212, size: 11, font: timesRomanFont, color: rgb(0, 0, 0.9) }
+    { x: 35, y: 212, size: 11, font: timesRomanFont, color: rgb(0, 0, 0.9) },
   );
   page.drawText("issued.", {
     x: 35,
@@ -362,7 +415,7 @@ const textandlines = async (
   });
   page.drawText(
     "After having carefully read and accepted your General Conditions, I/We quote on the item at prices noted above:",
-    { x: 50, y: 160, size: 11, font: timesRomanFont }
+    { x: 50, y: 160, size: 11, font: timesRomanFont },
   );
 
   page.drawText("Canvassed by:", {
@@ -593,7 +646,7 @@ const textandlines = async (
   });
   const headerjpg = "/header.jpeg";
   const headerjpgBytes = await fetch(headerjpg).then((res) =>
-    res.arrayBuffer()
+    res.arrayBuffer(),
   );
   const headerimage = await pdfDoc.embedJpg(headerjpgBytes);
   page.drawImage(headerimage, {
