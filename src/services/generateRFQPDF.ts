@@ -3,41 +3,6 @@ import {
   quotationResponseType,
 } from "@/types/response/request-for-quotation";
 import { PDFDocument, PDFFont, PDFPage, StandardFonts, rgb } from "pdf-lib";
-// Draw a grid for debugging purposes temporarily
-const drawGrid = (page: PDFPage) => {
-  const { width, height } = page.getSize();
-  const step = 10;
-
-  for (let x = 0; x <= width; x += step) {
-    page.drawLine({
-      start: { x, y: 0 },
-      end: { x, y: height },
-      thickness: 0.3,
-      color: rgb(0.8, 0.8, 0.8),
-    });
-
-    page.drawText(`${x}`, {
-      x: x + 2,
-      y: 2,
-      size: 6,
-    });
-  }
-
-  for (let y = 0; y <= height; y += step) {
-    page.drawLine({
-      start: { x: 0, y },
-      end: { x: width, y },
-      thickness: 0.3,
-      color: rgb(0.8, 0.8, 0.8),
-    });
-
-    page.drawText(`${y}`, {
-      x: 2,
-      y: y + 2,
-      size: 6,
-    });
-  }
-};
 
 export const generateRFQPDF = async (
   item: itemQuotationResponseType[],
@@ -56,7 +21,6 @@ export const generateRFQPDF = async (
   const pages = Math.ceil(item.length / itemperpage);
   for (let pageIndex = 0; pageIndex < pages; pageIndex++) {
     const page = pdfDoc.addPage([615.12, 936]);
-    drawGrid(page); //temp for debugging
     const pageItems = item.slice(
       pageIndex * itemperpage,
       (pageIndex + 1) * itemperpage,
