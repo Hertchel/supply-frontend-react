@@ -316,14 +316,14 @@ const textandlines = async (
     font: timesBoldFont,
   });
   page.drawText("Brand/Model", {
-    x: 375,
+    x: 376,
     y: 545,
     size: 10,
     font: timesBoldFont,
     color: rgb(0, 0, 0.9),
   });
   page.drawText("(Offered by Supplier).", {
-    x: 373,
+    x: 362,
     y: 535,
     size: 10,
     font: timesRomanFont,
