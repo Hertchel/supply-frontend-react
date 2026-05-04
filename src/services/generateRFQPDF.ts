@@ -6,7 +6,7 @@ import { PDFDocument, PDFFont, PDFPage, StandardFonts, rgb } from "pdf-lib";
 // Draw a grid for debugging purposes temporarily
 const drawGrid = (page: PDFPage) => {
   const { width, height } = page.getSize();
-  const step = 50;
+  const step = 10;
 
   for (let x = 0; x <= width; x += step) {
     page.drawLine({
