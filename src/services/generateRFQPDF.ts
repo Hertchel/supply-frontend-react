@@ -329,20 +329,26 @@ const textandlines = async (
     font: timesRomanFont,
     color: rgb(0, 0, 0.9),
   });
-  page.drawText("Unit Price", {
-    x: 445,
-    y: 538,
-    size: 11,
+  page.drawText("Unit", {
+    x: 465,
+    y: 545,
+    size: 10,
+    font: timesBoldFont,
+  });
+  page.drawText("Price", {
+    x: 465,
+    y: 535,
+    size: 10,
     font: timesBoldFont,
   });
   page.drawText("Total Price Quotation", {
-    x: 530,
+    x: 502,
     y: 545,
     size: 10,
     font: timesBoldFont,
   });
   page.drawText("(Offered by Supplier).", {
-    x: 521,
+    x: 502,
     y: 535,
     size: 10,
     font: timesRomanFont,
