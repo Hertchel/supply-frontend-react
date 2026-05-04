@@ -633,14 +633,14 @@ const textandlines = async (
     color: rgb(0, 0, 0),
   });
   page.drawLine({
-    start: { x: 430, y: 555.5 },
-    end: { x: 430, y: 306 },
+    start: { x: 450, y: 555.5 },
+    end: { x: 450, y: 306 },
     thickness: 1,
     color: rgb(0, 0, 0),
   });
   page.drawLine({
-    start: { x: 520, y: 541.5 },
-    end: { x: 520, y: 306 },
+    start: { x: 500, y: 555.5 },
+    end: { x: 500, y: 306 },
     thickness: 1,
     color: rgb(0, 0, 0),
   });
