@@ -342,13 +342,13 @@ const textandlines = async (
     font: timesBoldFont,
   });
   page.drawText("Total Price Quotation", {
-    x: 502,
+    x: 492,
     y: 545,
     size: 10,
     font: timesBoldFont,
   });
   page.drawText("(Offered by Supplier).", {
-    x: 502,
+    x: 492,
     y: 535,
     size: 10,
     font: timesRomanFont,
@@ -645,8 +645,8 @@ const textandlines = async (
     color: rgb(0, 0, 0),
   });
   page.drawLine({
-    start: { x: 500, y: 555.5 },
-    end: { x: 500, y: 306 },
+    start: { x: 490, y: 555.5 },
+    end: { x: 490, y: 306 },
     thickness: 1,
     color: rgb(0, 0, 0),
   });
