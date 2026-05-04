@@ -322,7 +322,7 @@ const textandlines = async (
     font: timesBoldFont,
     color: rgb(0, 0, 0.9),
   });
-  page.drawText("(Offered by Supplier).", {
+  page.drawText("(Offered by Supplier)", {
     x: 362,
     y: 535,
     size: 10,
@@ -330,25 +330,25 @@ const textandlines = async (
     color: rgb(0, 0, 0.9),
   });
   page.drawText("Unit", {
-    x: 465,
+    x: 460,
     y: 545,
     size: 10,
     font: timesBoldFont,
   });
   page.drawText("Price", {
-    x: 465,
+    x: 458,
     y: 535,
     size: 10,
     font: timesBoldFont,
   });
   page.drawText("Total Price Quotation", {
-    x: 492,
+    x: 490.5,
     y: 545,
     size: 10,
     font: timesBoldFont,
   });
-  page.drawText("(Offered by Supplier).", {
-    x: 492,
+  page.drawText("(Offered by Supplier)", {
+    x: 493.5,
     y: 535,
     size: 10,
     font: timesRomanFont,
