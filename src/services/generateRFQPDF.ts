@@ -3,6 +3,41 @@ import {
   quotationResponseType,
 } from "@/types/response/request-for-quotation";
 import { PDFDocument, PDFFont, PDFPage, StandardFonts, rgb } from "pdf-lib";
+// Draw a grid for debugging purposes temporarily
+const drawGrid = (page: PDFPage) => {
+  const { width, height } = page.getSize();
+  const step = 50;
+
+  for (let x = 0; x <= width; x += step) {
+    page.drawLine({
+      start: { x, y: 0 },
+      end: { x, y: height },
+      thickness: 0.3,
+      color: rgb(0.8, 0.8, 0.8),
+    });
+
+    page.drawText(`${x}`, {
+      x: x + 2,
+      y: 2,
+      size: 6,
+    });
+  }
+
+  for (let y = 0; y <= height; y += step) {
+    page.drawLine({
+      start: { x: 0, y },
+      end: { x: width, y },
+      thickness: 0.3,
+      color: rgb(0.8, 0.8, 0.8),
+    });
+
+    page.drawText(`${y}`, {
+      x: 2,
+      y: y + 2,
+      size: 6,
+    });
+  }
+};
 
 export const generateRFQPDF = async (
   item: itemQuotationResponseType[],
@@ -21,6 +56,7 @@ export const generateRFQPDF = async (
   const pages = Math.ceil(item.length / itemperpage);
   for (let pageIndex = 0; pageIndex < pages; pageIndex++) {
     const page = pdfDoc.addPage([615.12, 936]);
+    drawGrid(page); //temp for debugging
     const pageItems = item.slice(
       pageIndex * itemperpage,
       (pageIndex + 1) * itemperpage,
@@ -279,46 +315,39 @@ const textandlines = async (
     size: 11,
     font: timesBoldFont,
   });
-  page.drawText("ABC", {
+  page.drawText("Brand/Model", {
     x: 382,
     y: 545,
     size: 10,
     font: timesBoldFont,
     color: rgb(0, 0, 0.9),
   });
-  page.drawText("(per unit)", {
+  page.drawText("(Offered by Supplier).", {
     x: 373,
     y: 535,
     size: 10,
     font: timesBoldFont,
     color: rgb(0, 0, 0.9),
   });
-  page.drawText("Offered by Supplier", {
-    x: 465,
+  page.drawText("Unit Price", {
+    x: 445,
+    y: 538,
+    size: 11,
+    font: timesBoldFont,
+  });
+  page.drawText("Total Price Quotation", {
+    x: 530,
     y: 545,
     size: 10,
-    font: timesRomanItalicFont,
+    font: timesBoldFont,
   });
-  page.drawText("Brand/Model", {
-    x: 445,
-    y: 530,
+  page.drawText("(Offered by Supplier).", {
+    x: 521,
+    y: 535,
     size: 10,
     font: timesBoldFont,
+    color: rgb(0, 0, 0.9),
   });
-  page.drawText("Unit Price", {
-    x: 530,
-    y: 530,
-    size: 10,
-    font: timesBoldFont,
-  });
-  page.drawText("PURPOSE:", {
-    x: 34,
-    y: 518,
-    size: 8,
-    font: timesBoldFont,
-    color: rgb(1, 0, 0),
-  });
-
   //text lower
   page.drawText("Delivery Period:", {
     x: 55,
