@@ -478,38 +478,38 @@ const textandlines = async (
   });
 
   page.drawLine({
-    start: { x: 330, y: 129 },
-    end: { x: 584.5, y: 129 },
+    start: { x: 330, y: 116 },
+    end: { x: 584.5, y: 116 },
     thickness: 1.5,
     color: rgb(0, 0, 0),
   });
   page.drawText("Signature over Printed Name of Supplier", {
     x: 350,
-    y: 119,
+    y: 106,
     size: 11,
     font: timesRomanFont,
   });
 
   page.drawLine({
-    start: { x: 330, y: 94 },
-    end: { x: 584.5, y: 94 },
+    start: { x: 330, y: 81 },
+    end: { x: 584.5, y: 81 },
     thickness: 1.5,
     color: rgb(0, 0, 0),
   });
   page.drawText("Tel. No. / Cellphone No. & Email Address", {
     x: 350,
-    y: 84,
+    y: 71,
     size: 11,
     font: timesRomanFont,
   });
 
   page.drawLine({
-    start: { x: 330, y: 59 },
-    end: { x: 584.5, y: 59 },
+    start: { x: 330, y: 46 },
+    end: { x: 584.5, y: 46 },
     thickness: 1.5,
     color: rgb(0, 0, 0),
   });
-  page.drawText("Date", { x: 440, y: 49, size: 11, font: timesRomanFont });
+  page.drawText("Date", { x: 440, y: 36, size: 11, font: timesRomanFont });
 
   //Horizontal Line
 
