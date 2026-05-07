@@ -111,7 +111,7 @@ const [requisitioners, setRequisitioners] = useState([]);
     try {
 
       const response = await fetch(
-        "http://127.0.0.1:8000/api/public/requisitioners/"
+        "https://supply-api-django.onrender.com/api/public/requisitioners/"
       );
 
       const data = await response.json();
@@ -202,13 +202,13 @@ const [requisitioners, setRequisitioners] = useState([]);
                 {isLoading ? <Loader2 className="animate-spin" /> : "Login"}
               </Button>
               <Button
-  type="button"
-  variant="outline"
-  className="w-full mt-3"
-  onClick={() => setOpenRequisitionerModal(true)}
->
-  Login as Requisitioner
-</Button>
+                type="button"
+                variant="outline"
+                className="w-full mt-3"
+                onClick={() => setOpenRequisitionerModal(true)}
+              >
+                Login as Requisitioner
+              </Button>
             </form>
           </div>
 

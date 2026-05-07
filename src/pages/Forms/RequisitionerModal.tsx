@@ -15,6 +15,7 @@ interface Props {
 
 const RequisitionerModal = ({ open, setOpen, requisitioners }: Props) => {
   const navigate = useNavigate();
+  console.log("REQUISITIONERS:", requisitioners);
 
   const [searchName, setSearchName] = useState("");
   const [selectedDepartment, setSelectedDepartment] = useState(""); // "" = All
