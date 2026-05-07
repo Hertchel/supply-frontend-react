@@ -1,10 +1,11 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { Link } from "react-router-dom";
 import { Label } from "@/components/ui/label";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { Loader2, Eye, EyeOff } from "lucide-react";
 import { InputOTPForm } from "@/pages/Forms/InputOTPForm";
+import RequisitionerModal from "@/pages/Forms/RequisitionerModal";
 import { FieldErrors, useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { userLoginSchema, userLoginType } from "@/types/request/user";
@@ -15,6 +16,11 @@ import { Alert, AlertDescription } from "@/components/ui/alert";
 const Login = () => {
   const [isLoading, setIsLoading] = useState<boolean>(false);
   const [showPassword, setShowPassword] = useState<boolean>(false);
+
+  const [openRequisitionerModal, setOpenRequisitionerModal] =
+  useState(false);
+
+const [requisitioners, setRequisitioners] = useState([]);
 
   const { checkUser, errorMessage, otpSent } = useAuthStore();
   const { toast } = useToast();
@@ -98,6 +104,38 @@ const Login = () => {
     setShowPassword((prevShowPassword) => !prevShowPassword);
   };
 
+  useEffect(() => {
+
+  const fetchRequisitioners = async () => {
+
+    try {
+
+      const response = await fetch(
+        "http://127.0.0.1:8000/api/public/requisitioners/"
+      );
+
+      const data = await response.json();
+
+      setRequisitioners(data);
+
+    } catch (error) {
+
+
+      console.error(
+        "Failed to fetch requisitioners",
+        error
+      );
+
+    }
+
+  };
+   //console.log(requisitioners);
+
+  fetchRequisitioners();
+  
+
+}, []);
+
   return (
     <div className="relative flex min-h-screen justify-center items-center p-4">
   {/* Background */}
@@ -163,6 +201,14 @@ const Login = () => {
               >
                 {isLoading ? <Loader2 className="animate-spin" /> : "Login"}
               </Button>
+              <Button
+  type="button"
+  variant="outline"
+  className="w-full mt-3"
+  onClick={() => setOpenRequisitionerModal(true)}
+>
+  Login as Requisitioner
+</Button>
             </form>
           </div>
 
@@ -179,8 +225,14 @@ const Login = () => {
       )}
     </div>
   </div>
+  <RequisitionerModal
+  open={openRequisitionerModal}
+  setOpen={setOpenRequisitionerModal}
+  requisitioners={requisitioners}
+/>  
 </div>
   );
+  
 };
 
 export default Login;

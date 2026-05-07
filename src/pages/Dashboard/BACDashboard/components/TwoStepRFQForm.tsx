@@ -346,8 +346,8 @@ export const TwoStepRFQForm: React.FC<TwoStepRFQFormProps> = ({
                       <div className="grid grid-cols-7 gap-2 items-center p-2  border-b-2 sticky bg-background top-0">
                         <Label>Unit</Label>
                         <Label>Item Description</Label>
-                        <Label>Unit Cost</Label>
                         <Label>Unit Quantity</Label>
+                        <Label>Unit Cost</Label>
                         <Label className="col-span-2">Brand / Model</Label>
                         <Label>Unit Price </Label>
                       </div>

@@ -35,6 +35,9 @@ import PurchaseOrderItemList from "./pages/Dashboard/SupplyDashboard/components/
 import BACPurchaseRequestIncoming from "./pages/Dashboard/BACDashboard/BACPurchaseRequestIncoming";
 import ItemDistribution from "./pages/Dashboard/SupplyDashboard/ItemDistribution";
 import { ItemDistributionList } from "./pages/Dashboard/SupplyDashboard/components/ItemDistributionList";
+import RequisitionerDashboard from "./pages/Dashboard/ReqDashboard/RequisitionerDashboard";
+
+import AIDashboard from "./pages/Dashboard/SupplyDashboard/AIDashboard";
 
 const App = () => {
   return (
@@ -46,6 +49,10 @@ const App = () => {
           <Route path="/login" element={<Login />} />
           <Route path="/logout" element={<Logout />} />
           <Route path="/register" element={<RegisterAndLogout />} />
+          <Route
+              path="/requisitioner/:token"
+              element={<RequisitionerDashboard />}
+            />
           <Route path="*" element={<NotFound />} />
 
           <Route
@@ -62,6 +69,8 @@ const App = () => {
             <Route path="abstract-of-quotation/" element={<SupplyAOQ />} />
             <Route path="reports" element={<Reports />} />
             <Route path="inventory" element={<Inventory />} />
+
+            <Route path="ai-dashboard" element={<AIDashboard />} />
 
             <Route path="stocks" element={<Stocks />} />
             <Route path="item-distribution" element={<ItemDistribution />} />

@@ -1,0 +1,375 @@
+import { useEffect, useState } from "react";
+import { useParams } from "react-router-dom";
+
+const RequisitionerDashboard = () => {
+
+  const { token } = useParams();
+
+  const [loading, setLoading] = useState(true);
+
+  const [dashboardData, setDashboardData] =
+    useState<any>(null);
+
+  useEffect(() => {
+
+    const fetchDashboard = async () => {
+
+      try {
+
+        const response = await fetch(
+  `https://supply-api-django.onrender.com/api/requisitioner-dashboard/${token}/`
+);
+
+        const data = await response.json();
+
+        console.log(data);
+
+        setDashboardData(data);
+
+      } catch (error) {
+
+        console.error(error);
+
+      } finally {
+
+        setLoading(false);
+
+      }
+
+    };
+
+    fetchDashboard();
+
+  }, [token]);
+
+  if (loading) {
+
+    return (
+
+      <div className="min-h-screen flex justify-center items-center">
+        Loading...
+      </div>
+
+    );
+
+  }
+
+  return (
+
+    <div className="min-h-screen bg-gray-100 py-8 px-4">
+
+  <div className="max-w-7xl mx-auto space-y-6">
+
+    {/* HEADER */}
+
+    <div
+      className="
+        bg-white
+        rounded-2xl
+        shadow-md
+        border-2
+        p-6
+        flex
+        flex-col
+        md:flex-row
+        items-center
+        justify-between
+        gap-4
+      "
+      style={{
+        borderColor: "rgb(254 215 170)",
+      }}
+    >
+
+      {/* LEFT */}
+
+      <div className="flex items-center gap-4">
+
+        <img
+          src="/CTU_new_logotransparent.svg"
+          alt="CTU AC Logo"
+          className="w-20 h-20 object-contain"
+        />
+
+        <div>
+
+          <h1 className="text-3xl font-bold text-gray-800">
+            Requisitioner Dashboard
+          </h1>
+
+          <p className="text-gray-600 mt-1">
+            {dashboardData?.requisitioner?.name}
+          </p>
+
+          <p className="text-sm text-gray-400">
+            {dashboardData?.requisitioner?.department}
+          </p>
+
+        </div>
+
+      </div>
+
+      {/* RIGHT */}
+
+      <div
+        className="
+          px-5
+          py-3
+          rounded-xl
+          text-center
+        "
+        style={{
+          backgroundColor: "rgb(254 215 170)",
+        }}
+      >
+
+        <p className="text-sm text-gray-600">
+          Cebu Technological University
+        </p>
+
+        <h2 className="font-bold text-lg text-gray-800">
+          Argao Campus
+        </h2>
+
+      </div>
+
+    </div>
+
+    {/* PURCHASE REQUESTS */}
+
+    <div className="grid gap-6">
+
+      {dashboardData?.purchase_requests?.map((pr: any) => (
+
+        <div
+          key={pr.pr_no}
+          className="
+            rounded-2xl
+            shadow-md
+            border-2
+            p-6
+            space-y-6
+            bg-white
+          "
+          style={{
+            borderColor: "rgb(254 215 170)",
+          }}
+        >
+
+          {/* TOP */}
+
+          <div className="flex flex-col md:flex-row justify-between gap-4">
+
+            <div>
+
+              <h1 className="text-2xl font-bold text-gray-800">
+                PR NO: {pr.pr_no}
+              </h1>
+
+              <p className="text-gray-500 text-sm mt-1">
+                Purchase Request Tracking
+              </p>
+
+            </div>
+
+            <div>
+
+              <span
+                className="
+                  px-5
+                  py-2
+                  rounded-full
+                  text-sm
+                  font-semibold
+                  shadow-sm
+                "
+                style={{
+                  backgroundColor: "rgb(254 215 170)",
+                  color: "#9A3412",
+                }}
+              >
+                {pr.status}
+              </span>
+
+            </div>
+
+          </div>
+
+          {/* TIMELINE */}
+
+          <div>
+
+            <h2 className="font-semibold text-gray-700 mb-3">
+              Procurement Progress
+            </h2>
+
+            <div className="flex flex-wrap gap-3">
+
+              {[
+                "Submitted",
+                "Approved",
+                "RFQ",
+                "AOQ",
+                "Bidder Selected",
+                "PO Created",
+                "Delivered",
+              ].map((step) => (
+
+                <div
+                  key={step}
+                  className="
+                    px-4
+                    py-2
+                    rounded-xl
+                    text-sm
+                    font-medium
+                    border
+                    bg-orange-50
+                    text-orange-700
+                  "
+                >
+                  {step}
+                </div>
+
+              ))}
+
+            </div>
+
+          </div>
+
+          {/* DETAILS */}
+
+          <div className="grid md:grid-cols-2 gap-6">
+
+            {/* SUPPLIER */}
+
+            <div
+              className="
+                rounded-xl
+                p-4
+                border
+                bg-orange-50
+              "
+            >
+
+              <h2 className="font-semibold text-gray-700 mb-1">
+                Supplier
+              </h2>
+
+              <p className="text-gray-600">
+                {pr.supplier_name || "No supplier assigned yet"}
+              </p>
+
+            </div>
+
+            {/* WINNING BIDDER */}
+
+            <div
+              className="
+                rounded-xl
+                p-4
+                border
+                bg-orange-50
+              "
+            >
+
+              <h2 className="font-semibold text-gray-700 mb-1">
+                Winning Bidder
+              </h2>
+
+              <p className="text-gray-600">
+                {pr.winning_bidder || "No winning bidder yet"}
+              </p>
+
+            </div>
+
+          </div>
+
+          {/* ITEMS */}
+
+          <div>
+
+            <h2 className="font-semibold text-gray-700 mb-4">
+              Requested Items
+            </h2>
+
+            {pr.items?.length > 0 ? (
+
+              <div className="grid gap-3">
+
+                {pr.items.map((item: any) => (
+
+                  <div
+                    key={item.item_no}
+                    className="
+                      rounded-xl
+                      border
+                      p-4
+                      flex
+                      justify-between
+                      items-center
+                      bg-orange-50
+                    "
+                  >
+
+                    <div>
+
+                      <p className="font-semibold text-gray-800">
+                        {item.item_description}
+                      </p>
+
+                      <p className="text-sm text-gray-500 mt-1">
+                        Quantity: {item.quantity}
+                      </p>
+
+                    </div>
+
+                    <div className="text-right">
+
+                      <p className="text-sm text-gray-500">
+                        Total Cost
+                      </p>
+
+                      <p className="font-bold text-orange-700">
+                        ₱ {item.total_cost}
+                      </p>
+
+                    </div>
+
+                  </div>
+
+                ))}
+
+              </div>
+
+            ) : (
+
+              <div
+                className="
+                  border
+                  rounded-xl
+                  p-6
+                  text-center
+                  text-gray-500
+                  bg-orange-50
+                "
+              >
+                No items available
+              </div>
+
+            )}
+
+          </div>
+
+        </div>
+
+      ))}
+
+    </div>
+
+  </div>
+
+</div>
+  );
+};
+export default RequisitionerDashboard;

@@ -65,6 +65,12 @@ export const ItemDistributionList = () => {
     return Array.isArray(item_delivered?.data) ? item_delivered.data : [];
   }, [item_delivered?.data]);
   console.log(itemsDeliveredData);
+  console.log(
+  itemsDeliveredData.map(
+    (item) => item.pr_details.status
+  )
+);
+console.log("PARAM PR NO:", pr_no);
 
   const filteredItemsDeliveredData = useMemo(() => {
     return itemsDeliveredData.filter(

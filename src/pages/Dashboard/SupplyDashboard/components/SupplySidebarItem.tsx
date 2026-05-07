@@ -60,65 +60,114 @@ const distribution = [
     url: "/supply/item-distribution",
     icon: PackageCheck
   }
+];
+
+const aiassistant = [
+  {
+    title: "AI Assistant",
+    url: "/supply/ai-dashboard",
+    icon: PackageCheck
+  }
 ]
 
 
 export function SidebarItem() {
 
   return (
-    <SidebarGroup className=" ">
-      <SidebarGroupLabel>Analytics</SidebarGroupLabel>
-      <SidebarMenu>
-        {dashboard.map((item) => (
-          <SidebarMenuItem key={item.title}>
-            <SidebarMenuButton asChild className="px-4 py-6" isActive={location.pathname === item.url}>
-              <Link to={item.url}>
-                <item.icon />
-                <span>{item.title}</span>
-              </Link>
-            </SidebarMenuButton>
-          </SidebarMenuItem>
-        ))}
-      </SidebarMenu>
-      <SidebarGroupLabel>Procurement</SidebarGroupLabel>
-      <SidebarMenu>
-        {procurement.map((item) => (
-          <SidebarMenuItem key={item.title}>
-            <SidebarMenuButton asChild className="px-4 py-6" isActive={location.pathname === item.url}>
-              <Link to={item.url}>
-                <item.icon />
-                <span>{item.title}</span>
-              </Link>
-            </SidebarMenuButton>
-          </SidebarMenuItem>
-        ))}
-      </SidebarMenu>
-      <SidebarGroupLabel>Inventory</SidebarGroupLabel>
-      <SidebarMenu>
-        {inventory.map((item) => (
-          <SidebarMenuItem key={item.title}>
-            <SidebarMenuButton asChild className="px-4 py-6" isActive={location.pathname === item.url}>
-              <Link to={item.url}>
-                <item.icon />
-                <span>{item.title}</span>
-              </Link>
-            </SidebarMenuButton>
-          </SidebarMenuItem>
-        ))}
-      </SidebarMenu>
-      <SidebarGroupLabel>Distribution</SidebarGroupLabel>
-      <SidebarMenu>
-        {distribution.map((item) => (
-          <SidebarMenuItem key={item.title}>
-            <SidebarMenuButton asChild className="px-4 py-6" isActive={location.pathname === item.url}>
-              <Link to={item.url}>
-                <item.icon />
-                <span>{item.title}</span>
-              </Link>
-            </SidebarMenuButton>
-          </SidebarMenuItem>
-        ))}
-      </SidebarMenu>
-    </SidebarGroup>
+    <SidebarGroup className="">
+
+  <SidebarGroupLabel>Analytics</SidebarGroupLabel>
+  <SidebarMenu>
+    {dashboard.map((item) => (
+      <SidebarMenuItem key={item.title}>
+        <SidebarMenuButton
+          asChild
+          className="px-4 py-6"
+          isActive={location.pathname === item.url}
+        >
+          <Link to={item.url}>
+            <item.icon />
+            <span>{item.title}</span>
+          </Link>
+        </SidebarMenuButton>
+      </SidebarMenuItem>
+    ))}
+  </SidebarMenu>
+
+  <SidebarGroupLabel>Procurement</SidebarGroupLabel>
+  <SidebarMenu>
+    {procurement.map((item) => (
+      <SidebarMenuItem key={item.title}>
+        <SidebarMenuButton
+          asChild
+          className="px-4 py-6"
+          isActive={location.pathname === item.url}
+        >
+          <Link to={item.url}>
+            <item.icon />
+            <span>{item.title}</span>
+          </Link>
+        </SidebarMenuButton>
+      </SidebarMenuItem>
+    ))}
+  </SidebarMenu>
+
+  <SidebarGroupLabel>Inventory</SidebarGroupLabel>
+  <SidebarMenu>
+    {inventory.map((item) => (
+      <SidebarMenuItem key={item.title}>
+        <SidebarMenuButton
+          asChild
+          className="px-4 py-6"
+          isActive={location.pathname === item.url}
+        >
+          <Link to={item.url}>
+            <item.icon />
+            <span>{item.title}</span>
+          </Link>
+        </SidebarMenuButton>
+      </SidebarMenuItem>
+    ))}
+  </SidebarMenu>
+
+  <SidebarGroupLabel>Distribution</SidebarGroupLabel>
+  <SidebarMenu>
+    {distribution.map((item) => (
+      <SidebarMenuItem key={item.title}>
+        <SidebarMenuButton
+          asChild
+          className="px-4 py-6"
+          isActive={location.pathname === item.url}
+        >
+          <Link to={item.url}>
+            <item.icon />
+            <span>{item.title}</span>
+          </Link>
+        </SidebarMenuButton>
+      </SidebarMenuItem>
+    ))}
+  </SidebarMenu>
+
+  {/* AI ASSISTANT */}
+
+  <SidebarGroupLabel>AI Assistant</SidebarGroupLabel>
+  <SidebarMenu>
+    {aiassistant.map((item) => (
+      <SidebarMenuItem key={item.title}>
+        <SidebarMenuButton
+          asChild
+          className="px-4 py-6"
+          isActive={location.pathname === item.url}
+        >
+          <Link to={item.url}>
+            <item.icon />
+            <span>{item.title}</span>
+          </Link>
+        </SidebarMenuButton>
+      </SidebarMenuItem>
+    ))}
+  </SidebarMenu>
+
+</SidebarGroup>
   )
 }
