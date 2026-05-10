@@ -80,10 +80,12 @@ export function OrderReceivedDialog({
   const handleOrderReceived = async () => {
     setIsLoading(true);
     const inspectionData = {
-      inspection_no: uuidv4(),
-      purchase_request: pr_no ?? "",
-      purchase_order: po_no,
-    };
+  inspection_no: uuidv4(),
+  purchase_request: pr_no ?? "",
+  purchase_order: po_no,
+  inspector_name: "System Inspector",
+  remarks: "Items received successfully",
+};
 
     try {
       const inspectionResponse = await addInspectionReport(inspectionData);

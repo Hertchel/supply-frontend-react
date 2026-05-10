@@ -67,6 +67,9 @@ export const AbstractItemContentList = () => {
   });
 
   const { aoq_no } = useParams();
+  if (!aoq_no) {
+  return <Loading />;
+}
   const { status, setStatus } = useStatusStore();
   const navigate = useNavigate();
   console.log(status);
@@ -85,7 +88,7 @@ export const AbstractItemContentList = () => {
 
   const supplierItemData = useMemo(() => {
     return Array.isArray(items?.data) ? items.data : [];
-  }, [items]);
+  }, [items?.data]);  
   
   console.log("RAW supplierItemData:", supplierItemData);
   console.log("FIRST ITEM:", supplierItemData[0]);
@@ -121,7 +124,7 @@ export const AbstractItemContentList = () => {
   if (isLoading || abstract_loading) return <Loading />;
 
   const isAlreadyForwardedToSupply =
-  status=== "Ready to Order";
+  abstractData?.pr_details.status === "Ready to Order";
 
   const handleGenerateAOQPDF = async () => {
   if (!filteredSupplierItemData || filteredSupplierItemData.length === 0) {
@@ -175,25 +178,30 @@ export const AbstractItemContentList = () => {
   };
 
   const handleForwardToProcurement = async () => {
-    await handleReadyToOrder(pr_no!);
-    if (isSuccess) {
-      setMessageDialog({
-        open: true,
-        message: "Forwarded Successfully ",
-        title: "Success",
-        type: "success",
-      });
-    }
+  try {
 
-    if (isError) {
-      setMessageDialog({
-        open: true,
-        message: "Something went wrong, Please try again later",
-        title: "Error",
-        type: "error",
-      });
-    }
-  };
+    await handleReadyToOrder(pr_no!);
+
+    setMessageDialog({
+      open: true,
+      message: "Forwarded Successfully",
+      title: "Success",
+      type: "success",
+    });
+
+    setStatus("Ready to Order");
+
+  } catch (error) {
+
+    setMessageDialog({
+      open: true,
+      message: "Something went wrong, Please try again later",
+      title: "Error",
+      type: "error",
+    });
+
+  }
+};
 
   return (
     <div className="w-full">
@@ -313,7 +321,7 @@ export const AbstractItemContentList = () => {
                     ) : (
                       <Cross2Icon />
                     )}
-                    {item.item_cost}
+                    {item.item_quotation_details.unit_price}
                   </p>
                 </div>
               );

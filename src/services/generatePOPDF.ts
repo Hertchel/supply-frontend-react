@@ -53,10 +53,23 @@ export const generatePOPDF = async (purchaseOrderItem: purchaseOrderItemType_[])
   pages.push(page);
   purchaseOrderItem.forEach((item, index) => {
     const item_description = item.supplier_item_details.item_quotation_details.item_details.item_description ?? ""
+
+    const unit_price =
+      item.supplier_item_details.item_quotation_details.unit_price
+
+    const quantity = item.supplier_item_details.item_quantity
+
+    const unit =
+      item.supplier_item_details.item_quotation_details.item_details.unit
+
+    const unit_cost =
+      item.supplier_item_details.item_quotation_details.unit_price
+    /*
     const unit_price = item.supplier_item_details.item_cost
     const quantity = item.supplier_item_details.item_quantity
     const unit = item.supplier_item_details.item_quotation_details.item_details.unit 
     const unit_cost = item.supplier_item_details.item_cost
+    */
 
     // Calculate height needed for wrapped description
     const wrappedDescription = wrapText(
@@ -213,6 +226,10 @@ export const generatePOPDF = async (purchaseOrderItem: purchaseOrderItemType_[])
       color: rgb(1, 0, 0),
     });
 
+    if (!purchaseOrderItem.length) {
+      throw new Error("No purchase order items found.");
+    }
+
     textandlines(
       page,
       timesBoldFont,
@@ -223,7 +240,8 @@ export const generatePOPDF = async (purchaseOrderItem: purchaseOrderItemType_[])
     );
   }
   const pdfBytes = await pdfDoc.save();
-  const blob = new Blob([pdfBytes], { type: "application/pdf" });
+  const fixedBuffer = new Uint8Array(pdfBytes).buffer;
+  const blob = new Blob([fixedBuffer], { type: "application/pdf" });
   const url = URL.createObjectURL(blob);
 
   return url;

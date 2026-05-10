@@ -24,10 +24,7 @@ import { v4 as uuidv4 } from "uuid";
 import { AxiosError } from "axios";
 import { purchaseOrderType } from "@/types/request/purchase-order";
 import { ApiResponse } from "@/types/response/api-response";
-import {
-  useAddPurchaseOrder,
-  useAddPurchaseOrderItem,
-} from "@/services/puchaseOrderServices";
+import {useAddPurchaseOrder, useAddPurchaseOrderItem,} from "@/services/puchaseOrderServices";
 import { MessageDialog } from "../../shared/components/MessageDialog";
 
 interface messageDialogProps {
@@ -118,7 +115,9 @@ export default function SupplyAOQ() {
         const itemQuantity = Number(
           item.item_quantity
         );
-        const itemUnitPrice = Number(item.item_cost);
+        const itemUnitPrice = Number(
+          item.item_quotation_details.unit_price
+        );
         return total + itemQuantity * itemUnitPrice;
       }, 0);
     },
@@ -301,7 +300,7 @@ export default function SupplyAOQ() {
                   item.item_quantity
                 );
                 const itemUnitPrice = Number(
-                  item.item_cost
+                  item.item_quotation_details.unit_price
                 );
                 return (
                   <TableRow key={index}>

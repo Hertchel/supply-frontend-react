@@ -38,6 +38,7 @@ export type purchaseOrderItemType_  = {
     item_quotation_details: {
       brand_model: string
       is_low_price: boolean
+      unit_price: string
       item_details: {
         item_description: string
         unit: string

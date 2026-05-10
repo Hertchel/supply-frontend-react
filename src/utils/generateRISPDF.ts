@@ -69,9 +69,15 @@ export const generateRISPDF = async (itemData: _itemsDeliveredType[]) => {
   const firstPurpose = itemData[0]?.inspection_details.po_details.pr_details.purpose ?? "";
   const firstPurposeSplit = wrapText(firstPurpose, purposewidth, 12);
   const divisiontext = "Admin";
-  const officetext = itemData[0]?.inspection_details.po_details.pr_details.office ?? "";
-  const resccodetext = itemData[0]?.inspection_details.po_details.pr_details.res_center_code ?? "";
-  const risnumtext = itemData[0]?.inspection_details.po_details.pr_details.pr_no ?? "";
+  const officetext = String(
+  itemData[0]?.inspection_details.po_details.pr_details.office ?? ""
+  );
+  const resccodetext = String(
+  itemData[0]?.inspection_details.po_details.pr_details.res_center_code ?? ""
+);
+  const risnumtext = String(
+  itemData[0]?.inspection_details.po_details.pr_details.pr_no ?? ""
+);
   const requestpnametext = itemData[0]?.inspection_details.po_details.pr_details.requisitioner_details.name ?? "";
   const requestDesigtxt = itemData[0]?.inspection_details.po_details.pr_details.requisitioner_details.designation ?? "";
   const requestDatetxt = formatDate(itemData[0]?.inspection_details.po_details.pr_details.created_at)?? "";
@@ -213,7 +219,8 @@ export const generateRISPDF = async (itemData: _itemsDeliveredType[]) => {
   );
 
   const pdfBytes = await pdfDoc.save();
-  const blob = new Blob([pdfBytes], { type: "application/pdf" });
+  const fixedBuffer = new Uint8Array(pdfBytes).buffer;
+  const blob = new Blob([fixedBuffer], { type: "application/pdf" });
   const url = URL.createObjectURL(blob);
   return url;
 };

@@ -59,7 +59,11 @@ export const ItemDistributionList = () => {
     usePurchaseRequestActions();
   const { data: item_delivered, isLoading: isItemsDeliveredLoading } =
     useGetItemsDeliveredInPurchaseRequest({ pr_no: pr_no });
-  console.log(item_delivered);
+    console.log(
+  "ITEM DELIVERED RESPONSE:",
+  JSON.stringify(item_delivered, null, 2)
+);
+  //console.log(item_delivered);
 
   const itemsDeliveredData = useMemo(() => {
     return Array.isArray(item_delivered?.data) ? item_delivered.data : [];
@@ -73,10 +77,17 @@ export const ItemDistributionList = () => {
 console.log("PARAM PR NO:", pr_no);
 
   const filteredItemsDeliveredData = useMemo(() => {
-    return itemsDeliveredData.filter(
-      (data) => data.pr_details.status === "Ready for Distribution"
-    );
-  }, [itemsDeliveredData]);
+  return itemsDeliveredData.filter((data) => {
+    const status =
+      data.pr_details.status?.toLowerCase()?.trim();
+
+    return [
+      "ready for distribution",
+      "completed",
+      "distributed",
+    ].includes(status);
+  });
+}, [itemsDeliveredData]);
 
   useEffect(() => {
     if (isSuccess) {

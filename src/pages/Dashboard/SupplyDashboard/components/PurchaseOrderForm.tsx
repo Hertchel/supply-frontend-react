@@ -114,6 +114,7 @@ export const PurchaseOrderForm: React.FC<PurchaseOrderFormProps> = ({
       (data) => data.rfq_details.purchase_request === pr_no
     );
   }, [supplier_, pr_no]);
+  console.log("SUPPLIER DATA:", supplierData);
   console.log(supplierData);
 
   const filteredSupplierItemData = useMemo(() => {
@@ -121,6 +122,12 @@ export const PurchaseOrderForm: React.FC<PurchaseOrderFormProps> = ({
       (item) => item.rfq_details.purchase_request === pr_no
     );
   }, [supplierItemData, pr_no]);
+
+  console.log(
+  "FILTERED SUPPLIER ITEMS:",
+  filteredSupplierItemData
+);
+  
 
   const filterItemBySupplier = useCallback(
     (supplier_no: string) => {
@@ -204,7 +211,9 @@ export const PurchaseOrderForm: React.FC<PurchaseOrderFormProps> = ({
             onSuccess: async (response) => {
               if (response.status === "success") {
                 const po_no = response.data?.po_no;
-                const purchaseOrderItem = supplierItemData.map((item) => {
+                const purchaseOrderItem = filterItemBySupplier(
+                  supplier.supplier_no
+                ).map((item) => {
                   return {
                     po_item_no: uuidv4(),
                     purchase_request: pr_no,
@@ -361,9 +370,7 @@ export const PurchaseOrderForm: React.FC<PurchaseOrderFormProps> = ({
                           )}
                         </TableBody>
                       </Table>
-                      <div className="mt-2 flex justify-end">
-                        <Button>Place Order</Button>
-                      </div>
+                      
                     </div>
                   ))}
                 </ScrollArea>

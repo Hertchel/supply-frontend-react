@@ -59,6 +59,7 @@ export const TwoStepRFQForm: React.FC<TwoStepRFQFormProps> = ({
   pr_no,
 }) => {
   const [isLoading, setIsLoading] = useState<boolean>(false);
+  const [isInitialized, setIsInitialized] = useState(false);
   const [selectedOption, setSelectedOption] = useState<string>("non-VAT");
   const [messageDialog, setMessageDialog] = useState<messageDialogProps>({
     open: false,
@@ -74,7 +75,7 @@ export const TwoStepRFQForm: React.FC<TwoStepRFQFormProps> = ({
   const rfq_no = pr_no; //set the initial value rfq_no to pr_no and later in submit handler it have a random Letter
 
   const { mutate: addRFQMutation } = useAddRequestForQuotation();
-  const { mutate: addItemMutation } = useAddItemQuotation();
+  const { mutateAsync: addItemMutation } = useAddItemQuotation();
 
   const {
     control,
@@ -109,7 +110,12 @@ export const TwoStepRFQForm: React.FC<TwoStepRFQFormProps> = ({
   });
 
   useEffect(() => {
-    if (sortedItems.length > 0) {
+
+    if (
+      sortedItems.length > 0 &&
+      !isInitialized
+    ) {
+
       setValue(
         "items",
         sortedItems.map((item) => ({
@@ -123,8 +129,17 @@ export const TwoStepRFQForm: React.FC<TwoStepRFQFormProps> = ({
           is_low_price: false,
         }))
       );
+
+      setIsInitialized(true);
     }
-  }, [isDialogOpen, setValue, pr_no, ]);
+
+  }, [
+    isInitialized,
+    sortedItems,
+    setValue,
+    pr_no,
+    rfq_no,
+  ]);
 
   type RequestForQuotationField =
     | "purchase_request"
@@ -171,6 +186,7 @@ export const TwoStepRFQForm: React.FC<TwoStepRFQFormProps> = ({
 
 
   const onSubmit = async (data: requestForQuotationType) => {
+    console.log("Submitting RFQ:", data);
     console.log(data);
     setIsLoading(true);
     try {
@@ -213,11 +229,29 @@ export const TwoStepRFQForm: React.FC<TwoStepRFQFormProps> = ({
             };
           });
 
-          // Perform all addItemMutation calls in parallel, but only once for each item
+          const validItems = itemDataArray.filter(
+            (itemData) =>
+              itemData.brand_model.trim() !== "" &&
+              Number(itemData.unit_price) > 0
+          );
+
+          if (validItems.length === 0) {
+
+            setIsLoading(false);
+
+            setMessageDialog({
+              open: true,
+              message: "Please complete all item quotation fields.",
+              title: "Validation Error",
+              type: "error",
+            });
+
+            return;
+          }
+
           await Promise.all(
-            itemDataArray.map((itemData) => {
-              // if (itemData.brand_model && itemData.unit_price)
-                return addItemMutation(itemData);
+            validItems.map((itemData) => {
+              return addItemMutation(itemData);
             })
           );
 
@@ -252,7 +286,16 @@ export const TwoStepRFQForm: React.FC<TwoStepRFQFormProps> = ({
 
   return (
     <>
-      <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
+      <Dialog open={isDialogOpen} onOpenChange={(open) => {
+
+        setIsDialogOpen(open);
+
+        if (!open) {
+          setIsInitialized(false);
+          reset();
+        }
+
+      }}>
         <DialogContent className="max-w-full w-[70rem]">
           <DialogHeader>
             <DialogTitle className="text-2xl">

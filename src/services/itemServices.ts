@@ -98,12 +98,21 @@ export const GetItem = async (id: string): Promise<ApiResponse<itemType>> => {
   }
 };
 
+export const useGetItem = (id?: string) => {
+  return useQuery<ApiResponse<itemType>, Error>({
+    queryKey: ["items", id],
+    queryFn: () => GetItem(id!),
+    enabled: !!id,
+  });
+};
+
+/*
 export const useGetItem = (id: string) => {
   return useQuery<ApiResponse<itemType>, Error>({
     queryKey: ["items", id],
     queryFn: () => GetItem(id!),
   });
-};
+};*/
 export const UpdateItem = async (data: ItemType) => {
   try {
     const response = await api.put<ItemType>(`api/item/${data.item_no}`, data);

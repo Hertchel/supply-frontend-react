@@ -276,16 +276,33 @@ export const AbstractForm: React.FC<AbstractFormProps> = ({
 
           for (const supplier of suppliersWithItems) {
             try {
-              const supplierResponse = await addSupplier({
-                  supplier_no: supplier.supplier_no,
-                  name: "Auto Supplier", // REQUIRED
-                  address: "N/A",        // REQUIRED
-                  contact_person: "N/A", // REQUIRED
-                  contact_number: "0000000000", // REQUIRED
-                  tin: "000-000-000-000",       // REQUIRED
-                  aoq: supplier.aoq,
-                  rfq: supplier.rfq,
-                });
+              const supplierResponse = await addSupplier(
+                {
+                supplier_no: supplier.supplier_no,
+
+                name:
+                  quotations_
+                    .find((q) => q.rfq_no === supplier.rfq)
+                    ?.supplier_name || "Unknown Supplier",
+
+                address:
+                  quotations_
+                    .find((q) => q.rfq_no === supplier.rfq)
+                    ?.supplier_address || "N/A",
+
+                contact_person: "N/A",
+
+                contact_number: "0000000000",
+
+                tin:
+                  quotations_
+                    .find((q) => q.rfq_no === supplier.rfq)
+                    ?.tin || "N/A",
+
+                aoq: supplier.aoq,
+                rfq: supplier.rfq,
+              }
+              );
                 console.log("SUPPLIER RESPONSE:", supplierResponse);
 
               const supplier_no = supplierResponse?.data?.supplier_no;
