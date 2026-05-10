@@ -73,7 +73,7 @@ export const AbstractItemContentList = () => {
   const { status, setStatus } = useStatusStore();
   const navigate = useNavigate();
   console.log(status);
-  const { handleReadyToOrder, isPendingReadyToOrder, isError, isSuccess } =
+  const { handleReadyToOrder, isPendingReadyToOrder, isSuccess } =
     usePurchaseRequestActions();
   const { data: abstract, isLoading: abstract_loading } =
     useGetAbstractOfQuotation(aoq_no!);
