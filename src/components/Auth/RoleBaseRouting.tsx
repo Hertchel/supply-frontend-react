@@ -5,6 +5,9 @@ import Loading from "@/pages/Dashboard/shared/components/Loading";
 const BACDashboard = lazy(() => import("@/pages/Dashboard/BACDashboard/BACDashboard"));
 const SupplyDashboard = lazy(() => import("@/pages/Dashboard/SupplyDashboard/Dashboard"));
 const AdminDashboard = lazy(() => import("@/pages/Dashboard/AdminDashboard/Dashboard"));
+const RequisitionerDashboard = lazy(
+  () => import("@/pages/Dashboard/ReqDashboard/RequisitionerDashboard")
+);
 const Login = lazy(() => import("@/pages/Forms/Login"));
 
 
@@ -20,6 +23,8 @@ const RoleBasedRouting: React.FC = () => {
         return AdminDashboard;
       case "BAC Officer":
         return BACDashboard;
+      case "Requisitioner":
+        return RequisitionerDashboard;
       default:
         return Login;
     }

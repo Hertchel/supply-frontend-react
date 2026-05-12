@@ -131,3 +131,26 @@ export const useRequisitionerCount = () => {
   const RequisitionerCount = data?.data?.length;
   return { RequisitionerCount, isLoading };
 };
+
+export const getAuthenticatedRequisitionerDashboard = async () => {
+  try {
+
+    const response = await api.get(
+      "/api/requisitioner/dashboard/"
+    );
+
+    return handleSucess(response);
+
+  } catch (error) {
+
+    return handleError(error);
+
+  }
+};
+
+export const useAuthenticatedRequisitionerDashboard = () => {
+  return useQuery({
+    queryKey: ["authenticated-requisitioner-dashboard"],
+    queryFn: getAuthenticatedRequisitionerDashboard,
+  });
+};

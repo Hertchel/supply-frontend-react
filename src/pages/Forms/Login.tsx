@@ -17,10 +17,6 @@ const Login = () => {
   const [isLoading, setIsLoading] = useState<boolean>(false);
   const [showPassword, setShowPassword] = useState<boolean>(false);
 
-  const [openRequisitionerModal, setOpenRequisitionerModal] =
-  useState(false);
-
-const [requisitioners, setRequisitioners] = useState([]);
 
   const { checkUser, errorMessage, otpSent } = useAuthStore();
   const { toast } = useToast();
@@ -104,38 +100,6 @@ const [requisitioners, setRequisitioners] = useState([]);
     setShowPassword((prevShowPassword) => !prevShowPassword);
   };
 
-  useEffect(() => {
-
-  const fetchRequisitioners = async () => {
-
-    try {
-
-      const response = await fetch(
-        "https://supply-api-django.onrender.com/api/public/requisitioners/"
-      );
-
-      const data = await response.json();
-
-      setRequisitioners(data);
-
-    } catch (error) {
-
-
-      console.error(
-        "Failed to fetch requisitioners",
-        error
-      );
-
-    }
-
-  };
-   //console.log(requisitioners);
-
-  fetchRequisitioners();
-  
-
-}, []);
-
   return (
     <div className="relative flex min-h-screen justify-center items-center p-4">
   {/* Background */}
@@ -201,14 +165,6 @@ const [requisitioners, setRequisitioners] = useState([]);
               >
                 {isLoading ? <Loader2 className="animate-spin" /> : "Login"}
               </Button>
-              <Button
-                type="button"
-                variant="outline"
-                className="w-full mt-3"
-                onClick={() => setOpenRequisitionerModal(true)}
-              >
-                Login as Requisitioner
-              </Button>
             </form>
           </div>
 
@@ -225,11 +181,6 @@ const [requisitioners, setRequisitioners] = useState([]);
       )}
     </div>
   </div>
-  <RequisitionerModal
-  open={openRequisitionerModal}
-  setOpen={setOpenRequisitionerModal}
-  requisitioners={requisitioners}
-/>  
 </div>
   );
   

@@ -19,7 +19,11 @@ import {
 import { generatePrNo } from "@/services/generatePrNo";
 import AsyncSelect from "react-select/async";
 import Select from "react-select"; // Added for dropdowns
-import { getAllRequisitioner } from "@/services/requisitionerServices";
+import {
+  getAllRequisitioner,
+  useAuthenticatedRequisitionerDashboard,
+} from "@/services/requisitionerServices";
+import useAuthStore from "@/components/Auth/AuthStore";
 import { Loader2 } from "lucide-react";
 import { getAllCampusDirector } from "@/services/campusDirectorServices";
 // import { getAllFundClusters, FundCluster } from "@/services/fundClusterServices"; // Add this
@@ -65,6 +69,15 @@ const PurchaseRequestForm: React.FC<PurchaseRequestFormProps> = ({
     type: "success" as const,
   });
 
+  const { user } = useAuthStore();
+
+  const isRequisitioner =
+    user?.role === "Requisitioner";
+
+  const { data: dashboardData } =
+  useAuthenticatedRequisitionerDashboard();
+  console.log("DASHBOARD DATA:", dashboardData);
+
   const { mutate: addPurchaseRequestMutation } = useAddPurchaseRequest();
   const currentPurchaseNumber = lastPrNo && lastPrNo;
 
@@ -74,6 +87,7 @@ const PurchaseRequestForm: React.FC<PurchaseRequestFormProps> = ({
   setValue,
   formState: { errors },
   reset,
+  watch,
 } = useForm<PurchaseRequestData>({
   resolver: zodResolver(purchaseRequestFormSchema),
   defaultValues: {
@@ -81,6 +95,7 @@ const PurchaseRequestForm: React.FC<PurchaseRequestFormProps> = ({
     reviewed_by: null,      
   },
 });
+console.log("REQUISITIONER VALUE:", watch("requisitioner"));
 
   // Load dropdown data when dialog opens
   useEffect(() => {
@@ -88,6 +103,18 @@ const PurchaseRequestForm: React.FC<PurchaseRequestFormProps> = ({
       loadDropdownData();
     }
   }, [isDialogOpen]);
+
+  useEffect(() => {
+    if (
+      isRequisitioner &&
+      dashboardData?.data?.requisitioner?.requisition_id
+    ) {
+      setValue(
+        "requisitioner",
+        dashboardData.data.requisitioner.requisition_id
+      );
+    }
+  }, [dashboardData, isRequisitioner, setValue]);
 
   const loadDropdownData = async () => {
   setLoadingData(true);
@@ -202,6 +229,7 @@ const PurchaseRequestForm: React.FC<PurchaseRequestFormProps> = ({
   };
 
   const onSubmit = async (data: PurchaseRequestData) => {
+    console.log(data);
     setIsLoading(true);
 
     const result = purchaseRequestFormSchema.safeParse(data);
@@ -312,8 +340,8 @@ const PurchaseRequestForm: React.FC<PurchaseRequestFormProps> = ({
                     "purpose",
                     <Textarea {...register("purpose")} />
                   )}
-                  
-                  {renderField(
+                  {!isRequisitioner && (
+                  renderField(
                     "Requested By",
                     "requisitioner",
                     <AsyncSelect
@@ -323,6 +351,7 @@ const PurchaseRequestForm: React.FC<PurchaseRequestFormProps> = ({
                       placeholder="Search for a Requisitioner..."
                       className="text-sm"
                     />
+                  )
                   )}
 
                   {renderField(
@@ -351,7 +380,7 @@ const PurchaseRequestForm: React.FC<PurchaseRequestFormProps> = ({
                     />
                   )}
                   
-                  <div className="mt-6 fixed bottom-6 right-10">
+                  <div className="mt-6 flex justify-end">
                     <Button
                       className="text-slate-950 bg-orange-200 hover:bg-orange-300"
                       type="submit"

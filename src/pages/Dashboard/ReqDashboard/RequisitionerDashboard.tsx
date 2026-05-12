@@ -1,48 +1,21 @@
-import { useEffect, useState } from "react";
-import { useParams } from "react-router-dom";
+import {
+  useAuthenticatedRequisitionerDashboard
+} from "@/services/requisitionerServices";
+import Layout from "./components/Layout/ReqDashboardLayout";
+import { ScrollArea } from "@/components/ui/scroll-area";
 
 const RequisitionerDashboard = () => {
 
-  const { token } = useParams();
+  const {
+  data,
+  isLoading,
+  error,
+} = useAuthenticatedRequisitionerDashboard();
 
-  const [loading, setLoading] = useState(true);
+const dashboardData = data?.data;
 
-  const [dashboardData, setDashboardData] =
-    useState<any>(null);
 
-  useEffect(() => {
-
-    const fetchDashboard = async () => {
-
-      try {
-
-        const response = await fetch(
-  `https://supply-api-django.onrender.com/api/requisitioner-dashboard/${token}/`
-);
-
-        const data = await response.json();
-
-        console.log(data);
-
-        setDashboardData(data);
-
-      } catch (error) {
-
-        console.error(error);
-
-      } finally {
-
-        setLoading(false);
-
-      }
-
-    };
-
-    fetchDashboard();
-
-  }, [token]);
-
-  if (loading) {
+  if (isLoading) {
 
     return (
 
@@ -53,10 +26,19 @@ const RequisitionerDashboard = () => {
     );
 
   }
+  if (error) {
+  return (
+    <div className="min-h-screen flex justify-center items-center">
+      Failed to load dashboard
+    </div>
+  );
+}
 
   return (
+  <Layout>
+    <ScrollArea className="w-full">
 
-    <div className="min-h-screen bg-gray-100 py-8 px-4">
+      <main className="flex-grow">
 
   <div className="max-w-7xl mx-auto space-y-6">
 
@@ -369,7 +351,10 @@ const RequisitionerDashboard = () => {
 
   </div>
 
-</div>
-  );
+      </main>
+
+    </ScrollArea>
+  </Layout>
+);
 };
 export default RequisitionerDashboard;

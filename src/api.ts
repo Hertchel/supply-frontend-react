@@ -1,5 +1,5 @@
 import axios from "axios";
-
+import Cookies from "js-cookie";
 const react_env = import.meta.env.VITE_REACT_ENV;
 const development_url = import.meta.env.VITE_API_URL;
 const production_url = import.meta.env.VITE_RENDER_API_URL;
@@ -16,6 +16,13 @@ const api = axios.create({
 // Request interceptor (optional if no additional headers are required)
 api.interceptors.request.use(
   (config) => {
+
+    const token = Cookies.get("access_token");
+
+    if (token) {
+      config.headers.Authorization = `Bearer ${token}`;
+    }
+
     return config;
   },
   (error) => {

@@ -36,6 +36,8 @@ import BACPurchaseRequestIncoming from "./pages/Dashboard/BACDashboard/BACPurcha
 import ItemDistribution from "./pages/Dashboard/SupplyDashboard/ItemDistribution";
 import { ItemDistributionList } from "./pages/Dashboard/SupplyDashboard/components/ItemDistributionList";
 import RequisitionerDashboard from "./pages/Dashboard/ReqDashboard/RequisitionerDashboard";
+import ReqPurchaseRequest from "./pages/Dashboard/ReqDashboard/ReqPurchaseRequest";
+import ReqPurchaseRequestView from "./pages/Dashboard/ReqDashboard/ReqPurchaseRequestView";
 
 import AIDashboard from "./pages/Dashboard/SupplyDashboard/AIDashboard";
 
@@ -144,6 +146,29 @@ const App = () => {
             <Route path="campus-director" element={<CampusDirector />} />
             <Route path="BACmembers" element={<BACmember />} />
           </Route>
+
+          <Route
+            path="/requisitioner/*"
+            element={
+              <ProtectedRoutes
+                allowedRoles={["Requisitioner"]}
+              />
+            }
+          >
+            <Route
+              path="dashboard"
+              element={<RequisitionerDashboard />}
+            />
+            <Route
+              path="purchase-request"
+              element={<ReqPurchaseRequest />}
+            />
+            <Route
+              path="purchase-request/:pr_no"
+              element={<ReqPurchaseRequestView />}
+            />
+          </Route>
+
         </Routes>
       </Router>
     </>
