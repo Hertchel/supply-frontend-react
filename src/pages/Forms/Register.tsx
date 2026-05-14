@@ -29,6 +29,7 @@ const Register = () => {
   const [showPassword, setShowPassword] = useState<boolean>(false); // State for password visibility
   const [showConfirmPassword, setShowConfirmPassword] =
     useState<boolean>(false); // State for confirm password visibility
+  const [employeePreview, setEmployeePreview] = useState("");
 
   const navigate = useNavigate();
   const { toast } = useToast();
@@ -84,6 +85,7 @@ const Register = () => {
 
   const handleRoleChange = (roleValue: string) => {
     setValue("role", roleValue);
+    setEmployeePreview("Auto generate after registration");
   };
 
   const togglePasswordVisibility = () => {
@@ -146,12 +148,11 @@ const Register = () => {
 
         {/* Employee ID */}
         <div>
-          <Input placeholder="Employee No." {...register("employee_id")} />
-          {errors.employee_id && (
-            <p className="text-red-500 text-xs">
-              {errors.employee_id.message}
-            </p>
-          )}
+          <Input
+            placeholder="Employee No. will be auto-generated"
+            value={employeePreview}
+            readOnly
+          />
         </div>
 
         {/* Name */}
@@ -193,7 +194,14 @@ const Register = () => {
                 <SelectItem value="Supply Officer">
                   Supply Officer
                 </SelectItem>
-                <SelectItem value="BAC Officer">BAC Officer</SelectItem>
+
+                <SelectItem value="BAC Officer">
+                  BAC Officer
+                </SelectItem>
+
+                <SelectItem value="Requisitioner">
+                  Requisitioner
+                </SelectItem>
               </SelectContent>
             </Select>
             {errors.role && (
