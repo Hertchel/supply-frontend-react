@@ -29,7 +29,8 @@ const Register = () => {
   const [showPassword, setShowPassword] = useState<boolean>(false); // State for password visibility
   const [showConfirmPassword, setShowConfirmPassword] =
     useState<boolean>(false); // State for confirm password visibility
-  const [employeePreview, setEmployeePreview] = useState("");
+    //atuo emp no
+  // const [employeePreview, setEmployeePreview] = useState("");
 
   const navigate = useNavigate();
   const { toast } = useToast();
@@ -82,10 +83,18 @@ const Register = () => {
       });
     }
   };
-
+//auto emp no
+/*
   const handleRoleChange = (roleValue: string) => {
     setValue("role", roleValue);
     setEmployeePreview("Auto generate after registration");
+  };
+*/
+
+  const handleRoleChange = (
+    roleValue: string
+  ) => {
+    setValue("role", roleValue);
   };
 
   const togglePasswordVisibility = () => {
@@ -148,11 +157,25 @@ const Register = () => {
 
         {/* Employee ID */}
         <div>
+          {/*Manual emp no */}
+          <Input
+            placeholder="Employee No."
+            {...register("employee_id")}
+          />
+          {errors.employee_id && (
+            <p className="text-red-500 text-xs">
+              {errors.employee_id.message}
+            </p>
+          )}
+          {/*Auto emp no */}
+          {/*
           <Input
             placeholder="Employee No. will be auto-generated"
             value={employeePreview}
             readOnly
           />
+          */}
+
         </div>
 
         {/* Name */}

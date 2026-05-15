@@ -2,7 +2,7 @@ import { z } from "zod";
 
 const registerFormSchema = z
   .object({
-    // employee_id: z.string().min(1, "Employee ID is required"),
+    employee_id: z.string().min(1, "Employee ID is required"),//manual emp no
     first_name: z.string().min(1, "Firstname is required"),
     last_name: z.string().min(1, "Lastname is required"),
     role: z.string().min(1, "Please select a role to continue"),
