@@ -238,7 +238,7 @@ export const generateEmptyAOQPDF = async () => {
 
   // text
 
-  page.drawText("ABSTRACT OF QUOTATIONS hahahhaha", {
+  page.drawText("ABSTRACT OF QUOTATIONS", {
     x: 383,
     y: 496.06,
     size: 14,

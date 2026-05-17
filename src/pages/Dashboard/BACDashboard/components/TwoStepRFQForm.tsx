@@ -16,6 +16,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
 import { ScrollArea } from "@/components/ui/scroll-area";
+
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import {
   arraySort,
@@ -39,6 +40,16 @@ import { v4 as uuidv4 } from "uuid";
 import { formatTIN } from "@/services/formatTIN";
 import { MessageDialog } from "../../shared/components/MessageDialog";
 import { AxiosError } from "axios";
+import { useRequestForQuotation } from "@/services/requestForQuotationServices";
+import {
+  Command,
+  CommandEmpty,
+  CommandGroup,
+  CommandItem,
+  CommandList,
+} from "@/components/ui/command";
+
+import { ChevronsUpDown, Check } from "lucide-react";
 
 interface TwoStepRFQFormProps {
   isDialogOpen: boolean;
@@ -75,13 +86,29 @@ export const TwoStepRFQForm: React.FC<TwoStepRFQFormProps> = ({
   const rfq_no = pr_no; //set the initial value rfq_no to pr_no and later in submit handler it have a random Letter
 
   const { mutate: addRFQMutation } = useAddRequestForQuotation();
+  const { data: rfqData } = useRequestForQuotation();
   const { mutateAsync: addItemMutation } = useAddItemQuotation();
+
+  const uniqueSuppliers = Array.from(
+    new Map(
+      (rfqData?.data || []).map((rfq) => [
+        rfq.supplier_name,
+        {
+          supplier_name: rfq.supplier_name,
+          supplier_address: rfq.supplier_address,
+          tin: rfq.tin,
+          is_VAT: rfq.is_VAT,
+        },
+      ])
+    ).values()
+  );
 
   const {
     control,
     register,
     handleSubmit,
     setValue,
+    watch,
     formState: { errors },
     reset,
   } = useForm({
@@ -108,6 +135,18 @@ export const TwoStepRFQForm: React.FC<TwoStepRFQFormProps> = ({
     control,
     name: "items",
   });
+  const watchedSupplierName = watch("supplier_name");
+  const watchedSupplierAddress = watch("supplier_address");
+  const watchedTIN = watch("tin");
+
+  const [openSupplier, setOpenSupplier] = useState(false);
+  const filteredSuppliers = uniqueSuppliers.filter((supplier) =>
+    supplier.supplier_name
+      .toLowerCase()
+      .includes(
+        watch("supplier_name").toLowerCase()
+      )
+  );
 
   useEffect(() => {
 
@@ -170,6 +209,15 @@ export const TwoStepRFQForm: React.FC<TwoStepRFQFormProps> = ({
         <Label>{label}</Label>
         <Input
           {...register(field_name)}
+          value={
+            field_name === "supplier_name"
+              ? watchedSupplierName
+              : field_name === "supplier_address"
+              ? watchedSupplierAddress
+              : field_name === "tin"
+              ? watchedTIN
+              : undefined
+          }
           onChange={(e) => {
             handleInputChange(e);
             register(field_name).onChange(e);
@@ -331,11 +379,142 @@ export const TwoStepRFQForm: React.FC<TwoStepRFQFormProps> = ({
                     </CardHeader>
                     <CardContent className="space-y-2">
                       <div className="grid gap-4">
-                        {renderField({
-                          label: "Supplier Name",
-                          field_name: "supplier_name",
-                          errors,
-                        })}
+                        <div className="space-y-2">
+                          <Label>Supplier Name</Label>
+
+                            <div className="relative">
+                              <Input
+                                value={watch("supplier_name")}
+                                placeholder="Select or type supplier"
+                                onFocus={() => {
+                                  setOpenSupplier(true);
+                                }}
+                                onChange={(e) => {
+                                  setValue("supplier_name", e.target.value);
+                                  setOpenSupplier(true);
+                                }}
+                                onBlur={() => {
+                                  setTimeout(() => {
+                                    setOpenSupplier(false);
+                                  }, 150);
+                                }}
+                              />
+
+                              {openSupplier && filteredSuppliers.length > 0 && (
+                                <div className="absolute z-50 mt-1 w-full rounded-md border bg-white shadow-md max-h-60 overflow-auto">
+                                  <Command>
+                                    <CommandList>
+                                      <CommandGroup>
+                                        {filteredSuppliers.map((supplier) => (
+                                          <CommandItem
+                                            key={supplier.supplier_name}
+                                            value={supplier.supplier_name}
+                                            onMouseDown={(e) => {
+                                              e.preventDefault();
+                                            }}
+                                            onSelect={() => {
+                                              setValue(
+                                                "supplier_name",
+                                                supplier.supplier_name
+                                              );
+
+                                              setValue(
+                                                "supplier_address",
+                                                supplier.supplier_address
+                                              );
+
+                                              setValue(
+                                                "tin",
+                                                supplier.tin
+                                              );
+
+                                              setSelectedOption(
+                                                supplier.is_VAT
+                                                  ? "vat"
+                                                  : "non-vat"
+                                              );
+
+                                              setOpenSupplier(false);
+                                            }}
+                                          >
+                                            <Check
+                                              className={`mr-2 h-4 w-4 ${
+                                                watch("supplier_name") ===
+                                                supplier.supplier_name
+                                                  ? "opacity-100"
+                                                  : "opacity-0"
+                                              }`}
+                                            />
+
+                                            {supplier.supplier_name}
+                                          </CommandItem>
+                                        ))}
+                                      </CommandGroup>
+                                    </CommandList>
+                                  </Command>
+                                </div>
+                              )}
+
+                              <ChevronsUpDown className="absolute right-3 top-3 h-4 w-4 opacity-50" />
+                            </div>
+
+                            
+                              <Command>
+
+                                <CommandList>
+                                  <CommandEmpty>
+                                    No supplier found.
+                                  </CommandEmpty>
+
+                                  <CommandGroup>
+                                    {filteredSuppliers.map((supplier) => (
+                                      <CommandItem
+                                        key={supplier.supplier_name}
+                                        value={supplier.supplier_name}
+                                        onMouseDown={(e) => {
+                                          e.preventDefault();
+                                        }}
+                                        onSelect={() => {
+                                          setValue(
+                                            "supplier_name",
+                                            supplier.supplier_name
+                                          );
+
+                                          setValue(
+                                            "supplier_address",
+                                            supplier.supplier_address
+                                          );
+
+                                          setValue(
+                                            "tin",
+                                            supplier.tin
+                                          );
+
+                                          setSelectedOption(
+                                            supplier.is_VAT
+                                              ? "vat"
+                                              : "non-vat"
+                                          );
+
+                                          setOpenSupplier(false);
+                                        }}
+                                      >
+                                        <Check
+                                          className={`mr-2 h-4 w-4 ${
+                                            watch("supplier_name") ===
+                                            supplier.supplier_name
+                                              ? "opacity-100"
+                                              : "opacity-0"
+                                          }`}
+                                        />
+
+                                        {supplier.supplier_name}
+                                      </CommandItem>
+                                    ))}
+                                  </CommandGroup>
+                                </CommandList>
+                              </Command>
+                        </div>
                         {renderField({
                           label: "Supplier Address",
                           field_name: "supplier_address",

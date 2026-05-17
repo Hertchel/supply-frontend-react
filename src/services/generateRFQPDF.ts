@@ -1,15 +1,20 @@
-import { itemQuotationResponseType, quotationResponseType } from "@/types/response/request-for-quotation";
+import {
+  itemQuotationResponseType,
+  quotationResponseType,
+} from "@/types/response/request-for-quotation";
 import { PDFDocument, PDFFont, PDFPage, StandardFonts, rgb } from "pdf-lib";
 
-export const generateRFQPDF = async (item: itemQuotationResponseType[], rfq: quotationResponseType) => {
-
+export const generateRFQPDF = async (
+  item: itemQuotationResponseType[],
+  rfq: quotationResponseType,
+) => {
   const pdfDoc = await PDFDocument.create();
-  console.log(rfq)
+  console.log(rfq);
 
   const timesBoldFont = await pdfDoc.embedFont(StandardFonts.TimesRomanBold);
   const timesRomanFont = await pdfDoc.embedFont(StandardFonts.TimesRoman);
   const timesRomanItalicFont = await pdfDoc.embedFont(
-    StandardFonts.TimesRomanItalic
+    StandardFonts.TimesRomanItalic,
   );
   // text upper
   const itemperpage = 15;
@@ -18,10 +23,9 @@ export const generateRFQPDF = async (item: itemQuotationResponseType[], rfq: quo
     const page = pdfDoc.addPage([615.12, 936]);
     const pageItems = item.slice(
       pageIndex * itemperpage,
-      (pageIndex + 1) * itemperpage
+      (pageIndex + 1) * itemperpage,
     );
     pageItems.forEach((entry, index) => {
-
       const yPosition1 = 505 - index * 14.3;
 
       // Safely handle itemnum
@@ -43,7 +47,10 @@ export const generateRFQPDF = async (item: itemQuotationResponseType[], rfq: quo
       });
 
       // Safely handle qty
-      const quantitytext = entry.item_details.quantity !== undefined ? entry.item_details.quantity.toString() : "-";
+      const quantitytext =
+        entry.item_details.quantity !== undefined
+          ? entry.item_details.quantity.toString()
+          : "-";
       const quantitywidth = timesRomanFont.widthOfTextAtSize(quantitytext, 11);
       const quantityplace = (235 + 393) / 2;
       page.drawText(quantitytext, {
@@ -65,7 +72,10 @@ export const generateRFQPDF = async (item: itemQuotationResponseType[], rfq: quo
       });
 
       // Safely handle ABC with formatting
-      const ABCValue = entry.item_details.unit_cost !== undefined ? entry.item_details.unit_cost : 0;
+      const ABCValue =
+        entry.item_details.unit_cost !== undefined
+          ? entry.item_details.unit_cost
+          : 0;
       const ABCFormatted = new Intl.NumberFormat("en-US", {
         minimumFractionDigits: 2,
         maximumFractionDigits: 2,
@@ -86,7 +96,7 @@ export const generateRFQPDF = async (item: itemQuotationResponseType[], rfq: quo
       timesBoldFont,
       timesRomanFont,
       timesRomanItalicFont,
-      rfq
+      rfq,
     );
   }
   const pdfBytes = await pdfDoc.save();
@@ -98,14 +108,13 @@ export const generateRFQPDF = async (item: itemQuotationResponseType[], rfq: quo
   return url; // Return the URL for preview/download
 };
 
-
 const textandlines = async (
   pdfDoc: PDFDocument,
   page: PDFPage,
   timesBoldFont: PDFFont,
   timesRomanFont: PDFFont,
   timesRomanItalicFont: PDFFont,
-  rfq: quotationResponseType
+  rfq: quotationResponseType,
 ) => {
   page.drawText("REQUEST FOR QUOTATION", {
     x: 215,
@@ -128,6 +137,12 @@ const textandlines = async (
   page.drawText("Quotation No.:", {
     x: 357.49,
     y: 736.33,
+    size: 11,
+    font: timesRomanFont,
+  });
+  page.drawText("Mode of Procurement:", {
+    x: 357.49,
+    y: 722.33,
     size: 11,
     font: timesRomanFont,
   });
@@ -164,7 +179,12 @@ const textandlines = async (
     thickness: 1.5,
     color: rgb(0, 0, 0),
   });
-  page.drawText(rfq.supplier_address, { x: 32.5, y: 695, size: 11, font: timesRomanFont });
+  page.drawText(rfq.supplier_address, {
+    x: 32.5,
+    y: 695,
+    size: 11,
+    font: timesRomanFont,
+  });
 
   page.drawText("Address", { x: 32.5, y: 678, size: 11, font: timesRomanFont });
   page.drawText("TIN:", { x: 32.5, y: 664, size: 11, font: timesRomanFont });
@@ -176,6 +196,21 @@ const textandlines = async (
     color: rgb(0, 0, 0),
   });
 
+  // Label
+  page.drawText("[ ] VAT", {
+    x: 230,
+    y: 664,
+    size: 11,
+    font: timesRomanFont,
+  });
+
+  // Label
+  page.drawText("[ ] NON-VAT", {
+    x: 290,
+    y: 664,
+    size: 11,
+    font: timesRomanFont,
+  });
   page.drawText("Sir/Madam:", {
     x: 32.5,
     y: 635,
@@ -203,7 +238,7 @@ const textandlines = async (
   });
   page.drawText(
     "your quotation duly signed by you or your authorized representative. Insert your duly accomplished quotation on the attached ",
-    { x: 35, y: 608, size: 11, font: timesRomanFont }
+    { x: 35, y: 608, size: 11, font: timesRomanFont },
   );
   page.drawText("return envelope and seal the same.", {
     x: 35,
@@ -213,7 +248,7 @@ const textandlines = async (
   });
   page.drawText(
     "We reserve the right to reject any and/or all bids/quotations submitted.",
-    { x: 50, y: 584, size: 11, font: timesRomanFont }
+    { x: 50, y: 584, size: 11, font: timesRomanFont },
   );
 
   page.drawText("LEVI U. PANGAN, LPT", {
@@ -244,46 +279,45 @@ const textandlines = async (
     size: 11,
     font: timesBoldFont,
   });
-  page.drawText("ABC", {
-    x: 382,
+  page.drawText("Brand/Model", {
+    x: 376,
     y: 545,
     size: 10,
     font: timesBoldFont,
     color: rgb(0, 0, 0.9),
   });
-  page.drawText("(per unit)", {
-    x: 373,
+  page.drawText("(Offered by Supplier)", {
+    x: 362,
+    y: 535,
+    size: 10,
+    font: timesRomanFont,
+    color: rgb(0, 0, 0.9),
+  });
+  page.drawText("Unit", {
+    x: 460,
+    y: 545,
+    size: 10,
+    font: timesBoldFont,
+  });
+  page.drawText("Price", {
+    x: 458,
     y: 535,
     size: 10,
     font: timesBoldFont,
-    color: rgb(0, 0, 0.9),
   });
-  page.drawText("Offered by Supplier", {
-    x: 465,
+  page.drawText("Total Price Quotation", {
+    x: 490.5,
     y: 545,
     size: 10,
-    font: timesRomanItalicFont,
+    font: timesBoldFont,
   });
-  page.drawText("Brand/Model", {
-    x: 445,
-    y: 530,
+  page.drawText("(Offered by Supplier)", {
+    x: 493.5,
+    y: 535,
     size: 10,
-    font: timesBoldFont,
+    font: timesRomanFont,
+    color: rgb(0, 0, 0.9),
   });
-  page.drawText("Unit Price", {
-    x: 530,
-    y: 530,
-    size: 10,
-    font: timesBoldFont,
-  });
-  page.drawText("PURPOSE:", {
-    x: 34,
-    y: 518,
-    size: 8,
-    font: timesBoldFont,
-    color: rgb(1, 0, 0),
-  });
-
   //text lower
   page.drawText("Delivery Period:", {
     x: 55,
@@ -323,11 +357,11 @@ const textandlines = async (
 
   page.drawText(
     "Please be advised that in the event that you will be declared as the Lowest Complying and Responsive Supplier, said items",
-    { x: 50, y: 238, size: 11, font: timesRomanFont }
+    { x: 50, y: 238, size: 11, font: timesRomanFont },
   );
   page.drawText(
     "will be awarded to you subject to submission of the documentary requirements: ",
-    { x: 35, y: 225, size: 11, font: timesRomanFont }
+    { x: 35, y: 225, size: 11, font: timesRomanFont },
   );
   page.drawText("(1)  PHILGEPS   Registration  Certificate;  2.", {
     x: 390,
@@ -338,7 +372,7 @@ const textandlines = async (
   });
   page.drawText(
     "Mayor's  Permit;  3.  Income  Tax   Return,  &  4.  Omnibus Sworn Statement. A Notice of Award and Purchase Order will be",
-    { x: 35, y: 212, size: 11, font: timesRomanFont, color: rgb(0, 0, 0.9) }
+    { x: 35, y: 212, size: 11, font: timesRomanFont, color: rgb(0, 0, 0.9) },
   );
   page.drawText("issued.", {
     x: 35,
@@ -347,22 +381,45 @@ const textandlines = async (
     font: timesRomanFont,
     color: rgb(0, 0, 0.9),
   });
-  page.drawText("Note: Award to the Lowest Complying Supplier shall be on ", {
+  page.drawText("Note: ", {
     x: 50,
     y: 186,
     size: 11,
     font: timesRomanFont,
   });
-  page.drawText("ITEM BASIS.", {
-    x: 315,
-    y: 186,
+  page.drawText("[ ] Award to the Lowest Complying Supplier shall be on a ", {
+    x: 50,
+    y: 173,
+    size: 11,
+    font: timesRomanFont,
+  });
+  page.drawText("LOT ", {
+    x: 310,
+    y: 173,
     size: 11,
     font: timesRomanFont,
     color: rgb(0, 0, 0.9),
   });
+  page.drawText("basis.", {
+    x: 335,
+    y: 173,
+    size: 11,
+    font: timesRomanFont,
+  });
+  page.drawText("[ ] Award Line Item Basis ", {
+    x: 50,
+    y: 160,
+    size: 11,
+    font: timesRomanFont,
+  });
   page.drawText(
     "After having carefully read and accepted your General Conditions, I/We quote on the item at prices noted above:",
-    { x: 50, y: 160, size: 11, font: timesRomanFont }
+    {
+      x: 50,
+      y: 147,
+      size: 11,
+      font: timesRomanFont,
+    },
   );
 
   page.drawText("Canvassed by:", {
@@ -385,38 +442,38 @@ const textandlines = async (
   });
 
   page.drawLine({
-    start: { x: 330, y: 129 },
-    end: { x: 584.5, y: 129 },
+    start: { x: 330, y: 116 },
+    end: { x: 584.5, y: 116 },
     thickness: 1.5,
     color: rgb(0, 0, 0),
   });
   page.drawText("Signature over Printed Name of Supplier", {
     x: 350,
-    y: 119,
+    y: 106,
     size: 11,
     font: timesRomanFont,
   });
 
   page.drawLine({
-    start: { x: 330, y: 94 },
-    end: { x: 584.5, y: 94 },
+    start: { x: 330, y: 81 },
+    end: { x: 584.5, y: 81 },
     thickness: 1.5,
     color: rgb(0, 0, 0),
   });
   page.drawText("Tel. No. / Cellphone No. & Email Address", {
     x: 350,
-    y: 84,
+    y: 71,
     size: 11,
     font: timesRomanFont,
   });
 
   page.drawLine({
-    start: { x: 330, y: 59 },
-    end: { x: 584.5, y: 59 },
+    start: { x: 330, y: 46 },
+    end: { x: 584.5, y: 46 },
     thickness: 1.5,
     color: rgb(0, 0, 0),
   });
-  page.drawText("Date", { x: 440, y: 49, size: 11, font: timesRomanFont });
+  page.drawText("Date", { x: 440, y: 36, size: 11, font: timesRomanFont });
 
   //Horizontal Line
 
@@ -426,12 +483,7 @@ const textandlines = async (
     thickness: 1,
     color: rgb(0, 0, 0),
   });
-  page.drawLine({
-    start: { x: 430, y: 541 },
-    end: { x: 585, y: 541 },
-    thickness: 1,
-    color: rgb(0, 0, 0),
-  });
+
   page.drawLine({
     start: { x: 30.52, y: 527 },
     end: { x: 585, y: 527 },
@@ -574,14 +626,14 @@ const textandlines = async (
     color: rgb(0, 0, 0),
   });
   page.drawLine({
-    start: { x: 430, y: 555.5 },
-    end: { x: 430, y: 306 },
+    start: { x: 450, y: 555.5 },
+    end: { x: 450, y: 306 },
     thickness: 1,
     color: rgb(0, 0, 0),
   });
   page.drawLine({
-    start: { x: 520, y: 541.5 },
-    end: { x: 520, y: 306 },
+    start: { x: 490, y: 555.5 },
+    end: { x: 490, y: 306 },
     thickness: 1,
     color: rgb(0, 0, 0),
   });
@@ -593,7 +645,7 @@ const textandlines = async (
   });
   const headerjpg = "/header.jpeg";
   const headerjpgBytes = await fetch(headerjpg).then((res) =>
-    res.arrayBuffer()
+    res.arrayBuffer(),
   );
   const headerimage = await pdfDoc.embedJpg(headerjpgBytes);
   page.drawImage(headerimage, {

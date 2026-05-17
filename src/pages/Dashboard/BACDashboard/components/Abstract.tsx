@@ -56,8 +56,31 @@ export default function Abstract() {
   }, [items?.data])
 
   const filteredSupplierItem = useMemo(() => {
+  console.log("PR NO:", pr_no);
+
+  console.log(
+    "SUPPLIER ITEMS:",
+    supplierItemData
+  );
+
+  return supplierItemData.filter((data) => {
+    console.log(
+      "purchase_request value:",
+      data.rfq_details.purchase_request
+    );
+
+    return (
+      data.rfq_details.purchase_request?.toString() ===
+      pr_no?.toString()
+    );
+  });
+}, [supplierItemData, pr_no]);
+
+/*
+  const filteredSupplierItem = useMemo(() => {
     return supplierItemData.filter(data => data.rfq_details.purchase_request === pr_no)
   }, [supplierItemData, pr_no])
+  */
 
   const {
     isLoading,
