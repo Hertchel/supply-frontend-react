@@ -27,6 +27,7 @@ export const generateRFQPDF = async (
     );
     pageItems.forEach((entry, index) => {
       const yPosition1 = 505 - index * 14.3;
+      console.log("ENTRY DATA:", entry);
 
       // Safely handle itemnum
       const itemnumtext = index !== undefined ? (index + 1).toString() : "-";
@@ -52,7 +53,7 @@ export const generateRFQPDF = async (
           ? entry.item_details.quantity.toString()
           : "-";
       const quantitywidth = timesRomanFont.widthOfTextAtSize(quantitytext, 11);
-      const quantityplace = (235 + 393) / 2;
+      const quantityplace = (301 + 327) / 2;
       page.drawText(quantitytext, {
         x: quantityplace - quantitywidth / 2,
         y: yPosition1,
@@ -63,11 +64,27 @@ export const generateRFQPDF = async (
       // Safely handle unit
       const unittext = entry.item_details.unit || "-";
       const unitwidth = timesRomanFont.widthOfTextAtSize(unittext, 11);
-      const unitplace = (290 + 393) / 2;
+      const unitplace = (327 + 360) / 2;
       page.drawText(unittext, {
         x: unitplace - unitwidth / 2,
         y: yPosition1,
         size: 11,
+        font: timesRomanFont,
+      });
+      // Safely handle brand/model
+      const brandText = entry.brand_model || "-";
+
+      const brandWidth = timesRomanFont.widthOfTextAtSize(
+        brandText,
+        10,
+      );
+
+      const brandPlace = (360 + 450) / 2;
+
+      page.drawText(brandText, {
+        x: brandPlace - brandWidth / 2,
+        y: yPosition1,
+        size: 10,
         font: timesRomanFont,
       });
 
@@ -81,14 +98,42 @@ export const generateRFQPDF = async (
         maximumFractionDigits: 2,
       }).format(Number(ABCValue));
       const ABCWidth = timesRomanFont.widthOfTextAtSize(ABCFormatted, 10);
-      const ABCPlace = 425;
+      const ABCPlace = 485;
       page.drawText(ABCFormatted, {
         x: ABCPlace - ABCWidth,
         y: yPosition1,
         size: 10,
         font: timesRomanFont,
       });
+      // Supplier quotation price
+      const supplierPriceValue =
+        entry.unit_price !== undefined
+          ? entry.unit_price
+          : 0;
+
+      const supplierPriceFormatted = new Intl.NumberFormat("en-US", {
+        minimumFractionDigits: 2,
+        maximumFractionDigits: 2,
+      }).format(Number(supplierPriceValue));
+
+      const supplierPriceWidth =
+        timesRomanFont.widthOfTextAtSize(
+          supplierPriceFormatted,
+          10,
+        );
+
+      const supplierPricePlace = 579;
+
+      page.drawText(supplierPriceFormatted, {
+        x: supplierPricePlace - supplierPriceWidth,
+        y: yPosition1,
+        size: 10,
+        font: timesRomanFont,
+      });
+
     });
+
+   
 
     await textandlines(
       pdfDoc,
@@ -128,6 +173,20 @@ const textandlines = async (
     size: 11,
     font: timesRomanFont,
   });
+
+  const currentDate = new Date().toLocaleDateString("en-US", {
+    year: "numeric",
+    month: "2-digit",
+    day: "2-digit",
+  });
+
+  page.drawText(currentDate, {
+    x: 395,
+    y: 764.33,
+    size: 11,
+    font: timesRomanFont,
+  });
+
   page.drawText("BAC Resolution No.:", {
     x: 357.49,
     y: 750.33,
@@ -196,21 +255,25 @@ const textandlines = async (
     color: rgb(0, 0, 0),
   });
 
-  // Label
-  page.drawText("[ ] VAT", {
-    x: 230,
-    y: 664,
-    size: 11,
-    font: timesRomanFont,
-  });
+  page.drawText(
+    rfq.is_VAT ? "[ / ] VAT" : "[ ] VAT",
+    {
+      x: 230,
+      y: 664,
+      size: 11,
+      font: timesRomanFont,
+    },
+  );
 
-  // Label
-  page.drawText("[ ] NON-VAT", {
-    x: 290,
-    y: 664,
-    size: 11,
-    font: timesRomanFont,
-  });
+  page.drawText(
+    !rfq.is_VAT ? "[ / ] NON-VAT" : "[ ] NON-VAT",
+    {
+      x: 290,
+      y: 664,
+      size: 11,
+      font: timesRomanFont,
+    },
+  );
   page.drawText("Sir/Madam:", {
     x: 32.5,
     y: 635,
@@ -319,20 +382,14 @@ const textandlines = async (
     color: rgb(0, 0, 0.9),
   });
   //text lower
-  page.drawText("Delivery Period:", {
+  page.drawText("Delivery Period: 15 Days Upon Confirming PO", {
     x: 55,
     y: 291,
     size: 11,
     font: timesRomanFont,
     color: rgb(0, 0, 0.9),
   });
-  page.drawLine({
-    start: { x: 130, y: 291 },
-    end: { x: 250, y: 291 },
-    thickness: 1,
-    color: rgb(0, 0, 0.9),
-  });
-
+  
   page.drawText("Warranty:", {
     x: 55,
     y: 278,
