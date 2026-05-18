@@ -58,7 +58,6 @@ const drawHeader = (
 };
 
 const drawTableHeaders = (page: PDFPage, timesBold: PDFFont) => {
-  const y = 605;
   page.drawText("Stock /", { x: 28, y: 620, size: 11, font: timesBold });
   page.drawText("Property No.", { x: 25, y: 608, size: 11, font: timesBold });
 
@@ -190,12 +189,8 @@ export const generatePRPDF = async (item: itemType[]) => {
   const headerBytes = await fetch("/header.jpeg").then((res) =>
     res.arrayBuffer(),
   );
-  const footerBytes = await fetch("/footer.jpeg").then((res) =>
-    res.arrayBuffer(),
-  );
 
   const headerImage = await pdfDoc.embedJpg(headerBytes);
-  const footerImage = await pdfDoc.embedJpg(footerBytes);
 
   const timesRoman = await pdfDoc.embedFont(StandardFonts.TimesRoman);
   const timesBold = await pdfDoc.embedFont(StandardFonts.TimesRomanBold);
@@ -293,19 +288,6 @@ export const generatePRPDF = async (item: itemType[]) => {
 
   textandlines(page, item[0]);
   drawSignatures(page, item, timesBold, helvetica, helveticaBold);
-
-  const colBounds = {
-    stock: [23, 70],
-    unit: [70, 119],
-    desc: [119, 365],
-    qty: [365, 416],
-    unitCost: [416, 480],
-    total: [480, 564],
-  };
-
-  const wrapText = (text: string, maxW: number, fontSize: number) => {
-    // ... keep your existing wrapText logic
-  };
 
   // Table items
   for (const entry of item) {
