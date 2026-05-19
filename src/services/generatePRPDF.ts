@@ -339,9 +339,9 @@ drawSignatures(page, item, Helveticafont);
   // COLUMN BOUNDARIES (MATCH GRID)
 const colBounds = {
   stock: [22.68, 70],
-  unit: [70, 119],
+  quantity: [70, 119],
   description: [119, 365],
-  quantity: [365, 416],
+  unit: [365, 416],
   unitCost: [416, 480],
   totalCost: [480, 564],
 };
@@ -463,7 +463,7 @@ drawCenteredText(
   10
 );
 
-// UNIT
+// Unit
 drawCenteredText(
   page,
   unit,
@@ -484,7 +484,8 @@ wrappedDescription.forEach((line, i) => {
   });
 });
 
-// QUANTITY
+
+// Quantity
 drawCenteredText(
   page,
   quantity,
