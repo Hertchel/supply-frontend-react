@@ -12,8 +12,9 @@ export type itemType = {
       designation: string;
     };
     reviewed_by_details?: {
-      first_name: string;
-      last_name: string;
+      id?: number;
+      name: string;
+      email?: string;
       designation?: string;
     };
     created_at: Date;
