@@ -50,6 +50,7 @@ const EditBACmemberForm: React.FC<EditBACmemberFormProps> = ({
       member_id: BACmember?.data?.member_id,
       name: BACmember?.data?.name,
       designation: BACmember?.data?.designation,
+      position: BACmember?.data?.position,
     },
   });
 
@@ -58,6 +59,7 @@ const EditBACmemberForm: React.FC<EditBACmemberFormProps> = ({
       setValue("member_id", BACmember?.data?.member_id);
       setValue("name", BACmember?.data?.name);
       setValue("designation", BACmember?.data?.designation);
+      setValue("position", BACmember?.data?.position);
     }
   }, [BACmember, setValue]);
 
@@ -108,11 +110,17 @@ const EditBACmemberForm: React.FC<EditBACmemberFormProps> = ({
                     "name",
                     <Input {...register("name")} />
                   )}
-
+                  
                   {renderField(
                     "Designation",
                     "designation",
                     <Input {...register("designation")} />
+                  )}
+
+                  {renderField(
+                    "Position",
+                    "position",
+                    <Input {...register("position")} />
                   )}
 
                   <div className="mt-6 fixed bottom-6 right-6"> 

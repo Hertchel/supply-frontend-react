@@ -7,6 +7,7 @@ export const BACmemberSchema = z.object({
   middle_name: z.string().optional(),
   name: z.string().optional(), // i will be concatenate th first_name, last_name and middle_name later in save
   designation: z.string().min(1, { message: "designation is required" }),
+  position: z.string(),
 });
 
 export type BACmemberType = z.infer<typeof BACmemberSchema>;
@@ -19,6 +20,7 @@ export const EditBACmemberSchema = z.object({
   middle_name: z.string().optional(),
   name: z.string().optional(), // i will be concatenate th first_name, last_name and middle_name later in save
   designation: z.string().min(1, { message: "designation is required" }),
+  position: z.string(),
 });
 
 export type EditBACmemberType = z.infer<typeof BACmemberSchema>;

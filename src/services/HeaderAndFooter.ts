@@ -31,7 +31,7 @@ export const HeaderAndFooter = async (
     // Example signature fields at calculated positions
     page.drawText('WE CERTIFY that we opened the bids of the above-listed materials, the abstract of which appears, as the time and date indicated.', {x: 56.69, y: footerYPosition, size: 12, font: timesRomanFont });
     page.drawText('Bids and Awards Committee:', {x: 31.18, y: footerYPosition - 15, size: 12, font: timesRomanFont });
-    page.drawText('Conforme:', {x: 547.08, y: footerYPosition - 15, size: 11, font: timesRomanFont });
+    page.drawText('Conforme:', {x: 547.08, y: footerYPosition - 80, size: 11, font: timesRomanFont });
     page.drawText('No.', {x: 40, y: 380, size: 11, font: timesBoldFont });
     page.drawText('Items', {x: 200, y: 380, size: 11, font: timesBoldFont });
     page.drawText('Quantity', {x: 365, y: 380, size: 11, font: timesBoldFont });
@@ -46,22 +46,24 @@ export const HeaderAndFooter = async (
     //text signature - FIXED with optional chaining and fallback values
     page.drawText(bac_members[0]?.name || "N/A", {x: 80.39, y: footerYPosition - 57.15, size: 11, font: timesBoldFont });
     page.drawText(bac_members[0]?.designation || "N/A", {x: 96.92, y: footerYPosition - 72.32, size: 11, font: timesRomanFont });
-    page.drawText(bac_members[1]?.name || "N/A", {x: 334.72, y: footerYPosition - 57.15, size: 11, font: timesBoldFont });
+
+    page.drawText(bac_members[1]?.name || "N/A", {x: 370, y: footerYPosition - 57.15, size: 11, font: timesBoldFont });
     page.drawText(bac_members[1]?.designation || "N/A", {x: 381.93, y: footerYPosition - 72.32, size: 11, font: timesRomanFont });
   
-    page.drawText('End-user', {x: 726.77, y: footerYPosition - 72.32 , size: 11, font: timesRomanFont });
+    page.drawText('End-user', {x: 726.77, y: footerYPosition - 130 , size: 11, font: timesRomanFont });
   
     page.drawText(bac_members[2]?.name || "N/A", {x: 68.57, y: footerYPosition - 130.07, size: 11, font: timesBoldFont });
     page.drawText(bac_members[2]?.designation || "N/A", {x: 96.92, y: footerYPosition - 145.2 , size: 11, font: timesRomanFont });
-    page.drawText(bac_members[3]?.name || "N/A", {x: 331.46, y: footerYPosition - 130.07, size: 11, font: timesBoldFont });
+
+    page.drawText(bac_members[3]?.name || "N/A", {x: 375, y: footerYPosition - 130.07, size: 11, font: timesBoldFont });
     page.drawText(bac_members[3]?.designation || "N/A", {x: 371.14, y: footerYPosition - 140.2  , size: 11, font: timesRomanFont });
   
-    page.drawText(bac_members[4]?.name || "N/A", {x: 200, y:  footerYPosition - 91.32, size: 11, font: timesBoldFont });
-    page.drawText(bac_members[4]?.designation || "N/A", {x: 225.14, y:  footerYPosition - 105.07   , size: 11, font: timesRomanFont });
+    page.drawText(bac_members[4]?.name || "N/A", {x: 200, y:  footerYPosition - 215, size: 11, font: timesBoldFont });
+    page.drawText(bac_members[4]?.designation || "N/A", {x: 225.14, y:  footerYPosition - 230  , size: 11, font: timesRomanFont });
   
     // FIXED: Add optional chaining for nested data
-    page.drawText(data?.supplier_details?.aoq_details?.pr_details?.campus_director_details?.name || "N/A", {x: 658.44, y: footerYPosition - 130.07, size: 11, font: timesBoldFont });
-    page.drawText(data?.supplier_details?.aoq_details?.pr_details?.campus_director_details?.designation || "N/A", {x: 665, y:  footerYPosition - 140.2 , size: 11, font: timesRomanFont });
+    page.drawText(data?.supplier_details?.aoq_details?.pr_details?.campus_director_details?.name || "N/A", {x: 690, y:  footerYPosition - 215, size: 11, font: timesBoldFont });
+    page.drawText(data?.supplier_details?.aoq_details?.pr_details?.campus_director_details?.designation || "N/A", {x: 665, y:  footerYPosition - 230, size: 11, font: timesRomanFont });
     
     //Horizontal Line
     page.drawLine({start: { x: 29.53  , y: 401.57 }, end: { x: 898.98, y: 401.57 }, thickness: 1.5 , color: rgb(0, 0, 0)});

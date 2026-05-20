@@ -107,9 +107,27 @@ export default function Abstract() {
 
 
   const handlePrintClick = async () => {
-    const url = await generateAOQPDF(filteredSupplierItem!, bacMembersData);
-    window.open(url!, "_blank");
-  };
+
+  console.log("BAC MEMBERS RAW:", bac_members);
+  console.log("BAC MEMBERS DATA:", bacMembersData);
+
+  if (!bacMembersData || bacMembersData.length === 0) {
+    console.error("BAC MEMBERS NOT LOADED");
+    return;
+  }
+
+  const url = await generateAOQPDF(
+    filteredSupplierItem!,
+    bacMembersData
+  );
+
+  if (!url) {
+    console.error("PDF generation failed");
+    return;
+  }
+
+  window.open(url, "_blank");
+};
 
   return (
   

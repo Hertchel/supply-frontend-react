@@ -3,6 +3,57 @@ import { HeaderAndFooter } from "./HeaderAndFooter";
 import { supplierItemType_ } from "@/types/response/abstract-of-quotation";
 import { BACmemberType } from "@/types/request/BACmember";
 
+const drawDebugGrid = (page: any) => {
+  const { width, height } = page.getSize();
+
+  // Grid spacing
+  const step = 15;
+
+  // Vertical lines
+  for (let x = 0; x <= width; x += step) {
+    page.drawLine({
+      start: { x, y: 0 },
+      end: { x, y: height },
+      thickness: x % 100 === 0 ? 0.8 : 0.3,
+      color:
+        x % 100 === 0
+          ? rgb(1, 0, 0) // red major lines
+          : rgb(0.85, 0.85, 0.85), // light gray minor lines
+      opacity: 0.5,
+    });
+
+    // X-axis labels
+    page.drawText(`${x}`, {
+      x: x + 2,
+      y: 2,
+      size: 5,
+      color: rgb(1, 0, 0),
+    });
+  }
+
+  // Horizontal lines
+  for (let y = 0; y <= height; y += step) {
+    page.drawLine({
+      start: { x: 0, y },
+      end: { x: width, y },
+      thickness: y % 100 === 0 ? 0.8 : 0.3,
+      color:
+        y % 100 === 0
+          ? rgb(0, 0, 1) // blue major lines
+          : rgb(0.85, 0.85, 0.85),
+      opacity: 0.5,
+    });
+
+    // Y-axis labels
+    page.drawText(`${y}`, {
+      x: 2,
+      y: y + 2,
+      size: 5,
+      color: rgb(0, 0, 1),
+    });
+  }
+};
+
 export const generateAOQPDF = async (data: supplierItemType_[], bac_members: BACmemberType[]) => {
   const items = Array.isArray(data) ? data : [];
 
@@ -19,6 +70,7 @@ export const generateAOQPDF = async (data: supplierItemType_[], bac_members: BAC
 
   for (let pageIndex = 0; pageIndex < pages; pageIndex++) {
     const page = pdfDoc.addPage([936, 612]);
+    drawDebugGrid(page);
     let yPosition = 355;
     let yPosition1 = 353;
     const pageItems = items.slice(
@@ -115,6 +167,15 @@ export const generateAOQPDF = async (data: supplierItemType_[], bac_members: BAC
       });
     });
     const footerYPosition = yPosition - 10;
+
+    console.log("BAC MEMBERS:", bac_members);
+    console.log("BAC MEMBERS LENGTH:", bac_members?.length);
+    console.log("DATA:", data);
+    console.log(
+      "CAMPUS DIRECTOR:",
+      data[0]?.supplier_details?.aoq_details?.pr_details?.campus_director_details
+    );
+
     await HeaderAndFooter(
       pdfDoc,
       page,

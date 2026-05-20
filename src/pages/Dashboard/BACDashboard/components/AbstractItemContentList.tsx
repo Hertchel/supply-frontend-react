@@ -127,6 +127,15 @@ export const AbstractItemContentList = () => {
   abstractData?.pr_details.status === "Ready to Order";
 
   const handleGenerateAOQPDF = async () => {
+
+  console.log("BAC MEMBERS RAW:", bac_members);
+  console.log("BAC MEMBERS DATA:", bacMembersData);
+
+  if (!bacMembersData || bacMembersData.length === 0) {
+    console.error("BAC MEMBERS NOT LOADED");
+    return;
+  }
+
   if (!filteredSupplierItemData || filteredSupplierItemData.length === 0) {
     console.log("Filtered AOQ items:", filteredSupplierItemData);
     console.log("aoq_no param:", aoq_no);
@@ -134,7 +143,10 @@ export const AbstractItemContentList = () => {
     return;
   }
 
-  const url = await generateAOQPDF(filteredSupplierItemData, bacMembersData);
+  const url = await generateAOQPDF(
+    filteredSupplierItemData,
+    bacMembersData
+  );
 
   if (!url) {
     console.error("PDF generation failed");
