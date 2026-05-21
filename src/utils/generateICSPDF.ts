@@ -13,13 +13,13 @@ type collectedDataType = {
   receivedfromposition: string;
   receivedbyname: string;
   receivedbyposition: string;
-}
+};
 
 export const generateICSPDF = async (itemData: _itemsDeliveredType[]) => {
   const pdfDoc = await PDFDocument.create();
   const timesRomanFont = await pdfDoc.embedFont(StandardFonts.TimesRoman);
   const timesRomanItalicFont = await pdfDoc.embedFont(
-    StandardFonts.TimesRomanItalic
+    StandardFonts.TimesRomanItalic,
   );
   const timesBoldFont = await pdfDoc.embedFont(StandardFonts.TimesRomanBold);
   const Helveticafont = await pdfDoc.embedFont(StandardFonts.Helvetica);
@@ -55,11 +55,7 @@ export const generateICSPDF = async (itemData: _itemsDeliveredType[]) => {
 
   const firstPurpose =
     itemData[0]?.inspection_details.po_details.pr_details.purpose ?? "";
-  const firstPurposeSplit = wrapText(
-    firstPurpose,
-    purposewidth,
-    12
-  );
+  const firstPurposeSplit = wrapText(firstPurpose, purposewidth, 12);
   const firstPurposeHeight = firstPurposeSplit.length * lineHeight;
 
   const collectedData: collectedDataType[] = [];
@@ -90,11 +86,7 @@ export const generateICSPDF = async (itemData: _itemsDeliveredType[]) => {
       receivedbyname,
       receivedbyposition,
     });
-    const wrappedDescription = wrapText(
-      description,
-      maxWidth,
-      9
-    );
+    const wrappedDescription = wrapText(description, maxWidth, 9);
     const descriptionHeight = wrappedDescription.length * lineHeight;
 
     const itemHeight = Math.max(descriptionHeight, lineHeight);
@@ -109,7 +101,7 @@ export const generateICSPDF = async (itemData: _itemsDeliveredType[]) => {
         collectedData,
         firstPurposeHeight,
         firstPurposeSplit,
-        lineHeight
+        lineHeight,
       );
 
       page = pdfDoc.addPage([612, pageHeight]);
@@ -142,7 +134,7 @@ export const generateICSPDF = async (itemData: _itemsDeliveredType[]) => {
     const quantitytext = quantity || "";
     const quantitywidth = timesRomanFont.widthOfTextAtSize(
       quantitytext.toString(),
-      10
+      10,
     );
     const quantityplace = (37 + 88) / 2;
     page.drawText(quantitytext.toString(), {
@@ -157,7 +149,7 @@ export const generateICSPDF = async (itemData: _itemsDeliveredType[]) => {
     }).format(unitCost || 0);
     const unitCostWidth = timesRomanFont.widthOfTextAtSize(
       unitCostFormatted,
-      10
+      10,
     );
     const unitCostPlace = 180;
     page.drawText(unitCostFormatted, {
@@ -174,7 +166,7 @@ export const generateICSPDF = async (itemData: _itemsDeliveredType[]) => {
 
     const totalCostWidth = timesRomanFont.widthOfTextAtSize(
       totalCostFormatted,
-      10
+      10,
     );
     const totalCostPlace = 248;
     page.drawText(totalCostFormatted, {
@@ -196,7 +188,7 @@ export const generateICSPDF = async (itemData: _itemsDeliveredType[]) => {
     collectedData,
     firstPurposeHeight,
     firstPurposeSplit,
-    lineHeight
+    lineHeight,
   );
 
   // Serialize the PDF to bytes
@@ -216,7 +208,7 @@ const textandlines = async (
   collectedData: collectedDataType[],
   firstPurposeHeight: number,
   firstPurposeSplit: string[],
-  lineHeight: number
+  lineHeight: number,
 ) => {
   collectedData.forEach((data) => {
     //receiveby from
@@ -312,15 +304,28 @@ const textandlines = async (
     });
     page.drawText(data.po_no, {
       x: 127,
-      y: 134 - firstPurposeHeight - 5,
+      y: 90 + firstPurposeHeight - firstPurposeHeight,
       size: 9,
       font: Helveticafont,
     }); //PO number
   });
   page.drawText("PO #:", {
     x: 99,
-    y: 134 - firstPurposeHeight - 5,
+    y: 90 + firstPurposeHeight - firstPurposeHeight,
     size: 10,
+    font: Helveticafont,
+  });
+  page.drawText("Supplier:", {
+    x: 220,
+    y: 90 + firstPurposeHeight - firstPurposeHeight,
+    size: 10,
+    font: Helveticafont,
+  });
+
+  page.drawText("SUPPLY AND PROPERTY MANAGEMENT OFFICE", {
+    x: 176,
+    y: 685,
+    size: 11,
     font: Helveticafont,
   });
   page.drawText("INVENTORY CUSTODIAN SLIP", {
@@ -356,9 +361,9 @@ const textandlines = async (
   firstPurposeSplit.forEach((line, lineIndex) => {
     page.drawText(line, {
       x: 128,
-      y: 129 - lineIndex * lineHeight,
-      size: 9,
-      font: timesRomanFont,
+      y: 128 - lineIndex * lineHeight,
+      size: 10,
+      font: timesRomanItalicFont,
     });
   });
 
@@ -520,7 +525,12 @@ const textandlines = async (
     size: 10,
     font: Helveticafont,
   });
-  page.drawText("Purpose:", { x: 85, y: 128, size: 10, font: Helveticafont });
+  page.drawText("Purpose:", {
+    x: 85,
+    y: 128,
+    size: 10,
+    font: Helveticafont,
+  });
 
   const text1 = "Signature Over Printed Name";
   const text1width = timesRomanFont.widthOfTextAtSize(text1, 11);
@@ -631,6 +641,14 @@ const textandlines = async (
     thickness: 2,
     color: rgb(0, 0, 0),
   }); //1
+  for (let i = 525; i > 255; i -= 20) {
+    page.drawLine({
+      start: { x: 37, y: i },
+      end: { x: 570, y: i },
+      thickness: 0.5,
+      color: rgb(0, 0, 0),
+    });
+  }
 
   // const headerjpg = "/header.jpeg";
   // const headerjpgBytes = await fetch(headerjpg).then((res) =>
@@ -644,7 +662,7 @@ const textandlines = async (
   // page.drawImage(jpgImage, { x: 45, y: 50, width: 530, height: 30 });
   const headerjpg = "/header.jpeg";
   const headerjpgBytes = await fetch(headerjpg).then((res) =>
-    res.arrayBuffer()
+    res.arrayBuffer(),
   );
   const headerimage = await pdfDoc.embedJpg(headerjpgBytes);
   page.drawImage(headerimage, {
