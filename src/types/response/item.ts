@@ -2,6 +2,13 @@ export type itemType = {
   pr_details: {
     pr_no: string;
     office: string;
+    office_details?: {
+      id: number;
+      code: string;
+      name: string;
+      department?: string;
+    };
+    fund_cluster?: string;
     purpose: string;
     requisitioner_details: {
       name: string;

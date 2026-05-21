@@ -54,6 +54,14 @@ export default function PurchaseOrderInProgess() {
   }, [orderItemData])
 
   const purchaseOrderData = Array.isArray(data?.data) ? data.data : [];
+  console.log(
+  "ALL PURCHASE ORDERS",
+  purchaseOrderData.map((po) => ({
+    po_no: po.po_no,
+    status: po.status,
+    created_at: po.created_at,
+  }))
+);
   const inProgressOrders = purchaseOrderData.filter(
     (order) => order.status === "In Progress"
   );

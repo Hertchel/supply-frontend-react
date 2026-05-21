@@ -137,7 +137,7 @@ console.log("REQUISITIONER VALUE:", watch("requisitioner"));
       setOffices(
         officeRes.data.map((office: Office) => ({
           value: office.id,
-          label: `${office.code} - ${office.name}`,
+          label: `${office.name}`,
         }))
       );
     }
@@ -314,11 +314,11 @@ console.log("REQUISITIONER VALUE:", watch("requisitioner"));
                       />
                     )}
                     {renderField(
-                      "Fund Cluster",
+                      "Fund Source",
                       "fund_cluster",
                       <Input
                         {...register("fund_cluster")}
-                        placeholder="Enter Fund Cluster"
+                        placeholder="Enter Fund Source"
                       />
                     )}
                   </div>

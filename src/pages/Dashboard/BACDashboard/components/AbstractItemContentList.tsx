@@ -103,6 +103,10 @@ export const AbstractItemContentList = () => {
 
   const abstractData = abstract && abstract.data;
   const pr_no = abstractData?.pr_details.pr_no;
+  console.log(
+  "CURRENT PR STATUS",
+  abstractData?.pr_details.status
+);
 
   const NOAData = useMemo(() => {
     return supplierItemData.find(

@@ -685,17 +685,27 @@ const textandlines = async (
     size: 10,
     font: timesBoldFont,
   });
+  page.drawText(
+  String(item.pr_details.fund_cluster || ""),
+  {
+    x: 150,
+    y: 605,
+    size: 10,
+  });
   page.drawText("Department/Section:", {
     x: 30,
     y: 630,
     size: 10,
   });
   console.log("OFFICE VALUE:", item.pr_details.office);
-  page.drawText(String(item.pr_details.office || ""), {
+  page.drawText(
+  String(item.pr_details.office_details?.name || ""),
+  {
     x: 150,
     y: 630,
     size: 10,
-  });
+  }
+);
   page.drawText("PR No.:", { x: 347, y: 630, size: 10, });
   page.drawText(String(item.pr_details.pr_no || ""), {
     x: 420,

@@ -200,7 +200,9 @@ export const PurchaseOrderForm: React.FC<PurchaseOrderFormProps> = ({
         index,
         isMultipleSupplier
       );
+      console.log("CREATING PURCHASE ORDER from poform.tsx", poNo);
       try {
+        console.log("CREATING PURCHASE ORDER from poform.tsx", poNo);
         await addPOMutation(
           {
             ...data,
