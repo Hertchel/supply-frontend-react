@@ -53,6 +53,53 @@ export const generateICSPDF = async (itemData: _itemsDeliveredType[]) => {
   const purposewidth = 580;
   pages.push(page);
 
+  const { width, height } = page.getSize();
+  const step = 5; // Change to 50 or 100 if too dense
+  const gray = rgb(0.75, 0.75, 0.75);
+  const red = rgb(1, 0, 0);
+
+  const font = await page.doc.embedFont(StandardFonts.Helvetica);
+
+  // Vertical lines + X labels
+  for (let x = 0; x <= width; x += step) {
+    page.drawLine({
+      start: { x, y: 0 },
+      end: { x, y: height },
+      thickness: 0.5,
+      color: gray,
+    });
+
+    if (x % 5 === 0 || x === 0) {
+      page.drawText(`${Math.round(x) + 5}`, {
+        x: x + 3,
+        y: height - 15,
+        size: 2,
+        font,
+        color: red,
+      });
+    }
+  }
+
+  // Horizontal lines + Y labels
+  for (let y = 0; y <= height; y += step) {
+    page.drawLine({
+      start: { x: 0, y },
+      end: { x: width, y },
+      thickness: 0.5,
+      color: gray,
+    });
+
+    if (y % 5 === 0 || y === 0) {
+      page.drawText(`${Math.round(y) + 5}`, {
+        x: 5,
+        y: y + 3,
+        size: 2,
+        font,
+        color: red,
+      });
+    }
+  }
+
   const firstPurpose =
     itemData[0]?.inspection_details.po_details.pr_details.purpose ?? "";
   const firstPurposeSplit = wrapText(firstPurpose, purposewidth, 12);
@@ -722,7 +769,7 @@ const textandlines = async (
   const jpgDims = jpgImage.scale(0.2);
 
   page.drawImage(jpgImage, {
-    x: 145,
+    x: 150,
     y: 10,
     width: jpgDims.width,
     height: jpgDims.height,
