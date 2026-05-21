@@ -1,16 +1,19 @@
 import { _itemsDeliveredType } from "@/types/request/purchase-order";
 import fontkit from "@pdf-lib/fontkit";
 import { PDFDocument, PDFFont, PDFPage, StandardFonts, rgb } from "pdf-lib";
-import { formatDate } from "./formateDate";
+//import { formatDate } from "./formateDate";
 
 type collectedDataType = {
   divisiontext: string
   officetext: string
+  fundclustertext: string
   resccodetext: string
   risnumtext: string
   requestpnametext: string
   requestDesigtxt: string
   requestDatetxt: string
+  approvedpnametext: string
+  approvedDesigtxt: string
   issuepnametext: string
   issueDesigtxt: string
   issuetDatetxt: string
@@ -70,8 +73,13 @@ export const generateRISPDF = async (itemData: _itemsDeliveredType[]) => {
   const firstPurposeSplit = wrapText(firstPurpose, purposewidth, 12);
   const divisiontext = "Admin";
   const officetext = String(
-  itemData[0]?.inspection_details.po_details.pr_details.office ?? ""
-  );
+  itemData[0]?.inspection_details.po_details.pr_details
+    .office_details?.name ?? ""
+);
+const fundclustertext = String(
+  itemData[0]?.inspection_details.po_details.pr_details
+    .fund_cluster ?? ""
+);
   const resccodetext = String(
   itemData[0]?.inspection_details.po_details.pr_details.res_center_code ?? ""
 );
@@ -80,22 +88,59 @@ export const generateRISPDF = async (itemData: _itemsDeliveredType[]) => {
 );
   const requestpnametext = itemData[0]?.inspection_details.po_details.pr_details.requisitioner_details.name ?? "";
   const requestDesigtxt = itemData[0]?.inspection_details.po_details.pr_details.requisitioner_details.designation ?? "";
-  const requestDatetxt = formatDate(itemData[0]?.inspection_details.po_details.pr_details.created_at)?? "";
+  const requestDatetxt = new Date(
+    itemData[0]?.inspection_details.po_details.pr_details.created_at
+  ).toLocaleDateString("en-US", {
+    month: "2-digit",
+    day: "2-digit",
+    year: "2-digit",
+  });
+  const approvedpnametext =
+      itemData[0]?.inspection_details.po_details.pr_details
+        .campus_director_details?.name ?? "";
+
+    const approvedDesigtxt =
+      itemData[0]?.inspection_details.po_details
+        .pr_details.campus_director_details
+        ?.designation ?? "";
   const issuepnametext =  "sample";
   const issueDesigtxt = "sample";
   const issuetDatetxt = "";
-  const receivepnametext = "";
-  const receiveDesigtxt = "";
-  const receiveDatetxt = "";
+  const receivepnametext =
+    itemData[0]?.inspection_details.po_details.pr_details
+      .requisitioner_details.name ?? "";
+
+  const receiveDesigtxt =
+    itemData[0]?.inspection_details.po_details.pr_details
+      .requisitioner_details.designation ?? "";
+
+  const latestReceivedDate = itemData.reduce(
+    (latest, item) => {
+      const current = new Date(item.date_received);
+
+      return current > latest ? current : latest;
+    },
+    new Date(itemData[0]?.date_received ?? new Date())
+  );
+
+const receiveDatetxt =
+  latestReceivedDate.toLocaleDateString("en-US", {
+    month: "2-digit",
+    day: "2-digit",
+    year: "2-digit",
+  });
   const collectedData: collectedDataType[] = [];
   collectedData.push({
     divisiontext,
     officetext,
+    fundclustertext,
     resccodetext,
     risnumtext,
     requestpnametext,
     requestDesigtxt,
     requestDatetxt,
+    approvedpnametext,
+    approvedDesigtxt,
     issuepnametext,
     issueDesigtxt,
     issuetDatetxt,
@@ -239,6 +284,61 @@ const textandlines = async (
   collectedData: collectedDataType[],
   Helveticafont: PDFFont
 ) => {
+  //debug grid lines 
+  /*
+  const drawDebugGrid = (
+  page: PDFPage,
+  spacing = 15
+) => {
+  const { width, height } = page.getSize();
+// looped horizontal lines until the bottom of the table
+  for (let y = 706; y > 275; y -= 17) {
+    page.drawLine({
+      start: { x: 34, y },
+      end: { x: 577, y },
+      thickness: 0.5,
+      color: rgb(0, 0, 0),
+    });
+  }
+
+    // Vertical lines
+    for (let x = 0; x <= width; x += spacing) {
+      page.drawLine({
+        start: { x, y: 0 },
+        end: { x, y: height },
+        thickness: 0.3,
+        color: rgb(0.85, 0.85, 0.85),
+      });
+
+      page.drawText(String(x), {
+        x: x + 1,
+        y: height - 10,
+        size: 5,
+        font: Helveticafont,
+        color: rgb(0.6, 0.6, 0.6),
+      });
+    }
+
+    // Horizontal lines
+    for (let y = 0; y <= height; y += spacing) {
+      page.drawLine({
+        start: { x: 0, y },
+        end: { x: width, y },
+        thickness: 0.3,
+        color: rgb(0.85, 0.85, 0.85),
+      });
+
+      page.drawText(String(y), {
+        x: 2,
+        y: y + 1,
+        size: 5,
+        font: Helveticafont,
+        color: rgb(0.6, 0.6, 0.6),
+      });
+    }
+  };
+  drawDebugGrid(page, 15);
+  */
   collectedData.forEach((data) => {
     page.drawText(data.divisiontext, {
       x: 95,
@@ -255,6 +355,12 @@ const textandlines = async (
     page.drawText(data.resccodetext, {
       x: 480,
       y: 780,
+      size: 8,
+      font: Helveticafont,
+    });
+    page.drawText(data.fundclustertext, {
+      x: 500,
+      y: 805,
       size: 8,
       font: Helveticafont,
     });
@@ -278,7 +384,7 @@ const textandlines = async (
     });
     const requestpnametxt = (data.requestpnametext || "").toUpperCase();
     const rpnamewidth = helvecfontbold.widthOfTextAtSize(requestpnametxt, 7);
-    const rpnameplace = (101 + 295) / 2;
+    const rpnameplace = ((101 + 295) / 2) - 15;
     page.drawText(requestpnametxt, {
       x: rpnameplace - rpnamewidth / 2,
       y: 155,
@@ -304,6 +410,40 @@ const textandlines = async (
       size: 8,
       font: Helveticafont,
     });
+
+    const approvedpnametxt =
+      (data.approvedpnametext || "").toUpperCase();
+
+    const apnamewidth =
+      helvecfontbold.widthOfTextAtSize(
+        approvedpnametxt,
+        7
+      );
+
+    const approvedCenter = ((295 + 366) / 2) - 15;
+
+      page.drawText(approvedpnametxt, {
+        x: approvedCenter - apnamewidth / 2,
+        y: 155,
+        size: 7,
+        font: helvecfontbold,
+      });
+
+  const approvedDesigtext =
+    data.approvedDesigtxt || "";
+
+  const adwidth =
+    Helveticafont.widthOfTextAtSize(
+      approvedDesigtext,
+      8
+    );
+
+  page.drawText(approvedDesigtext, {
+    x: approvedCenter - adwidth / 2,
+    y: 138,
+    size: 8,
+    font: Helveticafont,
+  });
 
     const issuepnametxt = (data.issuepnametext || "").toUpperCase();
     const ipnamewidth = helvecfontbold.widthOfTextAtSize(issuepnametxt, 7);
@@ -428,6 +568,7 @@ const textandlines = async (
     size: 11,
     font: timesRomanFont,
   });
+  
   // page.drawLine({start: { x: 425, y: 787 }, end: { x: 552, y: 787 }, thickness: 1 , color: rgb(0, 0, 0)});
   page.drawText("Responsibility Center Code:", {
     x: 370,
@@ -567,7 +708,7 @@ const textandlines = async (
     font: timesBoldFont,
   });
   page.drawText("Approved by:", {
-    x: 298,
+    x: 265,
     y: 198,
     size: 10,
     font: timesBoldFont,
@@ -629,7 +770,7 @@ const textandlines = async (
     thickness: 1.5,
     color: rgb(0, 0, 0),
   }); //4th
-
+// bottom of the table
   page.drawLine({
     start: { x: 34, y: 275 },
     end: { x: 577, y: 275 },
@@ -741,18 +882,21 @@ const textandlines = async (
     thickness: 1,
     color: rgb(0, 0, 0),
   });
+  // between request and approve
   page.drawLine({
-    start: { x: 295, y: 210 },
-    end: { x: 295, y: 116 },
+    start: { x: 260, y: 210 },
+    end: { x: 260, y: 116 },
     thickness: 1,
     color: rgb(0, 0, 0),
   });
+  // between approved and issued
   page.drawLine({
     start: { x: 366, y: 210 },
     end: { x: 366, y: 116 },
     thickness: 1,
     color: rgb(0, 0, 0),
   });
+  //between issue and receive
   page.drawLine({
     start: { x: 471, y: 210 },
     end: { x: 471, y: 116 },

@@ -117,6 +117,13 @@ export type _itemsDeliveredType = {
     pr_no: string;
     res_center_code: string;
     office: string;
+     office_details?: {
+      id: number;
+      code: string;
+      name: string;
+      department?: string;
+    };
+    fund_cluster?: string;
     purpose: string;
     status: string;
     requisitioner_details: {
@@ -139,10 +146,21 @@ export type _itemsDeliveredType = {
         pr_no: string;
         res_center_code: string;
         office: string;
+        office_details?: {
+          id: number;
+          code: string;
+          name: string;
+          department?: string;
+        };
+        fund_cluster?: string;
         purpose: string;
         requisitioner_details: {
           name: string;
           department: string;
+          designation: string;
+        };
+        campus_director_details?: {
+          name: string;
           designation: string;
         };
         created_at: Date;

@@ -54,8 +54,8 @@ export default function SupplyAOQ() {
     useGetAllSupplierItem();
   const { mutate: updateSupplierIsAddedToTrueMutation } =
     useUpdateSupplierIsAddedToTrue();
-  const { mutate: addPOMutation } = useAddPurchaseOrder();
-  const { mutate: addPOItemMutation } = useAddPurchaseOrderItem();
+  const { mutateAsync: addPOMutation } = useAddPurchaseOrder();
+  const { mutateAsync: addPOItemMutation } = useAddPurchaseOrderItem();
   const { handleOrderPlaced } = usePurchaseRequestActions();
 
   const isAllLoading =
@@ -89,16 +89,28 @@ export default function SupplyAOQ() {
   );
 
   const filteredSupplierData = useCallback(
-    (pr_no: string) => {
-      return supplierData.filter(
+  (pr_no: string) => {
+
+    console.log(
+      "FILTERED SUPPLIERS",
+      pr_no,
+      supplierData.filter(
         (item) =>
           item.rfq_details.purchase_request === pr_no &&
           !orderPlacedSupplierNo.includes(item.supplier_no) &&
           !item.is_added
-      );
-    },
-    [supplierData, orderPlacedSupplierNo]
-  );
+      )
+    );
+
+    return supplierData.filter(
+      (item) =>
+        item.rfq_details.purchase_request === pr_no &&
+        !orderPlacedSupplierNo.includes(item.supplier_no) &&
+        !item.is_added
+    );
+  },
+  [supplierData, orderPlacedSupplierNo]
+);
 
   const filterItemBySupplier = useCallback(
     (supplier_no: string) => {
@@ -184,6 +196,7 @@ export default function SupplyAOQ() {
       const poNo = isMultipleSupplier ? poNoOfMultipleSupplier : pr_no;
       const totalAmount = calculateSupplierTotal(supplierNo);
       const supplierItemData = filterItemBySupplier(supplierNo);
+      console.log("CREATING PURCHASE ORDER", poNo);
 
       try {
         await addPOMutation(
@@ -198,21 +211,49 @@ export default function SupplyAOQ() {
           {
             onSuccess: async (response: ApiResponse<purchaseOrderType>) => {
               if (response.status === "success") {
+                console.log("PO RESPONSE", response);
                 const po_no = response.data?.po_no;
                 const purchaseOrderItem = supplierItemData.map((item) => {
                   return {
+                    
                     po_item_no: uuidv4(),
+
                     purchase_request: pr_no,
+
                     purchase_order: po_no!,
+
                     supplier_item: item.supplier_item_no,
+
+                    quantity_ordered: item.item_quantity,
+
+                    unit_price: item.item_cost,
+
+                    total_price: item.total_amount,
                   };
                 });
 
-                await Promise.all(
-                  purchaseOrderItem.map((prItem) => {
-                    addPOItemMutation(prItem);
-                  })
-                );
+                const results = await Promise.allSettled(
+  purchaseOrderItem.map(async (prItem) => {
+
+    console.log("SENDING PO ITEM", prItem);
+
+    try {
+      const result = await addPOItemMutation(prItem);
+
+      console.log("PO ITEM SUCCESS", result);
+
+      return result;
+
+    } catch (error) {
+
+      console.error("PO ITEM FAILED", error);
+
+      throw error;
+    }
+  })
+);
+
+console.log("ALL PO ITEM RESULTS", results);
                 setIsLoading(false);
 
                 setMessageDialog({
@@ -316,6 +357,10 @@ export default function SupplyAOQ() {
             </TableBody>
           </Table>
           <div className="flex justify-end mt-4">
+
+            {/*<Button disabled>
+              Place Order Disabled
+            </Button>*/}
             <Button
               onClick={() =>
                 handlePlaceOrder(
@@ -330,6 +375,7 @@ export default function SupplyAOQ() {
             >
               {isLoading ? <Loader2 className="animate-spin" /> : "Place Order"}
             </Button>
+
           </div>
         </div>
       );

@@ -267,6 +267,7 @@ export const useUpdatePurchaseRequestStatus = () => {
 
       queryClient.invalidateQueries({ queryKey: ["purchase-request", pr_no] });
       queryClient.invalidateQueries({ queryKey: ["purchase-requests"] });
+      queryClient.invalidateQueries({ queryKey: ["abstract-of-quotations"] });
     },
     onError: () => {
       setIsPending(false);

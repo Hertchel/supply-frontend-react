@@ -257,7 +257,7 @@ export const generateRFQPDF = async () => {
 
   page.drawText("REQUEST FOR QUOTATION", {
     x: 215,
-    y: 793.7,
+    y: 786,
     size: 14,
     font: timesBoldFont,
   });
@@ -267,6 +267,20 @@ export const generateRFQPDF = async () => {
     size: 11,
     font: timesRomanFont,
   });
+
+  const currentDate = new Date().toLocaleDateString("en-US", {
+    year: "numeric",
+    month: "2-digit",
+    day: "2-digit",
+  });
+
+  page.drawText(currentDate, {
+    x: 395,
+    y: 764.33,
+    size: 11,
+    font: timesRomanFont,
+  });
+
   page.drawText("BAC Resolution No.:", {
     x: 357.49,
     y: 750.33,
@@ -279,7 +293,60 @@ export const generateRFQPDF = async () => {
     size: 11,
     font: timesRomanFont,
   });
+  page.drawText("Mode of Procurement:", {
+    x: 357.49,
+    y: 722.33,
+    size: 11,
+    font: timesRomanFont,
+  });
+/*
+  page.drawText(rfq.purchase_request, {
+    x: 430,
+    y: 736.33,
+    size: 11,
+    font: timesRomanFont,
+  });
 
+  page.drawText(rfq.supplier_name, {
+    x: 32.5,
+    y: 725.02,
+    size: 11,
+    font: timesRomanFont,
+  });
+
+  page.drawText(rfq.supplier_address, {
+    x: 32.5,
+    y: 695,
+    size: 11,
+    font: timesRomanFont,
+  });
+  page.drawText(rfq.tin, { x: 65, y: 665, size: 11, font: timesRomanFont });
+  page.drawText(
+    rfq.is_VAT ? "[ / ] VAT" : "[ ] VAT",
+    {
+      x: 230,
+      y: 664,
+      size: 11,
+      font: timesRomanFont,
+    },
+  );
+  page.drawText(
+    !rfq.is_VAT ? "[ / ] NON-VAT" : "[ ] NON-VAT",
+    {
+      x: 290,
+      y: 664,
+      size: 11,
+      font: timesRomanFont,
+    },
+  );
+  */
+ page.drawText("[ ] NON-VAT   [ ] NON-VAT",
+    {
+      x: 275,
+      y: 664,
+      size: 11,
+      font: timesRomanFont,
+    });
   page.drawLine({
     start: { x: 30.52, y: 720.87 },
     end: { x: 287, y: 720.87 },
@@ -299,6 +366,7 @@ export const generateRFQPDF = async () => {
     thickness: 1.5,
     color: rgb(0, 0, 0),
   });
+
   page.drawText("Address", { x: 32.5, y: 678, size: 11, font: timesRomanFont });
   page.drawText("TIN:", { x: 32.5, y: 664, size: 11, font: timesRomanFont });
   page.drawLine({
@@ -307,7 +375,6 @@ export const generateRFQPDF = async () => {
     thickness: 1,
     color: rgb(0, 0, 0),
   });
-
   page.drawText("Sir/Madam:", {
     x: 32.5,
     y: 635,
@@ -335,7 +402,7 @@ export const generateRFQPDF = async () => {
   });
   page.drawText(
     "your quotation duly signed by you or your authorized representative. Insert your duly accomplished quotation on the attached ",
-    { x: 35, y: 608, size: 11, font: timesRomanFont }
+    { x: 35, y: 608, size: 11, font: timesRomanFont },
   );
   page.drawText("return envelope and seal the same.", {
     x: 35,
@@ -345,7 +412,7 @@ export const generateRFQPDF = async () => {
   });
   page.drawText(
     "We reserve the right to reject any and/or all bids/quotations submitted.",
-    { x: 50, y: 584, size: 11, font: timesRomanFont }
+    { x: 50, y: 584, size: 11, font: timesRomanFont },
   );
 
   page.drawText("LEVI U. PANGAN, LPT", {
@@ -376,61 +443,54 @@ export const generateRFQPDF = async () => {
     size: 11,
     font: timesBoldFont,
   });
-  page.drawText("ABC", {
-    x: 382,
+  page.drawText("Brand/Model", {
+    x: 376,
     y: 545,
     size: 10,
     font: timesBoldFont,
     color: rgb(0, 0, 0.9),
   });
-  page.drawText("(per unit)", {
-    x: 373,
+  page.drawText("(Offered by Supplier)", {
+    x: 362,
+    y: 535,
+    size: 10,
+    font: timesRomanFont,
+    color: rgb(0, 0, 0.9),
+  });
+  page.drawText("Unit", {
+    x: 460,
+    y: 545,
+    size: 10,
+    font: timesBoldFont,
+  });
+  page.drawText("Price", {
+    x: 458,
     y: 535,
     size: 10,
     font: timesBoldFont,
-    color: rgb(0, 0, 0.9),
   });
-  page.drawText("Offered by Supplier", {
-    x: 465,
+  page.drawText("Total Price Quotation", {
+    x: 490.5,
     y: 545,
     size: 10,
-    font: timesRomanItalicFont,
-  });
-  page.drawText("Brand/Model", {
-    x: 445,
-    y: 530,
-    size: 10,
     font: timesBoldFont,
   });
-  page.drawText("Unit Price", {
-    x: 530,
-    y: 530,
+  page.drawText("(Offered by Supplier)", {
+    x: 493.5,
+    y: 535,
     size: 10,
-    font: timesBoldFont,
+    font: timesRomanFont,
+    color: rgb(0, 0, 0.9),
   });
-  page.drawText("PURPOSE:", {
-    x: 34,
-    y: 516,
-    size: 10,
-    font: timesBoldFont,
-    color: rgb(1, 0, 0),
-  });
-
   //text lower
-  page.drawText("Delivery Period:", {
+  page.drawText("Delivery Period: 15 Days Upon Confirming PO", {
     x: 55,
     y: 291,
     size: 11,
     font: timesRomanFont,
     color: rgb(0, 0, 0.9),
   });
-  page.drawLine({
-    start: { x: 130, y: 291 },
-    end: { x: 250, y: 291 },
-    thickness: 1,
-    color: rgb(0, 0, 0.9),
-  });
-
+  
   page.drawText("Warranty:", {
     x: 55,
     y: 278,
@@ -455,11 +515,11 @@ export const generateRFQPDF = async () => {
 
   page.drawText(
     "Please be advised that in the event that you will be declared as the Lowest Complying and Responsive Supplier, said items",
-    { x: 50, y: 238, size: 11, font: timesRomanFont }
+    { x: 50, y: 238, size: 11, font: timesRomanFont },
   );
   page.drawText(
     "will be awarded to you subject to submission of the documentary requirements: ",
-    { x: 35, y: 225, size: 11, font: timesRomanFont }
+    { x: 35, y: 225, size: 11, font: timesRomanFont },
   );
   page.drawText("(1)  PHILGEPS   Registration  Certificate;  2.", {
     x: 390,
@@ -470,7 +530,7 @@ export const generateRFQPDF = async () => {
   });
   page.drawText(
     "Mayor's  Permit;  3.  Income  Tax   Return,  &  4.  Omnibus Sworn Statement. A Notice of Award and Purchase Order will be",
-    { x: 35, y: 212, size: 11, font: timesRomanFont, color: rgb(0, 0, 0.9) }
+    { x: 35, y: 212, size: 11, font: timesRomanFont, color: rgb(0, 0, 0.9) },
   );
   page.drawText("issued.", {
     x: 35,
@@ -479,22 +539,45 @@ export const generateRFQPDF = async () => {
     font: timesRomanFont,
     color: rgb(0, 0, 0.9),
   });
-  page.drawText("Note: Award to the Lowest Complying Supplier shall be on ", {
+  page.drawText("Note: ", {
     x: 50,
     y: 186,
     size: 11,
     font: timesRomanFont,
   });
-  page.drawText("ITEM BASIS.", {
-    x: 315,
-    y: 186,
+  page.drawText("[ ] Award to the Lowest Complying Supplier shall be on a ", {
+    x: 50,
+    y: 173,
+    size: 11,
+    font: timesRomanFont,
+  });
+  page.drawText("LOT ", {
+    x: 310,
+    y: 173,
     size: 11,
     font: timesRomanFont,
     color: rgb(0, 0, 0.9),
   });
+  page.drawText("basis.", {
+    x: 335,
+    y: 173,
+    size: 11,
+    font: timesRomanFont,
+  });
+  page.drawText("[ ] Award Line Item Basis ", {
+    x: 50,
+    y: 160,
+    size: 11,
+    font: timesRomanFont,
+  });
   page.drawText(
     "After having carefully read and accepted your General Conditions, I/We quote on the item at prices noted above:",
-    { x: 50, y: 160, size: 11, font: timesRomanFont }
+    {
+      x: 50,
+      y: 147,
+      size: 11,
+      font: timesRomanFont,
+    },
   );
 
   page.drawText("Canvassed by:", {
@@ -517,38 +600,38 @@ export const generateRFQPDF = async () => {
   });
 
   page.drawLine({
-    start: { x: 330, y: 129 },
-    end: { x: 584.5, y: 129 },
+    start: { x: 330, y: 116 },
+    end: { x: 584.5, y: 116 },
     thickness: 1.5,
     color: rgb(0, 0, 0),
   });
   page.drawText("Signature over Printed Name of Supplier", {
     x: 350,
-    y: 119,
+    y: 106,
     size: 11,
     font: timesRomanFont,
   });
 
   page.drawLine({
-    start: { x: 330, y: 94 },
-    end: { x: 584.5, y: 94 },
+    start: { x: 330, y: 81 },
+    end: { x: 584.5, y: 81 },
     thickness: 1.5,
     color: rgb(0, 0, 0),
   });
   page.drawText("Tel. No. / Cellphone No. & Email Address", {
     x: 350,
-    y: 84,
+    y: 71,
     size: 11,
     font: timesRomanFont,
   });
 
   page.drawLine({
-    start: { x: 330, y: 59 },
-    end: { x: 584.5, y: 59 },
+    start: { x: 330, y: 46 },
+    end: { x: 584.5, y: 46 },
     thickness: 1.5,
     color: rgb(0, 0, 0),
   });
-  page.drawText("Date", { x: 440, y: 49, size: 11, font: timesRomanFont });
+  page.drawText("Date", { x: 440, y: 36, size: 11, font: timesRomanFont });
 
   //Horizontal Line
 
@@ -558,12 +641,7 @@ export const generateRFQPDF = async () => {
     thickness: 1,
     color: rgb(0, 0, 0),
   });
-  page.drawLine({
-    start: { x: 430, y: 541 },
-    end: { x: 585, y: 541 },
-    thickness: 1,
-    color: rgb(0, 0, 0),
-  });
+
   page.drawLine({
     start: { x: 30.52, y: 527 },
     end: { x: 585, y: 527 },
@@ -571,99 +649,99 @@ export const generateRFQPDF = async () => {
     color: rgb(0, 0, 0),
   });
   page.drawLine({
-    start: { x: 30.52, y: 513 },
-    end: { x: 585, y: 513 },
+    start: { x: 30.52, y: 516 },
+    end: { x: 585, y: 516 },
     thickness: 1,
     color: rgb(0, 0, 0),
   });
 
   page.drawLine({
-    start: { x: 30.52, y: 499 },
-    end: { x: 585, y: 499 },
+    start: { x: 30.52, y: 502 },
+    end: { x: 585, y: 502 },
     thickness: 1,
     color: rgb(0, 0, 0),
   });
   page.drawLine({
-    start: { x: 30.52, y: 485 },
-    end: { x: 585, y: 485 },
+    start: { x: 30.52, y: 488 },
+    end: { x: 585, y: 488 },
     thickness: 1,
     color: rgb(0, 0, 0),
   });
   page.drawLine({
-    start: { x: 30.52, y: 471 },
-    end: { x: 585, y: 471 },
+    start: { x: 30.52, y: 474 },
+    end: { x: 585, y: 474 },
     thickness: 1,
     color: rgb(0, 0, 0),
   });
   page.drawLine({
-    start: { x: 30.52, y: 457 },
-    end: { x: 585, y: 457 },
+    start: { x: 30.52, y: 460 },
+    end: { x: 585, y: 460 },
     thickness: 1,
     color: rgb(0, 0, 0),
   });
   page.drawLine({
-    start: { x: 30.52, y: 443 },
-    end: { x: 585, y: 443 },
+    start: { x: 30.52, y: 446 },
+    end: { x: 585, y: 446 },
     thickness: 1,
     color: rgb(0, 0, 0),
   });
   page.drawLine({
-    start: { x: 30.52, y: 429 },
-    end: { x: 585, y: 429 },
+    start: { x: 30.52, y: 432 },
+    end: { x: 585, y: 432 },
     thickness: 1,
     color: rgb(0, 0, 0),
   });
   page.drawLine({
-    start: { x: 30.52, y: 415 },
-    end: { x: 585, y: 415 },
+    start: { x: 30.52, y: 418 },
+    end: { x: 585, y: 418 },
     thickness: 1,
     color: rgb(0, 0, 0),
   });
   page.drawLine({
-    start: { x: 30.52, y: 401 },
-    end: { x: 585, y: 401 },
+    start: { x: 30.52, y: 404 },
+    end: { x: 585, y: 404 },
     thickness: 1,
     color: rgb(0, 0, 0),
   });
   page.drawLine({
-    start: { x: 30.52, y: 387 },
-    end: { x: 585, y: 387 },
+    start: { x: 30.52, y: 390 },
+    end: { x: 585, y: 390 },
     thickness: 1,
     color: rgb(0, 0, 0),
   });
   page.drawLine({
-    start: { x: 30.52, y: 373 },
-    end: { x: 585, y: 373 },
+    start: { x: 30.52, y: 376 },
+    end: { x: 585, y: 376 },
     thickness: 1,
     color: rgb(0, 0, 0),
   });
   page.drawLine({
-    start: { x: 30.52, y: 359 },
-    end: { x: 585, y: 359 },
+    start: { x: 30.52, y: 362 },
+    end: { x: 585, y: 362 },
     thickness: 1,
     color: rgb(0, 0, 0),
   });
   page.drawLine({
-    start: { x: 30.52, y: 345 },
-    end: { x: 585, y: 345 },
+    start: { x: 30.52, y: 348 },
+    end: { x: 585, y: 348 },
     thickness: 1,
     color: rgb(0, 0, 0),
   });
   page.drawLine({
-    start: { x: 30.52, y: 331 },
-    end: { x: 585, y: 331 },
+    start: { x: 30.52, y: 334 },
+    end: { x: 585, y: 334 },
     thickness: 1,
     color: rgb(0, 0, 0),
   });
   page.drawLine({
-    start: { x: 30.52, y: 317 },
-    end: { x: 585, y: 317 },
+    start: { x: 30.52, y: 320 },
+    end: { x: 585, y: 320 },
     thickness: 1,
     color: rgb(0, 0, 0),
   });
   page.drawLine({
-    start: { x: 30.52, y: 303 },
-    end: { x: 585, y: 303 },
+    start: { x: 30.52, y: 306 },
+    end: { x: 585, y: 306 },
     thickness: 1,
     color: rgb(0, 0, 0),
   });
@@ -671,7 +749,7 @@ export const generateRFQPDF = async () => {
   //Vertical Line
   page.drawLine({
     start: { x: 30.52, y: 555.5 },
-    end: { x: 30.52, y: 302.5 },
+    end: { x: 30.52, y: 306 },
     thickness: 1,
     color: rgb(0, 0, 0),
   });
@@ -682,58 +760,52 @@ export const generateRFQPDF = async () => {
     color: rgb(0, 0, 0),
   });
   page.drawLine({
-    start: { x: 60, y: 513.5 },
-    end: { x: 60, y: 302.5 },
+    start: { x: 60, y: 516 },
+    end: { x: 60, y: 306 },
     thickness: 1,
     color: rgb(0, 0, 0),
   });
   page.drawLine({
     start: { x: 301, y: 555.5 },
-    end: { x: 301, y: 302.5 },
+    end: { x: 301, y: 306 },
     thickness: 1,
     color: rgb(0, 0, 0),
   });
   page.drawLine({
     start: { x: 327, y: 527.5 },
-    end: { x: 327, y: 302.5 },
+    end: { x: 327, y: 306 },
     thickness: 1,
     color: rgb(0, 0, 0),
   });
   page.drawLine({
     start: { x: 360, y: 555.5 },
-    end: { x: 360, y: 302.5 },
+    end: { x: 360, y: 306 },
     thickness: 1,
     color: rgb(0, 0, 0),
   });
   page.drawLine({
-    start: { x: 430, y: 555.5 },
-    end: { x: 430, y: 302.5 },
+    start: { x: 450, y: 555.5 },
+    end: { x: 450, y: 306 },
     thickness: 1,
     color: rgb(0, 0, 0),
   });
   page.drawLine({
-    start: { x: 520, y: 541.5 },
-    end: { x: 520, y: 302.5 },
+    start: { x: 490, y: 555.5 },
+    end: { x: 490, y: 306 },
     thickness: 1,
     color: rgb(0, 0, 0),
   });
   page.drawLine({
     start: { x: 584.5, y: 555.5 },
-    end: { x: 584.5, y: 302.5 },
+    end: { x: 584.5, y: 306 },
     thickness: 1,
     color: rgb(0, 0, 0),
   });
-/*
   const headerjpg = "/header.jpeg";
   const headerjpgBytes = await fetch(headerjpg).then((res) =>
-    res.arrayBuffer()
+    res.arrayBuffer(),
   );
   const headerimage = await pdfDoc.embedJpg(headerjpgBytes);
-  */
-  const headerjpg = "/header.jpeg";
-  const headerjpgResponse = await fetch(headerjpg);
-  const headerjpgBuffer = await headerjpgResponse.arrayBuffer();
-  const headerimage = await pdfDoc.embedJpg(new Uint8Array(headerjpgBuffer));
   page.drawImage(headerimage, {
     x: 145,
     y: 808,
@@ -784,15 +856,10 @@ export const generateRFQPDF = async () => {
     size: 7,
     font: timesRomanFont,
   });
-/*
+
   const jpgUrl = "/footer.jpeg";
   const jpgImageBytes = await fetch(jpgUrl).then((res) => res.arrayBuffer());
   const jpgImage = await pdfDoc.embedJpg(jpgImageBytes);
-  */
-  const jpgUrl = "/footer.jpeg";
-  const jpgResponse = await fetch(jpgUrl);
-  const jpgBuffer = await jpgResponse.arrayBuffer();
-  const jpgImage = await pdfDoc.embedJpg(new Uint8Array(jpgBuffer));
   const jpgDims = jpgImage.scale(0.2);
 
   page.drawImage(jpgImage, {
@@ -801,6 +868,7 @@ export const generateRFQPDF = async () => {
     width: jpgDims.width,
     height: jpgDims.height,
   });
+
   const pdfBytes = await pdfDoc.save();
   const uint8Array = new Uint8Array(pdfBytes);
 
