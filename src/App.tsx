@@ -40,6 +40,7 @@ import ReqPurchaseRequest from "./pages/Dashboard/ReqDashboard/ReqPurchaseReques
 import ReqPurchaseRequestView from "./pages/Dashboard/ReqDashboard/ReqPurchaseRequestView";
 
 import AIDashboard from "./pages/Dashboard/SupplyDashboard/AIDashboard";
+import Office from "./pages/Dashboard/SupplyDashboard/Office/Office";
 
 const App = () => {
   return (
@@ -72,6 +73,7 @@ const App = () => {
             <Route path="reports" element={<Reports />} />
             <Route path="inventory" element={<Inventory />} />
 
+            <Route path="office" element={<Office />} />
             <Route path="ai-dashboard" element={<AIDashboard />} />
 
             <Route path="stocks" element={<Stocks />} />

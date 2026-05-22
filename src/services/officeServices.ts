@@ -49,6 +49,73 @@ export const getOfficeById = async (id: number): Promise<ApiResponse<Office>> =>
   }
 };
 
+export const addOffice = async (
+  data: Omit<Office, "id">
+): Promise<ApiResponse<Office>> => {
+  try {
+    const response = await api.post<Office>(
+      "/api/offices/",
+      data
+    );
+
+    return {
+      status: "success",
+      data: response.data,
+    };
+  } catch (error: any) {
+    console.error("Error adding office:", error);
+
+    return {
+      status: "error",
+      error,
+    };
+  }
+};
+
+export const updateOffice = async (
+  id: number,
+  data: Omit<Office, "id">
+): Promise<ApiResponse<Office>> => {
+  try {
+    const response = await api.put<Office>(
+      `/api/offices/${id}/`,
+      data
+    );
+
+    return {
+      status: "success",
+      data: response.data,
+    };
+  } catch (error: any) {
+    console.error("Error updating office:", error);
+
+    return {
+      status: "error",
+      error,
+    };
+  }
+};
+
+export const deleteOffice = async (
+  id: number
+): Promise<ApiResponse<null>> => {
+  try {
+    await api.delete(`/api/offices/${id}/`);
+
+    return {
+      status: "success",
+      data: null,
+    };
+  } catch (error: any) {
+    console.error("Error deleting office:", error);
+
+    return {
+      status: "error",
+      error,
+    };
+  }
+};
+
 /**
  * Format offices for dropdown/select components
  * @param offices - Array of offices

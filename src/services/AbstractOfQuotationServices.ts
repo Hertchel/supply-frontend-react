@@ -236,6 +236,40 @@ export const generateEmptyAOQPDF = async () => {
   const timesBoldFont = await pdfDoc.embedFont(StandardFonts.TimesRomanBold);
   const timesRomanFont = await pdfDoc.embedFont(StandardFonts.TimesRoman);
 
+  //logos - FIXED with proper ArrayBuffer handling
+      const headerjpg = '/header.jpeg';
+      const headerjpgResponse = await fetch(headerjpg);
+      const headerjpgBuffer = await headerjpgResponse.arrayBuffer();
+      const headerimage = await pdfDoc.embedJpg(new Uint8Array(headerjpgBuffer));
+      page.drawImage(headerimage, {
+          x: 235,
+          y: 510,
+          width: 462,
+          height: 85,
+      });
+      page.drawText('Republic of the Philippines', { x: 391, y: 580, size: 12, font: timesRomanFont });
+      page.drawText('CEBU TECHNOLOGICAL UNIVERSITY', { x: 348, y: 565, size: 12, font: timesBoldFont });
+      page.drawText('ARGAO CAMPUS', { x: 411, y: 553, size: 12, font: timesRomanFont });
+      page.drawText('Ed Kintanar Street, Lamacan, Argao Cebu Philippines', { x: 348, y: 543, size: 10, font: timesRomanFont });
+      page.drawText('Website:', { x: 348, y: 533, size: 8, font: timesRomanFont});
+      page.drawText('http://www.argao.ctu.edu.ph ', { x: 380, y: 533, size: 8, font: timesRomanFont, color: rgb(0, 0, 1)});
+      page.drawText('E-mail: cdargao@ctu.edu.ph', { x: 483, y: 533, size: 8, font: timesRomanFont});
+      page.drawText('Phone No.: (032) 485-8290/485-5109 loc 1700Fax. N0.: (032)4858-290', { x: 343, y: 523, size: 8, font: timesRomanFont });
+      
+      // FIXED: Footer image with proper ArrayBuffer handling
+      const jpgUrl = '/footer.jpeg';
+      const jpgResponse = await fetch(jpgUrl);
+      const jpgBuffer = await jpgResponse.arrayBuffer();
+      const jpgImage = await pdfDoc.embedJpg(new Uint8Array(jpgBuffer));
+      const jpgDims = jpgImage.scale(0.3);
+   
+      page.drawImage(jpgImage, {
+          x: 240,
+          y: 10,
+          width: jpgDims.width,
+          height: jpgDims.height,
+      });
+
   // text
 
   page.drawText("ABSTRACT OF QUOTATIONS", {
@@ -309,11 +343,11 @@ export const generateEmptyAOQPDF = async () => {
 
   page.drawText(
     "WE CERTIFY that we opened the bids of the above-listed materials, the abstract of which appears, as the time and date indicated.",
-    { x: 56.69, y: 170.08, size: 11, font: timesRomanFont }
+    { x: 56.69, y: 225, size: 11, font: timesRomanFont }
   );
   page.drawText("Bids and Awards Committee:", {
     x: 31.18,
-    y: 153.07,
+    y: 215,
     size: 11,
     font: timesRomanFont,
   });
@@ -345,27 +379,27 @@ export const generateEmptyAOQPDF = async () => {
   });
 
   //text signature
-  page.drawText("RYAN H. TEO, MPA", {
+  page.drawText("ROSALYN P. ALBURO", {
     x: 80.39,
-    y: 129.92,
+    y: 180,
     size: 11,
     font: timesBoldFont,
   });
   page.drawText("BAC Member", {
     x: 96.92,
-    y: 115.75,
+    y: 165,
     size: 11,
     font: timesRomanFont,
   });
-  page.drawText("LEMUEL M. VELASCO, Dev.Ed.D", {
+  page.drawText("VEVENCIO A. ALONSO JR.", {
     x: 334.72,
-    y: 129.92,
+    y: 180,
     size: 11,
     font: timesBoldFont,
   });
   page.drawText("BAC Member", {
     x: 381.93,
-    y: 115.75,
+    y: 165,
     size: 11,
     font: timesRomanFont,
   });
@@ -377,40 +411,40 @@ export const generateEmptyAOQPDF = async () => {
     font: timesRomanFont,
   });
 
-  page.drawText("JUNE REY A. VILLEGAS", {
+  page.drawText("JEAN F. PUERTO, Dev.Ed.D", {
     x: 68.57,
-    y: 78,
+    y: 128,
     size: 11,
     font: timesBoldFont,
   });
   page.drawText("BAC Member", {
     x: 96.92,
-    y: 62.87,
+    y: 113,
     size: 11,
     font: timesRomanFont,
   });
-  page.drawText("CHARISSA JANE S. SAMBOLA, CPA", {
+  page.drawText("LEVI U. PANGAN, LPT", {
     x: 331.46,
-    y: 79,
+    y: 128,
     size: 11,
     font: timesBoldFont,
   });
   page.drawText("BAC Vice-Chairman", {
     x: 371.14,
-    y: 62.87,
+    y: 113,
     size: 11,
     font: timesRomanFont,
   });
 
-  page.drawText("LEVI U. PANGAN, LPT", {
+  page.drawText("CHARISSA JANE S. SAMBOLA, CPA", {
     x: 200,
-    y: 110.75,
+    y: 60,
     size: 11,
     font: timesBoldFont,
   });
-  page.drawText("BAC Chairman", {
+  page.drawText("BAC Chairperson", {
     x: 225.14,
-    y: 100,
+    y: 50,
     size: 11,
     font: timesRomanFont,
   });
@@ -485,65 +519,47 @@ export const generateEmptyAOQPDF = async () => {
     thickness: 1.5,
     color: rgb(0, 0, 0),
   });
-  page.drawLine({
-    start: { x: 29.53, y: 221.1 },
-    end: { x: 898.98, y: 221.1 },
-    thickness: 1.5,
-    color: rgb(0, 0, 0),
-  });
-  page.drawLine({
-    start: { x: 29.53, y: 204.09 },
-    end: { x: 898.98, y: 204.09 },
-    thickness: 1.5,
-    color: rgb(0, 0, 0),
-  });
-  page.drawLine({
-    start: { x: 29.53, y: 187.09 },
-    end: { x: 898.98, y: 187.09 },
-    thickness: 1.5,
-    color: rgb(0, 0, 0),
-  });
 
   //Vertical Line
   page.drawLine({
     start: { x: 29.53, y: 402.3 },
-    end: { x: 29.53, y: 186.8 },
+    end: { x: 29.53, y: 238.11 },
     thickness: 1.5,
     color: rgb(0, 0, 0),
   });
   page.drawLine({
     start: { x: 64.96, y: 402.3 },
-    end: { x: 64.96, y: 186.8 },
+    end: { x: 64.96, y: 238.11 },
     thickness: 1.5,
     color: rgb(0, 0, 0),
   });
   page.drawLine({
     start: { x: 366.14, y: 402.3 },
-    end: { x: 366.14, y: 186.8 },
+    end: { x: 366.14, y: 238.11 },
     thickness: 1.5,
     color: rgb(0, 0, 0),
   });
   page.drawLine({
     start: { x: 425.2, y: 402.3 },
-    end: { x: 425.2, y: 186.8 },
+    end: { x: 425.2, y: 238.11 },
     thickness: 1.5,
     color: rgb(0, 0, 0),
   });
   page.drawLine({
     start: { x: 480.31, y: 402.3 },
-    end: { x: 480.31, y: 186.8 },
+    end: { x: 480.31, y: 238.11 },
     thickness: 1.5,
     color: rgb(0, 0, 0),
   });
   page.drawLine({
     start: { x: 780.38, y: 402.3 },
-    end: { x: 780.38, y: 186.8 },
+    end: { x: 780.38, y: 238.11 },
     thickness: 1.5,
     color: rgb(0, 0, 0),
   });
   page.drawLine({
     start: { x: 898.5, y: 402.3 },
-    end: { x: 898.5, y: 186.8 },
+    end: { x: 898.5, y: 238.11 },
     thickness: 1.5,
     color: rgb(0, 0, 0),
   });

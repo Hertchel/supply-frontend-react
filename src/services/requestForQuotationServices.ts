@@ -340,9 +340,9 @@ export const generateRFQPDF = async () => {
     },
   );
   */
- page.drawText("[ ] NON-VAT   [ ] NON-VAT",
+ page.drawText("[  ] VAT          [  ] NON-VAT",
     {
-      x: 275,
+      x: 230,
       y: 664,
       size: 11,
       font: timesRomanFont,
@@ -648,12 +648,6 @@ export const generateRFQPDF = async () => {
     thickness: 1,
     color: rgb(0, 0, 0),
   });
-  page.drawLine({
-    start: { x: 30.52, y: 516 },
-    end: { x: 585, y: 516 },
-    thickness: 1,
-    color: rgb(0, 0, 0),
-  });
 
   page.drawLine({
     start: { x: 30.52, y: 502 },
@@ -755,12 +749,6 @@ export const generateRFQPDF = async () => {
   });
   page.drawLine({
     start: { x: 60, y: 555.5 },
-    end: { x: 60, y: 527.5 },
-    thickness: 1,
-    color: rgb(0, 0, 0),
-  });
-  page.drawLine({
-    start: { x: 60, y: 516 },
     end: { x: 60, y: 306 },
     thickness: 1,
     color: rgb(0, 0, 0),
@@ -868,6 +856,7 @@ export const generateRFQPDF = async () => {
     width: jpgDims.width,
     height: jpgDims.height,
   });
+
 
   const pdfBytes = await pdfDoc.save();
   const uint8Array = new Uint8Array(pdfBytes);

@@ -3,7 +3,8 @@ import {
   LayoutGrid,
   PackageCheck,
   ShoppingCart,
-  Clipboard
+  Clipboard,
+  Building2
 } from "lucide-react"
 
 import {
@@ -60,6 +61,13 @@ const distribution = [
     url: "/supply/item-distribution",
     icon: PackageCheck
   }
+];
+const maintenance = [
+  {
+    title: "Office",
+    url: "/supply/office",
+    icon: Building2,
+  },
 ];
 
 const aiassistant = [
@@ -147,6 +155,24 @@ export function SidebarItem() {
       </SidebarMenuItem>
     ))}
   </SidebarMenu>
+
+  <SidebarGroupLabel>Maintenance</SidebarGroupLabel>
+<SidebarMenu>
+  {maintenance.map((item) => (
+    <SidebarMenuItem key={item.title}>
+      <SidebarMenuButton
+        asChild
+        className="px-4 py-6"
+        isActive={location.pathname === item.url}
+      >
+        <Link to={item.url}>
+          <item.icon />
+          <span>{item.title}</span>
+        </Link>
+      </SidebarMenuButton>
+    </SidebarMenuItem>
+  ))}
+</SidebarMenu>
 
   {/* AI ASSISTANT */}
 

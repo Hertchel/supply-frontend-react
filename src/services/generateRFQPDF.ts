@@ -256,7 +256,7 @@ const textandlines = async (
   });
 
   page.drawText(
-    rfq.is_VAT ? "[ / ] VAT" : "[ ] VAT",
+    rfq.is_VAT ? "[ / ] VAT" : "[  ] VAT",
     {
       x: 230,
       y: 664,
@@ -266,7 +266,7 @@ const textandlines = async (
   );
 
   page.drawText(
-    !rfq.is_VAT ? "[ / ] NON-VAT" : "[ ] NON-VAT",
+    !rfq.is_VAT ? "[ / ] NON-VAT" : "[  ] NON-VAT",
     {
       x: 290,
       y: 664,
@@ -547,12 +547,6 @@ const textandlines = async (
     thickness: 1,
     color: rgb(0, 0, 0),
   });
-  page.drawLine({
-    start: { x: 30.52, y: 516 },
-    end: { x: 585, y: 516 },
-    thickness: 1,
-    color: rgb(0, 0, 0),
-  });
 
   page.drawLine({
     start: { x: 30.52, y: 502 },
@@ -654,12 +648,6 @@ const textandlines = async (
   });
   page.drawLine({
     start: { x: 60, y: 555.5 },
-    end: { x: 60, y: 527.5 },
-    thickness: 1,
-    color: rgb(0, 0, 0),
-  });
-  page.drawLine({
-    start: { x: 60, y: 516 },
     end: { x: 60, y: 306 },
     thickness: 1,
     color: rgb(0, 0, 0),
