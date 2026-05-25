@@ -23,6 +23,7 @@ export type supplierType_ = {
 };
 
 export type supplierItemType_ = {
+  created_at: string;
   supplier_item_no: string;
   total_amount: string;
   item_cost: string;

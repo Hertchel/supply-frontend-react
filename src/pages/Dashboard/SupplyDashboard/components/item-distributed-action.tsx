@@ -12,6 +12,7 @@ import { generateRISPDF } from "@/utils/generateRISPDF";
 import { useGetItemsDeliveredInPurchaseRequest } from "@/services/puchaseOrderServices";
 import { useMemo, useState } from "react";
 import GenerateICSPDFDialog from "./ItemDistributeDialog";
+import useAuthStore from "@/components/Auth/AuthStore";
 
 interface ItemDistributionActionsProps {
   pr_no: string;
@@ -23,6 +24,7 @@ export const ItemDistributedActions = ({
   pr_no,
 }: ItemDistributionActionsProps) => {
   const [isDialogOpen, setIsDialogOpen] = useState<boolean>(false);
+  const user = useAuthStore((state) => state.user);
   const { data: item_delivered } =
     useGetItemsDeliveredInPurchaseRequest({ pr_no: pr_no });
   console.log(item_delivered);
@@ -40,7 +42,7 @@ export const ItemDistributedActions = ({
 
   console.log(_data);
   const handleGenerateRISPDF = async () => {
-    const url = await generateRISPDF(itemsDeliveredData);
+    const url = await generateRISPDF(itemsDeliveredData, user);
     window.open(url, "_blank");
   };
   return (

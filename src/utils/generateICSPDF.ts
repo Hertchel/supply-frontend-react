@@ -1,6 +1,7 @@
 /* eslint-disable @typescript-eslint/no-unused-vars */
 import { _itemsDeliveredType } from "@/types/request/purchase-order";
 import { PDFDocument, PDFFont, PDFPage, StandardFonts, rgb } from "pdf-lib";
+import { User } from "@/components/Auth/AuthStore";
 
 type collectedDataType = {
   po_no: string;
@@ -13,9 +14,10 @@ type collectedDataType = {
   receivedfromposition: string;
   receivedbyname: string;
   receivedbyposition: string;
+  suppliername: string;
 };
 
-export const generateICSPDF = async (itemData: _itemsDeliveredType[]) => {
+export const generateICSPDF = async (itemData: _itemsDeliveredType[], user: User | null) => {
   const pdfDoc = await PDFDocument.create();
   const timesRomanFont = await pdfDoc.embedFont(StandardFonts.TimesRoman);
   const timesRomanItalicFont = await pdfDoc.embedFont(
@@ -53,6 +55,8 @@ export const generateICSPDF = async (itemData: _itemsDeliveredType[]) => {
   const purposewidth = 580;
   pages.push(page);
 
+  /*
+  //debug grid
   const { width, height } = page.getSize();
   const step = 5; // Change to 50 or 100 if too dense
   const gray = rgb(0.75, 0.75, 0.75);
@@ -99,6 +103,7 @@ export const generateICSPDF = async (itemData: _itemsDeliveredType[]) => {
       });
     }
   }
+    */
 
   const firstPurpose =
     itemData[0]?.inspection_details.po_details.pr_details.purpose ?? "";
@@ -114,13 +119,11 @@ export const generateICSPDF = async (itemData: _itemsDeliveredType[]) => {
       data.item_details.item_quotation_details.item_details.item_description;
     const unitCost = Number(data.item_details.item_cost);
     const purpose = data.inspection_details.po_details.pr_details.purpose;
-    const receivedfromname =
-      data.inspection_details.po_details.pr_details.requisitioner_details.name;
-    const receivedfromposition =
-      data.inspection_details.po_details.pr_details.requisitioner_details
-        .designation;
-    const receivedbyname = "sample";
-    const receivedbyposition = "sample position";
+    const receivedfromname = user? `${user.first_name} ${user.last_name}` : "";
+    const receivedfromposition = user?.role || "Project Proponent";
+    const receivedbyname = data.inspection_details.po_details.pr_details.requisitioner_details.name;
+    const receivedbyposition = data.inspection_details.po_details.pr_details.requisitioner_details.designation;
+    const suppliername = data.inspection_details.po_details.rfq_details.supplier_name || "";
     collectedData.push({
       po_no,
       quantity,
@@ -132,6 +135,7 @@ export const generateICSPDF = async (itemData: _itemsDeliveredType[]) => {
       receivedfromposition,
       receivedbyname,
       receivedbyposition,
+      suppliername,
     });
     const wrappedDescription = wrapText(description, maxWidth, 9);
     const descriptionHeight = wrappedDescription.length * lineHeight;
@@ -240,7 +244,9 @@ export const generateICSPDF = async (itemData: _itemsDeliveredType[]) => {
 
   // Serialize the PDF to bytes
   const pdfBytes = await pdfDoc.save();
-  const blob = new Blob([pdfBytes], { type: "application/pdf" });
+  const fixedBuffer = new Uint8Array(pdfBytes).buffer;
+  const blob = new Blob([fixedBuffer], { type: "application/pdf" });
+  //const blob = new Blob([pdfBytes], { type: "application/pdf" });
   const url = URL.createObjectURL(blob);
 
   return url;
@@ -257,6 +263,16 @@ const textandlines = async (
   firstPurposeSplit: string[],
   lineHeight: number,
 ) => {
+  const currentDate = new Date();
+
+  const formattedDate = currentDate.toLocaleDateString(
+    "en-US",
+    {
+      month: "2-digit",
+      day: "2-digit",
+      year: "numeric"
+    }
+  );
   collectedData.forEach((data) => {
     //receiveby from
     const receivefrom = (data.receivedfromname || "").toUpperCase();
@@ -331,7 +347,7 @@ const textandlines = async (
       color: rgb(0, 0, 0),
     });
     //date
-    const dater = "asdasd";
+    const dater = formattedDate;
     const daterwidth = timesBoldFont.widthOfTextAtSize(dater, 11);
     const daterby1place = (37 + 337) / 2;
     page.drawText(dater, {
@@ -340,7 +356,7 @@ const textandlines = async (
       size: 11,
       font: timesBoldFont,
     });
-    const dater1 = "asdasd";
+    const dater1 = formattedDate;
     const dater1width = timesBoldFont.widthOfTextAtSize(dater1, 11);
     const dater1by1place = (337 + 570) / 2;
     page.drawText(dater1, {
@@ -364,6 +380,12 @@ const textandlines = async (
   });
   page.drawText("Supplier:", {
     x: 220,
+    y: 90 + firstPurposeHeight - firstPurposeHeight,
+    size: 10,
+    font: Helveticafont,
+  });
+  page.drawText(collectedData[0]?.suppliername || "", {
+    x: 265,
     y: 90 + firstPurposeHeight - firstPurposeHeight,
     size: 10,
     font: Helveticafont,

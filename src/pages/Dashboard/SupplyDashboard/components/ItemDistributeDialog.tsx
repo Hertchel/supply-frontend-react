@@ -17,6 +17,7 @@ import {
 import { Checkbox } from "@/components/ui/checkbox";
 import { generateICSPDF } from "@/utils/generateICSPDF";
 import { _itemsDeliveredType } from "@/types/request/purchase-order";
+import useAuthStore from "@/components/Auth/AuthStore";
 
 interface ItemDistributeDialogProps {
   itemsDeliveredData: _itemsDeliveredType[]
@@ -30,7 +31,7 @@ export default function GenerateICSPDFDialog({
   setIsOpen,
 }: ItemDistributeDialogProps) {
   const [selectedItems, setSelectedItems] = useState<_itemsDeliveredType[]>([]);
-
+  const user = useAuthStore((state) => state.user);
 
   const handleItemToggle = (data: _itemsDeliveredType) => {
     setSelectedItems((prev) =>
@@ -41,7 +42,7 @@ export default function GenerateICSPDFDialog({
   };
 
   const generateICS = async () => {
-    const url = await generateICSPDF(selectedItems);
+    const url = await generateICSPDF(selectedItems, user);
     window.open(url, "_blank");
   };
 

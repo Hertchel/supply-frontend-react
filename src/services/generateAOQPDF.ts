@@ -3,6 +3,8 @@ import { HeaderAndFooter } from "./HeaderAndFooter";
 import { supplierItemType_ } from "@/types/response/abstract-of-quotation";
 import { BACmemberType } from "@/types/request/BACmember";
 
+/*
+//debug grid function
 const drawDebugGrid = (page: any) => {
   const { width, height } = page.getSize();
 
@@ -53,6 +55,7 @@ const drawDebugGrid = (page: any) => {
     });
   }
 };
+*/
 
 export const generateAOQPDF = async (data: supplierItemType_[], bac_members: BACmemberType[]) => {
   const items = Array.isArray(data) ? data : [];
@@ -72,7 +75,7 @@ export const generateAOQPDF = async (data: supplierItemType_[], bac_members: BAC
 
   for (let pageIndex = 0; pageIndex < pages; pageIndex++) {
     const page = pdfDoc.addPage([936, 612]);
-    drawDebugGrid(page);
+    // drawDebugGrid(page);
     const ROW_HEIGHT = 15;
     const FIRST_ROW_Y = 357;
     const pageItems = items.slice(

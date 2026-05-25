@@ -13,11 +13,27 @@ export const HeaderAndFooter = async (
   data: supplierItemType_,
   totalPages: number
 ) => {
+    console.log(data);
     // Draw header
  
     page.drawText('ABSTRACT OF QUOTATIONS', { x: 379, y: 496.06, size: 12, font: boldFont });
     page.drawText('Project Name:', {x: 194.49, y: 473.19, size: 11, font: timesRomanFont });
     page.drawText('Date of Posting:', {x: 186.61, y: 456.38, size: 11, font: timesRomanFont });
+    const postingDate = data?.created_at
+        ? new Date(data.created_at)
+            .toLocaleDateString("en-US", {
+                month: "2-digit",
+                day: "2-digit",
+                year: "numeric",
+            })
+        : "N/A";
+
+        page.drawText(postingDate, {
+        x: 265,
+        y: 456.38,
+        size: 11,
+        font: timesRomanFont,
+        });
     page.drawText('Project Location:', {x: 182, y: 442.91, size: 11, font: timesRomanFont });
     page.drawText('Lamacan, Argao, Cebu', {x: 265, y: 442.91, size: 11, font: timesRomanFont });
     page.drawText('Implementing Office:', {x: 162.50, y: 428, size: 11, font: timesRomanFont });

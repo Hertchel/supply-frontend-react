@@ -2,6 +2,7 @@ import { _itemsDeliveredType } from "@/types/request/purchase-order";
 import fontkit from "@pdf-lib/fontkit";
 import { PDFDocument, PDFFont, PDFPage, StandardFonts, rgb } from "pdf-lib";
 //import { formatDate } from "./formateDate";
+import { User} from "@/components/Auth/AuthStore";
 
 type collectedDataType = {
   divisiontext: string
@@ -14,6 +15,7 @@ type collectedDataType = {
   requestDatetxt: string
   approvedpnametext: string
   approvedDesigtxt: string
+  approvedDatetxt: string
   issuepnametext: string
   issueDesigtxt: string
   issuetDatetxt: string
@@ -22,7 +24,7 @@ type collectedDataType = {
   receiveDatetxt: string
 };
 
-export const generateRISPDF = async (itemData: _itemsDeliveredType[]) => {
+export const generateRISPDF = async (itemData: _itemsDeliveredType[], user: User | null) => {
   const pdfDoc = await PDFDocument.create();
   pdfDoc.registerFontkit(fontkit);
 
@@ -72,63 +74,32 @@ export const generateRISPDF = async (itemData: _itemsDeliveredType[]) => {
   const firstPurpose = itemData[0]?.inspection_details.po_details.pr_details.purpose ?? "";
   const firstPurposeSplit = wrapText(firstPurpose, purposewidth, 12);
   const divisiontext = "Admin";
-  const officetext = String(
-  itemData[0]?.inspection_details.po_details.pr_details
-    .office_details?.name ?? ""
-);
-const fundclustertext = String(
-  itemData[0]?.inspection_details.po_details.pr_details
-    .fund_cluster ?? ""
-);
-  const resccodetext = String(
-  itemData[0]?.inspection_details.po_details.pr_details.res_center_code ?? ""
-);
-  const risnumtext = String(
-  itemData[0]?.inspection_details.po_details.pr_details.pr_no ?? ""
-);
+  const officetext = String(itemData[0]?.inspection_details.po_details.pr_details.office_details?.name ?? "");
+  const fundclustertext = String(itemData[0]?.inspection_details.po_details.pr_details.fund_cluster ?? "");
+  const resccodetext = String(itemData[0]?.inspection_details.po_details.pr_details.res_center_code ?? "");
+  const risnumtext = String(itemData[0]?.inspection_details.po_details.pr_details.pr_no ?? "");
+
+  const currentDate = new Date();
+  const currentFormattedDate = currentDate.toLocaleDateString("en-US", {month: "2-digit", day: "2-digit", year: "2-digit",});
+
   const requestpnametext = itemData[0]?.inspection_details.po_details.pr_details.requisitioner_details.name ?? "";
   const requestDesigtxt = itemData[0]?.inspection_details.po_details.pr_details.requisitioner_details.designation ?? "";
-  const requestDatetxt = new Date(
-    itemData[0]?.inspection_details.po_details.pr_details.created_at
-  ).toLocaleDateString("en-US", {
-    month: "2-digit",
-    day: "2-digit",
-    year: "2-digit",
-  });
-  const approvedpnametext =
-      itemData[0]?.inspection_details.po_details.pr_details
-        .campus_director_details?.name ?? "";
+  const requestDatetxt = new Date(itemData[0]?.inspection_details.po_details.pr_details.created_at).toLocaleDateString("en-US", {month: "2-digit", day: "2-digit", year: "2-digit",});
+  
+  const approvedpnametext = itemData[0]?.inspection_details.po_details.pr_details.campus_director_details?.name ?? "";
+  const approvedDesigtxt =itemData[0]?.inspection_details.po_details.pr_details.campus_director_details?.designation ?? "";
+  const approvedDatetxt =
+  currentFormattedDate;
 
-    const approvedDesigtxt =
-      itemData[0]?.inspection_details.po_details
-        .pr_details.campus_director_details
-        ?.designation ?? "";
-  const issuepnametext =  "sample";
-  const issueDesigtxt = "sample";
-  const issuetDatetxt = "";
-  const receivepnametext =
-    itemData[0]?.inspection_details.po_details.pr_details
-      .requisitioner_details.name ?? "";
+  const issuepnametext = user? `${user.first_name} ${user.last_name}` : "";
+  const issueDesigtxt = user?.role || "Supply Officer";
 
-  const receiveDesigtxt =
-    itemData[0]?.inspection_details.po_details.pr_details
-      .requisitioner_details.designation ?? "";
+  const issuetDatetxt = currentFormattedDate;
 
-  const latestReceivedDate = itemData.reduce(
-    (latest, item) => {
-      const current = new Date(item.date_received);
+  const receivepnametext = itemData[0]?.inspection_details.po_details.pr_details.requisitioner_details.name ?? "";
+  const receiveDesigtxt = itemData[0]?.inspection_details.po_details.pr_details. requisitioner_details.designation ?? "";
+  const receiveDatetxt = currentFormattedDate;
 
-      return current > latest ? current : latest;
-    },
-    new Date(itemData[0]?.date_received ?? new Date())
-  );
-
-const receiveDatetxt =
-  latestReceivedDate.toLocaleDateString("en-US", {
-    month: "2-digit",
-    day: "2-digit",
-    year: "2-digit",
-  });
   const collectedData: collectedDataType[] = [];
   collectedData.push({
     divisiontext,
@@ -141,6 +112,7 @@ const receiveDatetxt =
     requestDatetxt,
     approvedpnametext,
     approvedDesigtxt,
+    approvedDatetxt,
     issuepnametext,
     issueDesigtxt,
     issuetDatetxt,
@@ -441,6 +413,22 @@ const textandlines = async (
   page.drawText(approvedDesigtext, {
     x: approvedCenter - adwidth / 2,
     y: 138,
+    size: 8,
+    font: Helveticafont,
+  });
+
+  const approvedDatetext =
+  data.approvedDatetxt || "";
+
+const appdatewidth =
+  Helveticafont.widthOfTextAtSize(
+    approvedDatetext,
+    8
+  );
+
+  page.drawText(approvedDatetext, {
+    x: approvedCenter - appdatewidth / 2,
+    y: 119,
     size: 8,
     font: Helveticafont,
   });
@@ -770,6 +758,15 @@ const textandlines = async (
     thickness: 1.5,
     color: rgb(0, 0, 0),
   }); //4th
+  // LOOPED TABLE ROW LINES
+  for (let y = 704; y > 275; y -= 17) {
+    page.drawLine({
+      start: { x: 34, y },
+      end: { x: 577, y },
+      thickness: 0.7,
+      color: rgb(0, 0, 0),
+    });
+  }
 // bottom of the table
   page.drawLine({
     start: { x: 34, y: 275 },
