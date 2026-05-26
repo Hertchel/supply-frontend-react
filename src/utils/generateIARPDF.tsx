@@ -11,7 +11,7 @@ export const generateIARPDF = async (itemData: _itemsDeliveredType[]) => {
   const timesBoldFont = await pdfDoc.embedFont(StandardFonts.TimesRomanBold);
   const timesRomanFont = await pdfDoc.embedFont(StandardFonts.TimesRoman);
   const timesRomanItalicFont = await pdfDoc.embedFont(
-    StandardFonts.TimesRomanItalic
+    StandardFonts.TimesRomanItalic,
   );
   const italicbold = await pdfDoc.embedFont(StandardFonts.TimesRomanBoldItalic);
 
@@ -40,23 +40,69 @@ export const generateIARPDF = async (itemData: _itemsDeliveredType[]) => {
     lines.push(currentLine); // Push the last line
     return lines;
   };
+
   const pages = []; // Array to hold pages
   let pageIndex = 0; // Page counter
   let page = pdfDoc.addPage([612, pageHeight]);
   pages.push(page);
+
+  const { width, height } = page.getSize();
+  const step = 5; // Change to 50 or 100 if too dense
+  const gray = rgb(0.75, 0.75, 0.75);
+  const red = rgb(1, 0, 0);
+
+  const font = await page.doc.embedFont(StandardFonts.Helvetica);
+
+  // Vertical lines + X labels
+  for (let x = 0; x <= width; x += step) {
+    page.drawLine({
+      start: { x, y: 0 },
+      end: { x, y: height },
+      thickness: 0.5,
+      color: gray,
+    });
+
+    if (x % 5 === 0 || x === 0) {
+      page.drawText(`${Math.round(x) + 5}`, {
+        x: x + 3,
+        y: height - 15,
+        size: 2,
+        font,
+        color: red,
+      });
+    }
+  }
+
+  // Horizontal lines + Y labels
+  for (let y = 0; y <= height; y += step) {
+    page.drawLine({
+      start: { x: 0, y },
+      end: { x: width, y },
+      thickness: 0.5,
+      color: gray,
+    });
+
+    if (y % 5 === 0 || y === 0) {
+      page.drawText(`${Math.round(y) + 5}`, {
+        x: 5,
+        y: y + 3,
+        size: 2,
+        font,
+        color: red,
+      });
+    }
+  }
   itemData.forEach((data) => {
-    const no = data.item_details.item_quotation_details.item_details.stock_property_no
-    const unit = data.item_details.item_quotation_details.item_details.unit
-    const description = data.item_details.item_quotation_details.item_details.item_description
-    const quantity = data.item_details.item_quantity
-    const unitcost = data.item_details.item_cost
+    const no =
+      data.item_details.item_quotation_details.item_details.stock_property_no;
+    const unit = data.item_details.item_quotation_details.item_details.unit;
+    const description =
+      data.item_details.item_quotation_details.item_details.item_description;
+    const quantity = data.item_details.item_quantity;
+    const unitcost = data.item_details.item_cost;
 
     // Calculate height needed for wrapped description
-    const wrappedDescription = wrapText(
-      description,
-      maxWidth,
-      9
-    );
+    const wrappedDescription = wrapText(description, maxWidth, 9);
     const descriptionHeight = wrappedDescription.length * lineHeight;
 
     // Calculate total height required for the current item
@@ -76,7 +122,7 @@ export const generateIARPDF = async (itemData: _itemsDeliveredType[]) => {
     }
 
     // Draw content
-    const totalamount = Number(quantity) *  Number(unitcost);
+    const totalamount = Number(quantity) * Number(unitcost);
 
     runningTotal += totalamount || 0;
 
@@ -84,7 +130,7 @@ export const generateIARPDF = async (itemData: _itemsDeliveredType[]) => {
     const stockPropertytext = no.toString() || "";
     const stockPropertywidth = timesRomanFont.widthOfTextAtSize(
       stockPropertytext,
-      9
+      9,
     );
     const stockPropertyplace = (30 + 85) / 2;
     page.drawText(stockPropertytext, {
@@ -215,7 +261,12 @@ const textandlines = async (
     color: rgb(0, 0, 0),
   });
   page.drawText("Supplier:", { x: 40, y: 800, size: 11, font: timesRomanFont });
-  page.drawText(data.inspection_details.po_details.rfq_details.supplier_name, { x: 90, y: 800, size: 11, font: timesRomanFont });
+  page.drawText(data.inspection_details.po_details.rfq_details.supplier_name, {
+    x: 90,
+    y: 800,
+    size: 11,
+    font: timesRomanFont,
+  });
   page.drawLine({
     start: { x: 85, y: 797 },
     end: { x: 428, y: 797 },
@@ -252,12 +303,12 @@ const textandlines = async (
     size: 11,
     font: timesRomanFont,
   });
-  page.drawText(data.inspection_details.po_details.pr_details.office, {
+  /*page.drawText(data.inspection_details.po_details.pr_details.office, {
     x: 180,
     y: 760,
     size: 11,
     font: timesRomanFont,
-  });
+  });*/
   page.drawLine({
     start: { x: 170, y: 757 },
     end: { x: 428, y: 757 },
@@ -270,12 +321,15 @@ const textandlines = async (
     size: 11,
     font: timesRomanFont,
   });
-  page.drawText(data.inspection_details.po_details.pr_details.res_center_code ?? "", {
-    x: 180,
-    y: 740,
-    size: 11,
-    font: timesRomanFont,
-  });
+  page.drawText(
+    data.inspection_details.po_details.pr_details.res_center_code ?? "",
+    {
+      x: 180,
+      y: 740,
+      size: 11,
+      font: timesRomanFont,
+    },
+  );
   page.drawLine({
     start: { x: 170, y: 737 },
     end: { x: 428, y: 737 },
@@ -340,7 +394,7 @@ const textandlines = async (
   page.drawText(description, {
     x: descplace - descwidth / 2,
     y: 712,
-    size: 11,
+    size: 8,
     font: italicbold,
   });
   const unit = "Unit";
@@ -388,7 +442,7 @@ const textandlines = async (
   });
   page.drawRectangle({
     x: 45,
-    y: 155,
+    y: 165,
     width: 25,
     height: 20,
     borderColor: rgb(0, 0, 0),
@@ -461,7 +515,7 @@ const textandlines = async (
     size: 12,
     font: timesRomanFont,
   });
-  const ioicname = "JOSEPHINE M. CABARDO";
+  const ioicname = "IRVIN PAUL A. RENDON";
   const ioicnamewidth = timesBoldFont.widthOfTextAtSize(ioicname, 13);
   const ioicnameplace = (34 + 329) / 2;
   page.drawText(ioicname, {
