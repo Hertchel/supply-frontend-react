@@ -1,5 +1,8 @@
 import api from "@/api";
-import { RequisitionerType } from "@/types/request/requisitioner";
+import {
+  RequisitionerType,
+  EditRequisitionerType
+} from "@/types/request/requisitioner";
 import { ApiResponse } from "@/types/response/api-response";
 import { handleError, handleSucess } from "@/utils/apiHelper";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
@@ -97,7 +100,7 @@ export const useGetRequisitioner = (requisition_id: string) => {
   });
 };
 
-export const UpdateRequisitioner = async (data: RequisitionerType) => {
+export const UpdateRequisitioner = async (data: EditRequisitionerType) => {
   try {
     const response = await api.put<RequisitionerType>(`api/requisitioner/${data.requisition_id}`, data);
     return handleSucess(response);
@@ -109,7 +112,7 @@ export const UpdateRequisitioner = async (data: RequisitionerType) => {
 export const useUpdateRequisitioner = () => {
   const queryClient = useQueryClient();
   const {toast} = useToast();
-  return useMutation<ApiResponse<RequisitionerType>, Error, RequisitionerType>({
+  return useMutation<ApiResponse<EditRequisitionerType>, Error, EditRequisitionerType>({
     mutationFn: (data) => UpdateRequisitioner(data),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["requisitioners"] });

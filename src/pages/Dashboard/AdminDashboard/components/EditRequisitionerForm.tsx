@@ -88,9 +88,6 @@ const EditRequisitionerForm: React.FC<EditRequisitionerFormProps> = ({
         console.log(data);
         mutate({
           requisition_id: requisition_id,
-          first_name: data.first_name,
-          last_name: data.last_name,
-          middle_name: data.middle_name,
           name: data.name,
           gender: data.gender,
           department: data.department,
