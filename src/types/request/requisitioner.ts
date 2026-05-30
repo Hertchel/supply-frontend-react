@@ -24,4 +24,4 @@ export const EditRequisitionerSchema = z.object({
   designation: z.string().min(1, { message: "designation is required" }),
 });
 
-export type EditRequisitionerType = z.infer<typeof requisitionerSchema>;
+export type EditRequisitionerType = z.infer<typeof EditRequisitionerSchema>;
