@@ -56,6 +56,26 @@ export const activateUser = async ({
   }
 };
 
+export const deleteUser = async (
+  id: string
+): Promise<ApiResponse<UsersType>> => {
+
+  try {
+
+    const response = await api.delete(
+      `/api/user/${id}`
+    );
+
+    return handleSucess(response);
+
+  } catch (error) {
+
+    return handleError(error);
+
+  }
+
+};
+
 export const useActivateUser = (action: string) => {
   const queryClient = useQueryClient()
   return useMutation({
@@ -70,6 +90,29 @@ export const useActivateUser = (action: string) => {
   })
 }
 
+export const useDeleteUser = () => {
+
+  const queryClient = useQueryClient();
+
+  return useMutation({
+
+    mutationFn: deleteUser,
+
+    onSuccess: () => {
+
+      queryClient.invalidateQueries({
+        queryKey: ["users"],
+      });
+
+      toast.success("Successfully Deleted!", {
+        description: "User deleted successfully",
+      });
+
+    },
+
+  });
+
+};
 
 export const useUser = () => {
   return useQuery<ApiResponse<UsersType[]>, Error>({
@@ -92,4 +135,107 @@ export const getReviewers = async (): Promise<ApiResponse<UsersType[]>> => {
   } catch (error) {
     return handleError(error);
   }
+};
+
+export const useGetReviewers = () => {
+
+  return useQuery<ApiResponse<UsersType[]>>({
+
+    queryKey: ["reviewers"],
+
+    queryFn: getReviewers,
+
+    refetchInterval: 5000,
+
+  });
+
+};
+export const deleteReviewer = async (
+  id: string
+): Promise<ApiResponse<UsersType>> => {
+
+  try {
+
+    const response = await api.delete(
+      `/api/reviewers/${id}`
+    );
+
+    return handleSucess(response);
+
+  } catch (error) {
+
+    return handleError(error);
+
+  }
+
+};
+export const useDeleteReviewer = () => {
+
+  const queryClient = useQueryClient();
+
+  return useMutation({
+
+    mutationFn: deleteReviewer,
+
+    onSuccess: () => {
+
+      queryClient.invalidateQueries({
+        queryKey: ["reviewers"],
+      });
+
+      toast.success("Reviewer Deleted!", {
+        description: "Reviewer deleted successfully",
+      });
+
+    },
+
+  });
+
+};
+
+export const addReviewer = async (
+  data: UsersType
+): Promise<ApiResponse<UsersType>> => {
+
+  try {
+
+    const response = await api.post(
+      "/api/reviewers/",
+      {
+        ...data,
+        is_reviewer: true,
+      }
+    );
+
+    return handleSucess(response);
+
+  } catch (error) {
+
+    return handleError(error);
+
+  }
+
+};
+export const useAddReviewer = () => {
+
+  const queryClient = useQueryClient();
+
+  return useMutation({
+
+    mutationFn: addReviewer,
+
+    onSuccess: () => {
+
+      queryClient.invalidateQueries({
+        queryKey: ["reviewers"],
+      });
+
+      toast.success("Reviewer Added!", {
+        description: "Reviewer created successfully",
+      });
+
+    },
+
+  });
+
 };

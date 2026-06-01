@@ -14,6 +14,7 @@ import BACReports from "./pages/Dashboard/BACDashboard/BACReports";
 import BACTransaction from "./pages/Dashboard/BACDashboard/BACTransaction";
 import AdminDashboard from "./pages/Dashboard/AdminDashboard/Dashboard";
 import Users from "./pages/Dashboard/AdminDashboard/Users";
+import Reviewers from "./pages/Dashboard/AdminDashboard/components/reviewers";
 import PurchaseRequestInProgress from "./pages/Dashboard/SupplyDashboard/PurchaseRequestInProgress";
 import BACPurchaseRequestInProgress from "./pages/Dashboard/BACDashboard/BACPurchaseRequestInProgress";
 import { Logout, RegisterAndLogout } from "./components/Auth/auth";
@@ -144,6 +145,7 @@ const App = () => {
           >
             <Route path="dashboard" element={<AdminDashboard />} />
             <Route path="users" element={<Users />} />
+            <Route path="reviewers" element={<Reviewers />} />
             <Route path="requisitioner" element={<Requisitioner />} />
             <Route path="campus-director" element={<CampusDirector />} />
             <Route path="BACmembers" element={<BACmember />} />

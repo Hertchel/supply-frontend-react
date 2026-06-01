@@ -10,7 +10,7 @@ export const registerUser = async (
 ): Promise<ApiResponse<UserResponse>> => {
   try {
     const response = await api.post<UserResponse>(
-      "api/user/register/ ",
+      "api/user/register/",
       data
     );
     return handleSucess(response);

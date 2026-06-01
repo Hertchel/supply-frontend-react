@@ -16,7 +16,10 @@ import {
 } from "@/components/ui/tooltip";
 import { UsersType } from "@/types/response/users";
 import { Loader2 } from "lucide-react";
-import { useActivateUser, useDeleteUser } from "@/services/userServices";
+import {
+  useActivateUser,
+  useDeleteReviewer,
+} from "@/services/userServices";
 import { RequisitionerType } from "@/types/request/requisitioner";
 
 interface DataTableRowActionsProps {
@@ -34,7 +37,7 @@ export const DataTableRowActions = ({
     : "Activate";
 
   const { mutate, isPending } = useActivateUser(buttonLabel);
-  const { mutate: deleteMutate } = useDeleteUser();
+  const { mutate: deleteMutate } = useDeleteReviewer();
 
   const handleActivateUser = () => {
     mutate({ id: id!, status: !(_data as UsersType).is_active });

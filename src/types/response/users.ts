@@ -8,6 +8,7 @@ export type UsersType = {
   is_active: string,
   date_joined: Date,
   last_login: Date,
+  is_reviewer?: boolean,
 }
 
 //Step 1: define the type

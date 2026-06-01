@@ -34,6 +34,11 @@ const AdminNav = [
     
   },
   {
+  title: "Reviewers",
+  url: "/admin/reviewers",
+  icon: Users,
+},
+  {
     title: "Requisitioner",
     url: "/admin/requisitioner",
     icon: Users,
