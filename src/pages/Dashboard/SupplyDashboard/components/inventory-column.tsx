@@ -63,23 +63,27 @@ export const inventoryColumns: ColumnDef<_itemsDeliveredType>[] = [
       );
     },
   },
+
   {
-    accessorKey: "unit_cost",
+  id: "supplier_unit_cost",
     header: ({ column }) => (
-      <DataTableColumnHeader column={column} title="UNIT COST" />
+      <DataTableColumnHeader
+        column={column}
+        title="UNIT COST"
+      />
     ),
     cell: ({ row }) => {
+      const supplierPrice =
+        row.original.item_details
+          .item_quotation_details
+          .unit_price;
+
       return (
         <div className="flex space-x-2">
           <span className="max-w-[500px] truncate font-medium">
-            <p className="font-thin text-sm">{row.getValue("unit_cost")}</p>
-
-            {/* <p className="font-thin text-sm">
-              {
-                row.original.item_details.item_quotation_details.item_details
-                  .unit_cost
-              }
-            </p> */}
+            <p className="font-thin text-sm">
+              {Number(supplierPrice).toFixed(2)}
+            </p>
           </span>
         </div>
       );
