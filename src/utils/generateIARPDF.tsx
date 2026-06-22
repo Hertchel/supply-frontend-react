@@ -46,6 +46,8 @@ export const generateIARPDF = async (itemData: _itemsDeliveredType[]) => {
   let page = pdfDoc.addPage([612, pageHeight]);
   pages.push(page);
 
+
+
   const { width, height } = page.getSize();
   const step = 5; // Change to 50 or 100 if too dense
   const gray = rgb(0.75, 0.75, 0.75);
@@ -92,6 +94,9 @@ export const generateIARPDF = async (itemData: _itemsDeliveredType[]) => {
       });
     }
   }
+
+
+
   itemData.forEach((data) => {
     const no =
       data.item_details.item_quotation_details.item_details.stock_property_no;
@@ -191,7 +196,9 @@ export const generateIARPDF = async (itemData: _itemsDeliveredType[]) => {
     );
   }
   const pdfBytes = await pdfDoc.save();
-  const blob = new Blob([pdfBytes], { type: "application/pdf" });
+  const fixedBuffer = new Uint8Array(pdfBytes).buffer;
+  const blob = new Blob([fixedBuffer], { type: "application/pdf" });
+  //const blob = new Blob([pdfBytes], { type: "application/pdf" });
   const url = URL.createObjectURL(blob);
 
   return url;
@@ -205,6 +212,17 @@ const textandlines = async (
   italicbold: PDFFont,
   data: _itemsDeliveredType,
 ) => {
+
+  const currentDate = new Date();
+
+  const formattedDate = currentDate.toLocaleDateString(
+    "en-US",
+    {
+      month: "2-digit",
+      day: "2-digit",
+      year: "numeric"
+    }
+  );
   const formname = "INSPECTION AND ACCEPTANCE REPORT";
   const formname1 = formname || "";
   const formnamewidth = timesBoldFont.widthOfTextAtSize(formname1, 14);
@@ -254,6 +272,14 @@ const textandlines = async (
     size: 12,
     font: timesRomanFont,
   });
+
+  page.drawText(data.inspection_details.po_details.pr_details.fund_cluster?.toString() || "", {
+    x: 500,
+    y: 825,
+    size: 11,
+    font: timesRomanFont,
+  });
+
   page.drawLine({
     start: { x: 500, y: 823 },
     end: { x: 570, y: 823 },
@@ -284,12 +310,14 @@ const textandlines = async (
     y: 780,
     size: 11,
     font: timesRomanFont,
+    color: rgb(0, 1, 0),
   });
   page.drawText(formatPrDate(data.inspection_details.created_at), {
     x: 240,
     y: 780,
     size: 11,
     font: timesRomanFont,
+    color: rgb(1, 0, 0),
   });
   page.drawLine({
     start: { x: 115, y: 777 },
@@ -303,12 +331,21 @@ const textandlines = async (
     size: 11,
     font: timesRomanFont,
   });
-  /*page.drawText(data.inspection_details.po_details.pr_details.office, {
+  
+  page.drawText(data.inspection_details.po_details.pr_details.office_details?.name ?? "", {
     x: 180,
     y: 760,
     size: 11,
     font: timesRomanFont,
-  });*/
+  });
+
+  page.drawText(data.inspection_details.po_details.pr_details.office_details?.department ?? "", {
+    x: 300,
+    y: 760,
+    size: 11,
+    font: timesRomanFont,
+  });
+
   page.drawLine({
     start: { x: 170, y: 757 },
     end: { x: 428, y: 757 },
@@ -350,6 +387,14 @@ const textandlines = async (
     thickness: 1,
     color: rgb(0, 0, 0),
   });
+
+    page.drawText(formattedDate, {
+      x: 500,
+      y: 780,
+      size: 11,
+      color: rgb(1, 0, 0),
+    });
+
   page.drawText("Invoice No. :", {
     x: 438,
     y: 760,
@@ -369,6 +414,14 @@ const textandlines = async (
     thickness: 1,
     color: rgb(0, 0, 0),
   });
+
+    page.drawText(formattedDate, {
+      x: 500,
+      y: 745,
+      size: 11,
+      color: rgb(1, 0, 0),
+    });
+
   const stocknum = "Stock/";
   const stocknum1 = stocknum || "";
   const stocknumwidth = italicbold.widthOfTextAtSize(stocknum1, 8);
@@ -434,12 +487,20 @@ const textandlines = async (
     size: 12,
     font: italicbold,
   });
-  page.drawText("Data Inspected:", {
+  page.drawText("Date Inspected:", {
     x: 45,
     y: 205,
     size: 11,
     font: timesBoldFont,
   });
+
+  page.drawText(formattedDate, {
+      x: 125,
+      y: 205,
+      size: 11,
+    });
+
+
   page.drawRectangle({
     x: 45,
     y: 165,
@@ -476,12 +537,21 @@ const textandlines = async (
     size: 12,
     font: timesRomanFont,
   });
-  page.drawText("Data Received :", {
+  page.drawText("Date Received :", {
     x: 345,
     y: 205,
     size: 11,
     font: timesBoldFont,
   });
+
+   page.drawText(formattedDate, {
+      x: 425,
+      y: 205,
+      size: 11,
+    });
+
+  
+
   page.drawText("Complete", { x: 375, y: 170, size: 12, font: timesRomanFont });
   page.drawText("Partial (pls. specify quantity)", {
     x: 375,
@@ -583,6 +653,20 @@ const textandlines = async (
     thickness: 1.5,
     color: rgb(0, 0, 0),
   });
+  //Date Inspected Line
+  page.drawLine({
+    start: { x: 125, y: 203 },
+    end: { x: 180, y: 203 },
+    thickness: 1,
+    color: rgb(0, 0, 0),
+  });
+  //Date Received Line
+  page.drawLine({
+    start: { x: 425, y: 203 },
+    end: { x: 480, y: 203 },
+    thickness: 1,
+    color: rgb(0, 0, 0),
+  });
 
   //Vertical Line
   page.drawLine({
@@ -625,6 +709,13 @@ const textandlines = async (
   page.drawLine({
     start: { x: 229, y: 795 },
     end: { x: 224, y: 778 },
+    thickness: 1,
+    color: rgb(0, 0, 0),
+  });
+
+  page.drawLine({
+    start: { x: 295, y: 775 },
+    end: { x: 290, y: 760 },
     thickness: 1,
     color: rgb(0, 0, 0),
   });
