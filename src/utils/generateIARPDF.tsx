@@ -47,7 +47,7 @@ export const generateIARPDF = async (itemData: _itemsDeliveredType[]) => {
   pages.push(page);
 
 
-
+/*
   const { width, height } = page.getSize();
   const step = 5; // Change to 50 or 100 if too dense
   const gray = rgb(0.75, 0.75, 0.75);
@@ -94,7 +94,7 @@ export const generateIARPDF = async (itemData: _itemsDeliveredType[]) => {
       });
     }
   }
-
+*/
 
 
   itemData.forEach((data) => {

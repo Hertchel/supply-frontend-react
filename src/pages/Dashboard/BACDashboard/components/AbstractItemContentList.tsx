@@ -79,7 +79,8 @@ export const AbstractItemContentList = () => {
     useGetAbstractOfQuotation(aoq_no!);
 
   const { data: items, isLoading } = useGetAllSupplierItem();
-  const { data: bac_members } = useGetAllBACmember()
+  const { data: bac_members } = useGetAllBACmember();
+  //const { data: rfqs } = useRequestForQuotation();
 
   const bacMembersData = useMemo(() => {
     return Array.isArray(bac_members?.data) ? bac_members.data : [] 
@@ -99,14 +100,53 @@ export const AbstractItemContentList = () => {
       
     );
   }, [supplierItemData, aoq_no]);
+
+  console.log("FILTERED COUNT:", filteredSupplierItemData.length);
+
+filteredSupplierItemData.forEach((item, index) => {
+  console.log(
+    index,
+    item.rfq_details.rfq_no,
+    item.rfq_details.supplier_name,
+    item.item_quotation_details.unit_price
+  );
+});
   console.log(filteredSupplierItemData);
 
   const abstractData = abstract && abstract.data;
-  const pr_no = abstractData?.pr_details.pr_no;
+
+  const quotationsForPR = useMemo(() => {
+
+    return supplierItemData.filter(
+      (item) =>
+        item.rfq_details.purchase_request ===
+        abstractData?.pr_details?.pr_no
+    );
+
+  }, [supplierItemData, abstractData]);
+
   console.log(
-  "CURRENT PR STATUS",
-  abstractData?.pr_details.status
+  "ALL SUPPLIERS FOR CURRENT PR",
+  quotationsForPR
 );
+
+quotationsForPR.forEach((supplier, index) => {
+  console.log(
+    index,
+    supplier.rfq_details.supplier_name,
+    supplier.item_quotation_details.unit_price
+  );
+});
+
+    const pr_no = abstractData?.pr_details.pr_no;
+    console.log(
+    "CURRENT PR STATUS",
+    abstractData?.pr_details.status
+  );
+  console.log(
+    "ALL RFQ QUOTATIONS FOR PR",
+    quotationsForPR
+  );
 
   const NOAData = useMemo(() => {
     return supplierItemData.find(
@@ -149,6 +189,7 @@ export const AbstractItemContentList = () => {
 
   const url = await generateAOQPDF(
     filteredSupplierItemData,
+    quotationsForPR,
     bacMembersData
   );
 

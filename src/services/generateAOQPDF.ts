@@ -57,8 +57,13 @@ const drawDebugGrid = (page: any) => {
 };
 */
 
-export const generateAOQPDF = async (data: supplierItemType_[], bac_members: BACmemberType[]) => {
+export const generateAOQPDF = async (data: supplierItemType_[], quotationsForPR: any[], bac_members: BACmemberType[]) => {
   const items = Array.isArray(data) ? data : [];
+
+  console.log(
+  "ALL SUPPLIERS FOR PR AOQPDF:",
+  quotationsForPR
+);
 
   if (items.length === 0) {
     console.error("No data available");
@@ -82,6 +87,20 @@ export const generateAOQPDF = async (data: supplierItemType_[], bac_members: BAC
       pageIndex * itemsPerPage,
       (pageIndex + 1) * itemsPerPage
     );
+    console.log("TOTAL SUPPLIER ITEMS:", data.length);
+
+data.forEach((d, index) => {
+  console.log(
+    index,
+    d.rfq_details?.supplier_name,
+    d.item_quotation_details?.unit_price
+  );
+});
+
+
+    console.log("FULL AOQ DATA");
+    console.log(JSON.stringify(data, null, 2));
+    
     pageItems.forEach((item, index) => {
       const rowY = FIRST_ROW_Y - (index * ROW_HEIGHT);
       const numtext = (index + 1).toString() || "";

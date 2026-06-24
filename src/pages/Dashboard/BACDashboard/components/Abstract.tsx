@@ -4,6 +4,10 @@ import { Button } from "@/components/ui/button";
 import { useMemo, useState } from "react";
 import { useEffect } from "react";
 import Loading from "../../shared/components/Loading";
+import {
+  useGetItemQuotation,
+  useRequestForQuotation
+} from "@/services/requestForQuotationServices";
 
 import {
   CalendarIcon,
@@ -47,6 +51,9 @@ export default function Abstract() {
   const { data: items } = useGetAllSupplierItem();
   const { data: bac_members } = useGetAllBACmember()
 
+  const { data: rfqs } = useRequestForQuotation();
+  const { data: itemQuotations } = useGetItemQuotation();
+
   const bacMembersData = useMemo(() => {
     return Array.isArray(bac_members?.data) ? bac_members.data : [] 
   }, [bac_members?.data])
@@ -54,6 +61,66 @@ export default function Abstract() {
   const supplierItemData = useMemo(() => {
     return Array.isArray(items?.data) ? items.data : []
   }, [items?.data])
+
+  const itemQuotationData = useMemo(() => {
+    return Array.isArray(itemQuotations?.data)
+      ? itemQuotations.data
+      : [];
+  }, [itemQuotations?.data]);
+
+  const quotationsForPR = useMemo(() => {
+
+    const rfqData = Array.isArray(rfqs?.data)
+      ? rfqs.data
+      : [];
+
+    return itemQuotationData.filter((quotation) => {
+
+      const matchingRFQ = rfqData.find(
+        rfq => rfq.rfq_no === quotation.rfq
+      );
+
+      return (
+        matchingRFQ?.purchase_request?.toString() ===
+        pr_no?.toString()
+      );
+
+    });
+
+  }, [
+    itemQuotationData,
+    rfqs?.data,
+    pr_no
+  ]);
+
+  console.log(
+    "QUOTATIONS FOR PR:",
+    quotationsForPR
+  );
+  quotationsForPR.forEach((q, index) => {
+    console.log(
+      index,
+      q.rfq,
+      q.unit_price,
+      q.brand_model
+    );
+  });
+  console.log(
+    "ITEM QUOTATION COUNT:",
+    itemQuotationData.length
+  );
+
+  console.log(
+    "ITEM QUOTATION RAW:",
+    itemQuotationData
+  );
+  quotationsForPR.forEach((quotation, index) => {
+    console.log(
+      "QUOTATION",
+      index,
+      quotation
+    );
+  });
 
   const filteredSupplierItem = useMemo(() => {
   console.log("PR NO:", pr_no);
@@ -118,6 +185,7 @@ export default function Abstract() {
 
   const url = await generateAOQPDF(
     filteredSupplierItem!,
+    quotationsForPR,
     bacMembersData
   );
 

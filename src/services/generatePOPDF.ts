@@ -494,6 +494,14 @@ const textandlines = async (
     size: 11,
     font: timesRomanFont,
   });
+
+   page.drawText(purchaseOrderData.pr_details.fund_cluster?.toString() || "", {
+    x: 110,
+    y: 150,
+    size: 9,
+    font: timesRomanFont,
+  });
+
   page.drawText("Fund Available :", {
     x: 40,
     y: 135,

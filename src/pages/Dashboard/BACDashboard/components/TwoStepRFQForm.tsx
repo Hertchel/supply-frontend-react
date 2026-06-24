@@ -236,6 +236,7 @@ export const TwoStepRFQForm: React.FC<TwoStepRFQFormProps> = ({
   const onSubmit = async (data: requestForQuotationType) => {
     console.log("Submitting RFQ:", data);
     console.log(data);
+    
     setIsLoading(true);
     try {
       const result = requestForQuotationSchema.safeParse(data);
@@ -245,7 +246,7 @@ export const TwoStepRFQForm: React.FC<TwoStepRFQFormProps> = ({
       }
 
       const quotationData = {
-        rfq_no: pr_no,
+        rfq_no: `${pr_no}-${uuidv4().substring(0,8)}`,
         purchase_request: data.purchase_request!,
         supplier_name: data.supplier_name ?? "",
         supplier_address: data.supplier_address ?? "",
@@ -253,8 +254,22 @@ export const TwoStepRFQForm: React.FC<TwoStepRFQFormProps> = ({
         is_VAT: selectedOption === "vat" ? true : false,
       };
 
+      console.log(
+        "RFQ NUMBER BEING SENT:",
+        pr_no
+      );
+
       addRFQMutation(quotationData, {
         onSuccess: async (rfqResponse) => {
+          console.log(
+            "RFQ RESPONSE:",
+            rfqResponse
+          );
+
+          console.log(
+            "RFQ RESPONSE DATA:",
+            rfqResponse?.data
+          );
           const rfqNo = rfqResponse.data?.rfq_no;
 
           // Map over the items and perform addItemMutation with rfqNo from the response
@@ -298,8 +313,28 @@ export const TwoStepRFQForm: React.FC<TwoStepRFQFormProps> = ({
           }
 
           await Promise.all(
-            validItems.map((itemData) => {
-              return addItemMutation(itemData);
+            validItems.map(async (itemData) => {
+              try {
+                const result =
+                  await addItemMutation(itemData);
+
+                console.log(
+                  "ITEM CREATED:",
+                  result
+                );
+
+                return result;
+              } catch (error) {
+
+                console.error(
+                  "ITEM CREATION FAILED:",
+                  itemData
+                );
+
+                console.error(error);
+
+                throw error;
+              }
             })
           );
 
@@ -313,13 +348,26 @@ export const TwoStepRFQForm: React.FC<TwoStepRFQFormProps> = ({
             type: "success"
           })
         },
-        onError: (error) => {
+        onError: (error: any) => {
+          console.error(
+            "RFQ CREATE ERROR FULL:",
+            error
+          );
+
+          console.error(
+            "RFQ CREATE ERROR RESPONSE:",
+            error?.response?.data
+          );
+
           setMessageDialog({
             open: true,
-            message: error.message ?? "Something went wrong, please try again later",
+            message:
+              JSON.stringify(error?.response?.data) ||
+              error.message ||
+              "Something went wrong",
             title: "Error",
             type: "error"
-          })
+          });
         },
       });
     } catch (error) {
