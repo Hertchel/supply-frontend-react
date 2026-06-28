@@ -64,6 +64,13 @@ export const generateAOQPDF = async (data: supplierItemType_[], quotationsForPR:
   "ALL SUPPLIERS FOR PR AOQPDF:",
   quotationsForPR
 );
+const bidder1 = quotationsForPR[0]?.supplier_name ?? "";
+const bidder2 = quotationsForPR[1]?.supplier_name ?? "";
+const bidder3 = quotationsForPR[2]?.supplier_name ?? "";
+
+console.log("BIDDER 1:", bidder1);
+console.log("BIDDER 2:", bidder2);
+console.log("BIDDER 3:", bidder3);
 
   if (items.length === 0) {
     console.error("No data available");
@@ -134,6 +141,24 @@ data.forEach((d, index) => {
         x: 355,
         y: rowY,
         size: 12,
+        font: timesRomanFont,
+      });
+      page.drawText(bidder1, {
+        x: 425,
+        y: rowY,
+        size: 10,
+        font: timesRomanFont,
+      });
+      page.drawText(bidder2, {
+        x: 545,
+        y: rowY,
+        size: 10,
+        font: timesRomanFont,
+      });
+      page.drawText(bidder3, {
+        x: 665,
+        y: rowY,
+        size: 10,
         font: timesRomanFont,
       });
       const winningbiddertext = item.rfq_details.supplier_name || "";
