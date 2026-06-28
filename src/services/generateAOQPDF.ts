@@ -60,13 +60,51 @@ const drawDebugGrid = (page: any) => {
 export const generateAOQPDF = async (data: supplierItemType_[], quotationsForPR: any[], bac_members: BACmemberType[]) => {
   const items = Array.isArray(data) ? data : [];
 
-  console.log(
-  "ALL SUPPLIERS FOR PR AOQPDF:",
-  quotationsForPR
-);
-const bidder1 = quotationsForPR[0]?.supplier_name ?? "";
-const bidder2 = quotationsForPR[1]?.supplier_name ?? "";
-const bidder3 = quotationsForPR[2]?.supplier_name ?? "";
+  const lowestSupplier =
+    items.length > 0
+        ? items.reduce((lowest, current) =>
+            Number(current.item_quotation_details.unit_price) <
+            Number(lowest.item_quotation_details.unit_price)
+                ? current
+                : lowest
+        )
+        : undefined;
+
+  const endUser =
+    items[0]?.supplier_details
+        ?.aoq_details
+        ?.pr_details
+        ?.requisitioner_details
+        ?.name ?? "";
+
+        console.log("END USER:", endUser);
+  
+  const uniqueBidders = quotationsForPR.filter(
+    (bidder, index, self) =>
+      index ===
+      self.findIndex(
+        b => b.supplier_name === bidder.supplier_name
+      )
+  );
+  //const lowestSupplier = uniqueBidders[0];
+
+
+  const lowestSupplierName =
+    lowestSupplier?.supplier_details.name ?? "";
+
+  const lowestSupplierPrice =
+    lowestSupplier
+        ? Number(
+            lowestSupplier.item_quotation_details.unit_price
+          ).toFixed(2)
+        : "";
+
+  console.log("LOWEST SUPPLIER", lowestSupplier);
+
+  console.log("UNIQUE BIDDERS", uniqueBidders);
+const bidder1 = uniqueBidders[0]?.supplier_name ?? "";
+const bidder2 = uniqueBidders[1]?.supplier_name ?? "";
+const bidder3 = uniqueBidders[2]?.supplier_name ?? "";
 
 console.log("BIDDER 1:", bidder1);
 console.log("BIDDER 2:", bidder2);
@@ -105,8 +143,22 @@ data.forEach((d, index) => {
 });
 
 
-    console.log("FULL AOQ DATA");
-    console.log(JSON.stringify(data, null, 2));
+    //console.log("FULL AOQ DATA");
+    //console.log(JSON.stringify(data, null, 2));
+    // Lowest Complying Supplier row
+    page.drawText(lowestSupplierName, {
+      x: 440,  
+      y: 280,   
+      size: 11,
+      font: timesRomanFont,
+    });
+
+    page.drawText(lowestSupplierPrice, {
+      x: 540,  
+      y: 280,
+      size: 11,
+      font: timesRomanFont,
+    });
     
     pageItems.forEach((item, index) => {
       const rowY = FIRST_ROW_Y - (index * ROW_HEIGHT);
@@ -168,6 +220,7 @@ data.forEach((d, index) => {
         size: 12,
         font: timesRomanFont,
       });
+      /*
       const winningPriceText =
         item.item_quotation_details.unit_price?.toString() || "";
       page.drawText(winningPriceText, {
@@ -175,7 +228,7 @@ data.forEach((d, index) => {
         y: rowY,
         size: 12,
         font: timesRomanFont,
-      });
+      });*/
     });
 
     /*
@@ -225,7 +278,8 @@ data.forEach((d, index) => {
         timesBoldItalicFont,
         bac_members,
         data[0],
-        pages
+        pages,
+        endUser
       );
     }
 

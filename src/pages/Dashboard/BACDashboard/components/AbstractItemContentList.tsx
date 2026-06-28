@@ -35,7 +35,7 @@ import {
   DialogHeader,
   DialogTitle,
 } from "@/components/ui/dialog";
-import { useGetRFQDetail } from "@/services/requestForQuotationServices";
+import { useGetRFQDetail, useRequestForQuotation, } from "@/services/requestForQuotationServices";
 import {
   Tooltip,
   TooltipContent,
@@ -56,6 +56,7 @@ interface messageDialogProps {
 }
 
 export const AbstractItemContentList = () => {
+  console.log("===== ABSTRACT ITEM CONTENT LIST =====");
   const [isInformationDialogOpen, setIsInformationDialogOpen] =
     useState<boolean>(false);
   const [rfqNo, setRfqNo] = useState<string | undefined>(undefined);
@@ -80,7 +81,17 @@ export const AbstractItemContentList = () => {
 
   const { data: items, isLoading } = useGetAllSupplierItem();
   const { data: bac_members } = useGetAllBACmember();
-  //const { data: rfqs } = useRequestForQuotation();
+  const { data: rfqs } = useRequestForQuotation();
+  const rfqData = useMemo(() => {
+      return Array.isArray(rfqs?.data)
+          ? rfqs.data
+          : [];
+  }, [rfqs?.data]);
+
+  console.log(
+      "ALL RFQS",
+      rfqs?.data
+  );
 
   const bacMembersData = useMemo(() => {
     return Array.isArray(bac_members?.data) ? bac_members.data : [] 
@@ -124,6 +135,20 @@ filteredSupplierItemData.forEach((item, index) => {
     );
 
   }, [supplierItemData, abstractData]);
+
+  const biddersForCurrentPR = useMemo(() => {
+
+      return rfqData.filter(rfq =>
+          rfq.purchase_request ===
+          abstractData?.pr_details?.pr_no
+      );
+
+  }, [rfqData, abstractData]);
+
+  console.log(
+      "-------BIDDERS FOR CURRENT PR",
+      biddersForCurrentPR
+  );
 
   console.log(
   "ALL SUPPLIERS FOR CURRENT PR",
@@ -189,7 +214,7 @@ quotationsForPR.forEach((supplier, index) => {
 
   const url = await generateAOQPDF(
     filteredSupplierItemData,
-    quotationsForPR,
+    biddersForCurrentPR,
     bacMembersData
   );
 

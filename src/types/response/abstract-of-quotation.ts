@@ -54,6 +54,15 @@ export type supplierItemType_ = {
     purchase_request: string;
   };
   supplier_details: {
+    supplier_no: string;
+
+    name: string;
+    address: string;
+    contact_person: string;
+    contact_number: string;
+    tin: string;
+    is_added: boolean;
+    created_at: string;
     aoq_details: {
       aoq_no: string;
       pr_details: {
@@ -75,7 +84,6 @@ export type supplierItemType_ = {
         created_at: Date;
       };
     };
-    supplier_no: string;
   };
 };
 

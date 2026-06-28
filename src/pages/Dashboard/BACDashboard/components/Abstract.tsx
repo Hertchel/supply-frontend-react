@@ -43,6 +43,7 @@ import { formatDate } from "@/services/formatDate";
 import { useGetAllBACmember } from "@/services/BACmemberServices";
 
 export default function Abstract() {
+  console.log("===== ABSTRACT COMPONENT RENDERED =====");
   const [pdfUrl, setPdfUrl] = useState<string | undefined>(undefined);
 
   const { pr_no } = useParams();
@@ -92,6 +93,7 @@ export default function Abstract() {
     rfqs?.data,
     pr_no
   ]);
+  console.log("ALL RFQS FROM API", rfqs?.data);
 
   console.log(
     "QUOTATIONS FOR PR:",

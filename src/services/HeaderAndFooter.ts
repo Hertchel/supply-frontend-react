@@ -11,7 +11,8 @@ export const HeaderAndFooter = async (
   timesBoldItalicFont: PDFFont,
   bac_members: BACmemberType[],
   data: supplierItemType_,
-  totalPages: number
+  totalPages: number,
+  endUser: string
 ) => {
     console.log(data);
     // Draw header
@@ -79,6 +80,12 @@ export const HeaderAndFooter = async (
     page.drawText(bac_members[1]?.designation || "N/A", {x: 381.93, y: 150, size: 11, font: timesRomanFont });
     //end-user text
     page.drawText('End-user', {x: 726.77, y: 120 , size: 11, font: timesRomanFont });
+    page.drawText(endUser, {
+        x: 710,
+        y: 135,
+        size: 11,
+        font: timesBoldFont,
+    });
     //conforme text
     page.drawText('Conforme:', {x: 547.08, y: 165, size: 11, font: timesRomanFont });
     //bac member 3(below bac member 1)
