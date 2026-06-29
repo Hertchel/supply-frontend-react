@@ -111,7 +111,7 @@ export const PurchaseOrderForm: React.FC<PurchaseOrderFormProps> = ({
 
   const supplierData = useMemo(() => {
     return supplier_.filter(
-      (data) => data.rfq_details.purchase_request === pr_no
+      (data) => data.rfq_details.purchase_request === pr_no,
     );
   }, [supplier_, pr_no]);
   console.log("SUPPLIER DATA:", supplierData);
@@ -119,23 +119,19 @@ export const PurchaseOrderForm: React.FC<PurchaseOrderFormProps> = ({
 
   const filteredSupplierItemData = useMemo(() => {
     return supplierItemData.filter(
-      (item) => item.rfq_details.purchase_request === pr_no
+      (item) => item.rfq_details.purchase_request === pr_no,
     );
   }, [supplierItemData, pr_no]);
 
-  console.log(
-  "FILTERED SUPPLIER ITEMS:",
-  filteredSupplierItemData
-);
-  
+  console.log("FILTERED SUPPLIER ITEMS:", filteredSupplierItemData);
 
   const filterItemBySupplier = useCallback(
     (supplier_no: string) => {
       return filteredSupplierItemData.filter(
-        (data) => data.supplier_details.supplier_no === supplier_no
+        (data) => data.supplier_details.supplier_no === supplier_no,
       );
     },
-    [filteredSupplierItemData]
+    [filteredSupplierItemData],
   );
 
   const aoq_no = useMemo(() => {
@@ -151,7 +147,7 @@ export const PurchaseOrderForm: React.FC<PurchaseOrderFormProps> = ({
   const totalAmount = useMemo(() => {
     return filteredSupplierItemData.reduce(
       (accumulator, item) => Number(accumulator) + Number(item.total_amount),
-      0
+      0,
     );
   }, [filteredSupplierItemData]);
 
@@ -195,11 +191,18 @@ export const PurchaseOrderForm: React.FC<PurchaseOrderFormProps> = ({
     }
 
     const addPurchaseOrders = supplierData.map(async (supplier, index) => {
+      console.log("CURRENT SUPPLIER");
+      console.log({
+        index,
+        supplierNo: supplier.supplier_no,
+        supplierName: supplier.rfq_details.supplier_name,
+      });
       const poNo = generatePONo(
         data.purchase_request,
         index,
-        isMultipleSupplier
+        isMultipleSupplier,
       );
+      console.log("GENERATED PO: ", poNo);
       console.log("CREATING PURCHASE ORDER from poform.tsx", poNo);
       try {
         console.log("CREATING PURCHASE ORDER from poform.tsx", poNo);
@@ -214,7 +217,7 @@ export const PurchaseOrderForm: React.FC<PurchaseOrderFormProps> = ({
               if (response.status === "success") {
                 const po_no = response.data?.po_no;
                 const purchaseOrderItem = filterItemBySupplier(
-                  supplier.supplier_no
+                  supplier.supplier_no,
                 ).map((item) => {
                   return {
                     po_item_no: uuidv4(),
@@ -227,7 +230,7 @@ export const PurchaseOrderForm: React.FC<PurchaseOrderFormProps> = ({
                 await Promise.all(
                   purchaseOrderItem.map((prItem) => {
                     addPOItemMutation(prItem);
-                  })
+                  }),
                 );
                 reset();
                 isOrderPlaced = true;
@@ -256,7 +259,7 @@ export const PurchaseOrderForm: React.FC<PurchaseOrderFormProps> = ({
                 type: "error",
               });
             },
-          }
+          },
         );
       } catch (error) {
         reset();
@@ -310,7 +313,7 @@ export const PurchaseOrderForm: React.FC<PurchaseOrderFormProps> = ({
                       variant="outline"
                       onClick={() =>
                         navigate(
-                          `/supply/purchase-request/${purchaseRequestData?.pr_no}`
+                          `/supply/purchase-request/${purchaseRequestData?.pr_no}`,
                         )
                       }
                     >
@@ -351,10 +354,10 @@ export const PurchaseOrderForm: React.FC<PurchaseOrderFormProps> = ({
                                   .item_description;
                               const itemQuantity = Number(
                                 item.item_quotation_details.item_details
-                                  .quantity
+                                  .quantity,
                               );
                               const itemUnitPrice = Number(
-                                item.item_quotation_details.unit_price
+                                item.item_quotation_details.unit_price,
                               );
                               return (
                                 <TableRow key={index}>
@@ -368,11 +371,10 @@ export const PurchaseOrderForm: React.FC<PurchaseOrderFormProps> = ({
                                   </TableCell>
                                 </TableRow>
                               );
-                            }
+                            },
                           )}
                         </TableBody>
                       </Table>
-                      
                     </div>
                   ))}
                 </ScrollArea>

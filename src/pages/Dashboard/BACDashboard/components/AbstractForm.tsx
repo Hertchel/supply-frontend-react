@@ -119,8 +119,7 @@ export const AbstractForm: React.FC<AbstractFormProps> = ({
   const purchaseItems = FilteredItemInPurchaseRequest(purchaseNumber!);
   const _items = useMemo(() => {
     return Array.isArray(items_?.data) ? items_.data : [];
-  }, [items_?.data])
-
+  }, [items_?.data]);
 
   const itemQuotation = useMemo(() => {
     return _items.filter((data) => data.rfq === rfqNo);
@@ -151,18 +150,16 @@ export const AbstractForm: React.FC<AbstractFormProps> = ({
   }, [isDialogOpen, setValue, itemQuotation, purchaseNumber]);
 
   useEffect(() => {
-    
     if (isDialogOpen && itemQuotation && itemQuotation.length > 0) {
       setEditableQuotation(itemQuotation);
-    } 
+    }
   }, [itemQuotation, isDialogOpen, selectedSupplier]);
-
 
   const handleItemSelection = (item: itemQuotationResponseType) => {
     if (!selectedSupplier) return;
     setQuotations((prevQuotations) => {
       const supplierQuotation = prevQuotations.find(
-        (q) => q.rfq_no === selectedSupplier
+        (q) => q.rfq_no === selectedSupplier,
       );
       const selectedItem: SelectedItems = {
         rfq_no: item.rfq,
@@ -176,19 +173,19 @@ export const AbstractForm: React.FC<AbstractFormProps> = ({
 
       if (supplierQuotation) {
         const itemIndex = supplierQuotation.items.findIndex(
-          (i) => i.item_quote_no === item.item_quotation_no
+          (i) => i.item_quote_no === item.item_quotation_no,
         );
         if (itemIndex > -1) {
           const updatedItems = [...supplierQuotation.items];
           updatedItems.splice(itemIndex, 1);
           return prevQuotations.map((q) =>
-            q.rfq_no === selectedSupplier ? { ...q, items: updatedItems } : q
+            q.rfq_no === selectedSupplier ? { ...q, items: updatedItems } : q,
           );
         } else {
           return prevQuotations.map((q) =>
             q.rfq_no === selectedSupplier
               ? { ...q, items: [...q.items, selectedItem] }
-              : q
+              : q,
           );
         }
       } else {
@@ -204,7 +201,7 @@ export const AbstractForm: React.FC<AbstractFormProps> = ({
     return quotations.some(
       (quotation) =>
         quotation.rfq_no !== selectedSupplier &&
-        quotation.items.some((item) => item.item_no === item_no)
+        quotation.items.some((item) => item.item_no === item_no),
     );
   };
 
@@ -218,10 +215,10 @@ export const AbstractForm: React.FC<AbstractFormProps> = ({
 
   const handleToggle = (supplier: quotationType) => {
     setSelectedSupplier(
-      supplier.rfq_no === selectedSupplier ? null : supplier.rfq_no
+      supplier.rfq_no === selectedSupplier ? null : supplier.rfq_no,
     );
     setRfqNo((prevRfqNo) =>
-      supplier.rfq_no === prevRfqNo ? null : supplier.rfq_no
+      supplier.rfq_no === prevRfqNo ? null : supplier.rfq_no,
     );
   };
 
@@ -229,21 +226,26 @@ export const AbstractForm: React.FC<AbstractFormProps> = ({
 
   const selectedItems = useMemo(() => {
     return new Set(
-      quotations.flatMap((data) => data.items.map((item) => item.item_quote_no))
+      quotations.flatMap((data) =>
+        data.items.map((item) => item.item_quote_no),
+      ),
     );
   }, [quotations]);
 
   const restrictedSubmitAction = allItemQuotationCount! > selectedItems.size;
 
-  const handleInputChange = (index: number, field: 'quantity' | 'unit_cost', value: string) => {
+  const handleInputChange = (
+    index: number,
+    field: "quantity" | "unit_cost",
+    value: string,
+  ) => {
     const updatedQuotation = [...editableQuotation];
     updatedQuotation[index].item_details[field] = value ?? 0;
     setEditableQuotation(updatedQuotation);
   };
 
-
   const onSubmit = async (
-    data: abstractType | supplierType | supplierItemType
+    data: abstractType | supplierType | supplierItemType,
   ) => {
     setIsLoading(true);
     try {
@@ -254,12 +256,20 @@ export const AbstractForm: React.FC<AbstractFormProps> = ({
       }
 
       console.log("AOQ PAYLOAD:", data);
+      if (quotations.length === 0) {
+        setMessageDialog({
+          open: true,
+          title: "No Suppliers",
+          message: "Please select at least one supplier.",
+          type: "error",
+        });
+        return;
+      }
 
       await addAOQMutation(data as abstractType, {
         onSuccess: async (AOQResponse) => {
+          console.log("AOQ RESPONSE:", AOQResponse);
 
-          console.log("AOQ RESPONSE:", AOQResponse); 
-          
           const aoqNo = AOQResponse?.data?.aoq_no;
           console.log("AOQ NO:", aoqNo);
 
@@ -275,41 +285,42 @@ export const AbstractForm: React.FC<AbstractFormProps> = ({
 
           for (const supplier of suppliersWithItems) {
             try {
-              const supplierResponse = await addSupplier(
-                {
+              console.log("SUPPLIER PAYLOAD");
+              console.log({
                 supplier_no: supplier.supplier_no,
-
+                extra_character: supplier.extra_character,
+                name: quotations_.find((q) => q.rfq_no === supplier.rfq)
+                  ?.supplier_name,
+                aoq: supplier.aoq,
+                rfq: supplier.rfq,
+              });
+              const supplierResponse = await addSupplier({
+                supplier_no: supplier.supplier_no,
                 name:
-                  quotations_
-                    .find((q) => q.rfq_no === supplier.rfq)
+                  quotations_.find((q) => q.rfq_no === supplier.rfq)
                     ?.supplier_name || "Unknown Supplier",
-
                 address:
-                  quotations_
-                    .find((q) => q.rfq_no === supplier.rfq)
+                  quotations_.find((q) => q.rfq_no === supplier.rfq)
                     ?.supplier_address || "N/A",
-
                 contact_person: "N/A",
-
                 contact_number: "0000000000",
-
                 tin:
-                  quotations_
-                    .find((q) => q.rfq_no === supplier.rfq)
-                    ?.tin || "N/A",
+                  quotations_.find((q) => q.rfq_no === supplier.rfq)?.tin ||
+                  "N/A",
+
+                extra_character: supplier.extra_character,
 
                 aoq: supplier.aoq,
                 rfq: supplier.rfq,
-              }
-              );
-                console.log("SUPPLIER RESPONSE:", supplierResponse);
+              });
+              console.log("SUPPLIER RESPONSE:", supplierResponse);
 
               const supplier_no = supplierResponse?.data?.supplier_no;
               if (!supplier_no) {
                 console.error(
-                  "Failed to retrieve supplier number from the response."
+                  "Failed to retrieve supplier number from the response.",
                 );
-                
+
                 continue;
               }
 
@@ -323,7 +334,6 @@ export const AbstractForm: React.FC<AbstractFormProps> = ({
                 total_amount: item.total_amount.toString(),
               }));
 
-
               allItems = [...allItems, ...supplierItems];
             } catch (error) {
               console.error("Error processing supplier:", error);
@@ -333,7 +343,7 @@ export const AbstractForm: React.FC<AbstractFormProps> = ({
           await Promise.all(
             allItems.map(async (item) => {
               await addSupplierItemMutation(item);
-            })
+            }),
           );
 
           setIsDialogOpen(false);
@@ -466,7 +476,10 @@ export const AbstractForm: React.FC<AbstractFormProps> = ({
                             {editableQuotation[index].item_details.unit}
                           </p>
                           <p className="text-gray-500 col-span-2">
-                            {editableQuotation[index].item_details.item_description}
+                            {
+                              editableQuotation[index].item_details
+                                .item_description
+                            }
                           </p>
                           <Input
                             defaultValue={
@@ -479,7 +492,7 @@ export const AbstractForm: React.FC<AbstractFormProps> = ({
                               handleInputChange(
                                 index,
                                 "quantity",
-                                e.target.value
+                                e.target.value,
                               )
                             }
                           />
@@ -494,7 +507,7 @@ export const AbstractForm: React.FC<AbstractFormProps> = ({
                               handleInputChange(
                                 index,
                                 "unit_cost",
-                                e.target.value
+                                e.target.value,
                               )
                             }
                           />
@@ -525,7 +538,7 @@ export const AbstractForm: React.FC<AbstractFormProps> = ({
                           <Checkbox
                             className="place-self-center"
                             checked={isItemSelectedForCurrentSupplier(
-                              item.item_quotation_no.toString()
+                              item.item_quotation_no.toString(),
                             )}
                             onCheckedChange={() => handleItemSelection(item)}
                             disabled={
