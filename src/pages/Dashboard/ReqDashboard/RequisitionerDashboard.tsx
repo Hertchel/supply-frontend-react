@@ -3,16 +3,39 @@ import {
 } from "@/services/requisitionerServices";
 import Layout from "./components/Layout/ReqDashboardLayout";
 import { ScrollArea } from "@/components/ui/scroll-area";
+import EditRequisitionerForm from "@/pages/Dashboard/AdminDashboard/components/EditRequisitionerForm";
+import { useEffect, useState } from "react";
+import { Button } from "@/components/ui/button";
+
 
 const RequisitionerDashboard = () => {
 
   const {
   data,
-  isLoading,
+  isLoading,  
   error,
 } = useAuthenticatedRequisitionerDashboard();
 
 const dashboardData = data?.data;
+const [isEditDialogOpen, setIsEditDialogOpen] = useState(false);
+const [hasShownProfileModal, setHasShownProfileModal] = useState(false);
+useEffect(() => {
+    if (!dashboardData?.requisitioner || hasShownProfileModal) return;
+
+    const {
+      department,
+      designation,
+    } = dashboardData.requisitioner;
+
+    const isProfileIncomplete =
+      !department ||
+      !designation;
+
+    if (isProfileIncomplete) {
+      setIsEditDialogOpen(true);
+      setHasShownProfileModal(true);
+    }
+  }, [dashboardData, hasShownProfileModal]);
 
 
   if (isLoading) {
@@ -114,6 +137,12 @@ const dashboardData = data?.data;
         </h2>
 
       </div>
+      <Button
+        onClick={() => setIsEditDialogOpen(true)}
+        className="bg-orange-300 hover:bg-orange-500"
+      >
+        Edit Profile
+      </Button>
 
     </div>
 
@@ -353,7 +382,14 @@ const dashboardData = data?.data;
 
       </main>
 
-    </ScrollArea>
+        </ScrollArea>
+
+    <EditRequisitionerForm
+      isEditDialogOpen={isEditDialogOpen}
+      setIsEditDialogOpen={setIsEditDialogOpen}
+      requisition_id={dashboardData?.requisitioner?.requisition_id}
+    />
+
   </Layout>
 );
 };

@@ -115,8 +115,18 @@ export const useUpdateRequisitioner = () => {
   return useMutation<ApiResponse<EditRequisitionerType>, Error, EditRequisitionerType>({
     mutationFn: (data) => UpdateRequisitioner(data),
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["requisitioners"] });
-      toast({title:"Success", description:"Edit Successfully"})
+      queryClient.invalidateQueries({
+        queryKey: ["requisitioners"],
+      });
+
+      queryClient.invalidateQueries({
+        queryKey: ["authenticated-requisitioner-dashboard"],
+      });
+
+      toast({
+        title: "Success",
+        description: "Profile updated successfully.",
+      });
     },
   });
 };

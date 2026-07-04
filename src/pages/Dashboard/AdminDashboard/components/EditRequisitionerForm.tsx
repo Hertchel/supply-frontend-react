@@ -115,7 +115,12 @@ const EditRequisitionerForm: React.FC<EditRequisitionerFormProps> = ({
   );
 
   return (
-    <Dialog open={isEditDialogOpen} onOpenChange={setIsEditDialogOpen}>
+    <Dialog
+      open={isEditDialogOpen}
+      onOpenChange={(open) => {
+        setIsEditDialogOpen(open);
+      }}
+    >
       <DialogContent className="max-w-full w-[40rem]">
         <ScrollArea className="h-[30rem] mb-8">
           <DialogHeader>
