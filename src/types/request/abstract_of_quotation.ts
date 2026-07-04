@@ -6,11 +6,11 @@ export const abstractSchema = z.object({
 });
 export type supplierType = {
   supplier_no: string;
-  name: string;              // ✅ ADD
-  address: string;           // ✅ ADD
-  contact_person: string;    // ✅ ADD
-  contact_number: string;    // ✅ ADD
-  tin: string;               // ✅ ADD
+  name: string;
+  address: string;
+  contact_person: string;
+  contact_number: string;
+  tin: string;
   extra_character?: string;
   aoq: string;
   rfq: string;
@@ -24,10 +24,10 @@ export type supplierType = {
 } 
 */
 export type supplierItemType = {
-  supplier_item_no: string
-  supplier: string
-  rfq: string
-  item_quotation: string
-  total_amount:string
-}
+  supplier_item_no: string;
+  supplier: string;
+  rfq: string;
+  item_quotation: string;
+  total_amount: string;
+};
 export type abstractType = z.infer<typeof abstractSchema>;
