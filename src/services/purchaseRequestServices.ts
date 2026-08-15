@@ -100,7 +100,7 @@ export const usePurchaseRequest = () => {
   return useQuery<ApiResponse<purchaseRequestType[]>, Error>({
     queryKey: ["purchase-request"],
     queryFn: GetPurchaseRequest,
-    refetchInterval: 5000,
+    refetchInterval: false,
   });
 };
 
