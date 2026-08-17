@@ -18,18 +18,10 @@ import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
 import { ScrollArea } from "@/components/ui/scroll-area";
 
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import {
-  arraySort,
-  FilteredItemInPurchaseRequest,
-} from "@/services/itemServices";
-import {
-  useAddItemQuotation,
-  useAddRequestForQuotation,
-} from "@/services/requestForQuotationServices";
-import {
-  requestForQuotationSchema,
-  requestForQuotationType,
-} from "@/types/request/request_for_quotation";
+import {arraySort, FilteredItemInPurchaseRequest,} from "@/services/itemServices";
+import {useAddItemQuotation, useAddRequestForQuotation,} from "@/services/requestForQuotationServices";
+import { useSupplierProfiles } from "@/services/supplierProfileServices";
+import {requestForQuotationSchema, requestForQuotationType,} from "@/types/request/request_for_quotation";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { FieldErrors, useFieldArray, useForm } from "react-hook-form";
 import Loading from "../../shared/components/Loading";
@@ -41,13 +33,7 @@ import { formatTIN } from "@/services/formatTIN";
 import { MessageDialog } from "../../shared/components/MessageDialog";
 import { AxiosError } from "axios";
 import { useRequestForQuotation } from "@/services/requestForQuotationServices";
-import {
-  Command,
-  CommandEmpty,
-  CommandGroup,
-  CommandItem,
-  CommandList,
-} from "@/components/ui/command";
+import {Command, CommandEmpty, CommandGroup, CommandItem, CommandList,} from "@/components/ui/command";
 
 import { ChevronsUpDown, Check } from "lucide-react";
 
@@ -87,21 +73,19 @@ export const TwoStepRFQForm: React.FC<TwoStepRFQFormProps> = ({
 
   const { mutate: addRFQMutation } = useAddRequestForQuotation();
   const { data: rfqData } = useRequestForQuotation();
+  const { data: supplierProfileData } = useSupplierProfiles();
+  const supplierProfiles = supplierProfileData?.data || [];
+  console.log("SUPPLIER PROFILES FOR FORM:", supplierProfiles);
+  console.log("SUPPLIER PROFILE DATA:", supplierProfileData);
   const { mutateAsync: addItemMutation } = useAddItemQuotation();
 
-  const uniqueSuppliers = Array.from(
-    new Map(
-      (rfqData?.data || []).map((rfq) => [
-        rfq.supplier_name,
-        {
-          supplier_name: rfq.supplier_name,
-          supplier_address: rfq.supplier_address,
-          tin: rfq.tin,
-          is_VAT: rfq.is_VAT,
-        },
-      ])
-    ).values()
-  );
+  const uniqueSuppliers = supplierProfiles.map((profile) => ({
+    supplier_profile_id: profile.supplier_profile_id,
+    supplier_name: profile.name,
+    supplier_address: profile.address,
+    tin: profile.tin ?? "",
+    is_VAT: false,
+  }));
 
   const {
     control,
@@ -111,13 +95,14 @@ export const TwoStepRFQForm: React.FC<TwoStepRFQFormProps> = ({
     watch,
     formState: { errors },
     reset,
-  } = useForm({
+  } = useForm<requestForQuotationType>({
     resolver: zodResolver(requestForQuotationSchema),
     defaultValues: {
       rfq_no: rfq_no,
       purchase_request: pr_no,
       supplier_name: "",
       supplier_address: "",
+      supplier_profile_id: null,
       tin: "",
       is_VAT: selectedOption === "vat" ? true : false,
       items: sortedItems?.map((item) => ({
@@ -131,6 +116,12 @@ export const TwoStepRFQForm: React.FC<TwoStepRFQFormProps> = ({
       })),
     },
   });
+
+  console.log(
+  "CURRENT SUPPLIER PROFILE ID:",
+  watch("supplier_profile_id")
+);
+
   const { fields } = useFieldArray({
     control,
     name: "items",
@@ -144,7 +135,7 @@ export const TwoStepRFQForm: React.FC<TwoStepRFQFormProps> = ({
     supplier.supplier_name
       .toLowerCase()
       .includes(
-        watch("supplier_name").toLowerCase()
+        (watch("supplier_name") ?? "").toLowerCase()
       )
   );
 
@@ -250,9 +241,14 @@ export const TwoStepRFQForm: React.FC<TwoStepRFQFormProps> = ({
         purchase_request: data.purchase_request!,
         supplier_name: data.supplier_name ?? "",
         supplier_address: data.supplier_address ?? "",
+        supplier_profile_id: data.supplier_profile_id ?? null,
         tin: data.tin ?? "",
-        is_VAT: selectedOption === "vat" ? true : false,
+        is_VAT: data.is_VAT,
       };
+      console.log(
+        "RFQ PAYLOAD:",
+        quotationData
+      );
 
       console.log(
         "RFQ NUMBER BEING SENT:",
@@ -476,11 +472,12 @@ export const TwoStepRFQForm: React.FC<TwoStepRFQFormProps> = ({
                                                 supplier.tin
                                               );
 
-                                              setSelectedOption(
-                                                supplier.is_VAT
-                                                  ? "vat"
-                                                  : "non-vat"
+                                              setValue(
+                                                "supplier_profile_id",
+                                                supplier.supplier_profile_id
                                               );
+
+                                              setSelectedOption("non-vat");
 
                                               setOpenSupplier(false);
                                             }}
@@ -538,11 +535,12 @@ export const TwoStepRFQForm: React.FC<TwoStepRFQFormProps> = ({
                                             supplier.tin
                                           );
 
-                                          setSelectedOption(
-                                            supplier.is_VAT
-                                              ? "vat"
-                                              : "non-vat"
+                                          setValue(
+                                            "supplier_profile_id",
+                                            supplier.supplier_profile_id
                                           );
+
+                                          setSelectedOption("non-vat");
 
                                           setOpenSupplier(false);
                                         }}
@@ -578,7 +576,10 @@ export const TwoStepRFQForm: React.FC<TwoStepRFQFormProps> = ({
                         <RadioGroup
                           className="flex items-center mb-3"
                           value={selectedOption}
-                          onValueChange={(value) => setSelectedOption(value)}
+                          onValueChange={(value) => {
+                            setSelectedOption(value);
+                            setValue("is_VAT", value === "vat");
+                          }}
                         >
                           <div className="flex items-center space-x-2">
                             <RadioGroupItem value="non-VAT" id="non-VAT" />
