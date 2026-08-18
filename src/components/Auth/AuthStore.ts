@@ -3,7 +3,13 @@ import { createJSONStorage, persist } from "zustand/middleware";
 import api from "@/api";
 import { AxiosError } from "axios";
 import { deleteAuthStorage, deleteCookies } from "@/utils/deleteCookies";
-import { userUpdatePasswordType, userUpdateType } from "@/types/request/user";
+import {
+  forgotPasswordType,
+  resetPasswordType,
+  userUpdatePasswordType,
+  userUpdateType,
+  verifyResetOTPType,
+} from "@/types/request/user";
 
 export interface User {
   id: number;
@@ -20,15 +26,36 @@ interface AuthState {
   otpSent: boolean;
   user: User | null;
   email: string | null;
+  resetToken: string | null;
   errorMessage: string | null;
   successMessage: string | null;
   checkAuth: () => Promise<void>;
+
   checkUser: (
     email: string,
     password: string,
     onSuccess?: (message: string) => void,
     onError?: (error: string) => void
   ) => Promise<void>;
+
+  forgotPassword: (
+    data: forgotPasswordType,
+    onSuccess?: (message: string) => void,
+    onError?: (error: string) => void
+  ) => Promise<void>;
+
+  verifyResetOTP: (
+    data: verifyResetOTPType,
+    onSuccess?: (message: string) => void,
+    onError?: (error: string) => void
+  ) => Promise<void>;
+
+  resetPassword: (
+    data: resetPasswordType,
+    onSuccess?: (message: string) => void,
+    onError?: (error: string) => void
+  ) => Promise<void>;
+
   updateUser: (
     id: number,
     data: userUpdateType,
@@ -66,6 +93,7 @@ const useAuthStore = create<AuthState>()(
       otpSent: false,
       user: null,
       email: null,
+      resetToken: null,
       errorMessage: null,
       successMessage: null,
 
@@ -99,8 +127,10 @@ const useAuthStore = create<AuthState>()(
             password,
           });
           set({
-            otpSent: true,
-            email: response.data.email,
+            isAuthenticated: true,
+            otpSent: false,
+            user: response.data.user,
+            email: response.data.user.email,
             successMessage: response.data.message,
           });
           onSuccess?.(response.data.message);
@@ -110,6 +140,124 @@ const useAuthStore = create<AuthState>()(
             (axiosError.response?.data as { error?: string })?.error ||
             "Failed to check user. Please try again.";
           set({ otpSent: false, errorMessage: errorMsg });
+          onError?.(errorMsg);
+        } finally {
+          set({ isLoading: false });
+        }
+      },
+
+      forgotPassword: async (data, onSuccess, onError) => {
+        set({
+          isLoading: true,
+          errorMessage: null,
+          successMessage: null,
+        });
+
+        try {
+          const response = await api.post(
+            "/api/user/forgot-password/",
+            data
+          );
+
+          set({
+            email: data.email,
+            successMessage: response.data.message,
+          });
+
+          onSuccess?.(response.data.message);
+        } catch (error) {
+          const axiosError = error as AxiosError;
+
+          const errorMsg =
+            (axiosError.response?.data as { error?: string })?.error ||
+            "Failed to send password reset OTP. Please try again.";
+
+          set({
+            errorMessage: errorMsg,
+          });
+
+          onError?.(errorMsg);
+        } finally {
+          set({ isLoading: false });
+        }
+      },
+
+      verifyResetOTP: async (data, onSuccess, onError) => {
+        set({
+          isLoading: true,
+          errorMessage: null,
+          successMessage: null,
+        });
+
+        try {
+          const response = await api.post(
+            "/api/user/verify-reset-otp/",
+            data
+          );
+
+          set({
+            email: data.email,
+            resetToken: response.data.reset_token,
+            successMessage: response.data.message,
+          });
+
+          onSuccess?.(response.data.message);
+        } catch (error) {
+          const axiosError = error as AxiosError;
+
+          const errorMsg =
+            (axiosError.response?.data as { error?: string })?.error ||
+            "Failed to verify the OTP. Please try again.";
+
+          set({
+            errorMessage: errorMsg,
+          });
+
+          onError?.(errorMsg);
+        } finally {
+          set({ isLoading: false });
+        }
+      },
+
+      resetPassword: async (data, onSuccess, onError) => {
+        set({
+          isLoading: true,
+          errorMessage: null,
+          successMessage: null,
+        });
+
+        try {
+          const response = await api.post(
+            "/api/user/reset-password/",
+            {
+              reset_token: data.reset_token,
+              new_password: data.new_password,
+            }
+          );
+
+          set({
+            resetToken: null,
+            email: null,
+            successMessage: response.data.message,
+          });
+
+          onSuccess?.(response.data.message);
+        } catch (error) {
+          const axiosError = error as AxiosError;
+
+          const errorData = axiosError.response?.data as {
+            error?: string | string[];
+          };
+
+          const errorMsg = Array.isArray(errorData?.error)
+            ? errorData.error.join(" ")
+            : errorData?.error ||
+              "Failed to reset password. Please try again.";
+
+          set({
+            errorMessage: errorMsg,
+          });
+
           onError?.(errorMsg);
         } finally {
           set({ isLoading: false });
@@ -215,6 +363,7 @@ const useAuthStore = create<AuthState>()(
             otpSent: false,
             user: null,
             email: null,
+            resetToken: null,
             errorMessage: null,
             successMessage: null,
             isLoggingOut: false,

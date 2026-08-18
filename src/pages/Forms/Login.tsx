@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { Link } from "react-router-dom";
+import { Link, useNavigate } from "react-router-dom";
 import { Label } from "@/components/ui/label";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
@@ -16,6 +16,7 @@ const Login = () => {
   const [isLoading, setIsLoading] = useState<boolean>(false);
   const [showPassword, setShowPassword] = useState<boolean>(false);
 
+  const navigate = useNavigate();
 
   const { checkUser, errorMessage, otpSent } = useAuthStore();
   const { toast } = useToast();
@@ -38,6 +39,8 @@ const Login = () => {
       data.email,
       data.password,
       (successMessage) => {
+        navigate("/");
+
         toast({
           title: "Success",
           description: successMessage,
@@ -166,6 +169,15 @@ const Login = () => {
               </Button>
             </form>
           </div>
+
+          <p className="text-center text-sm">
+            <Link
+              to="/forgot-password"
+              className="text-orange-300 hover:underline"
+            >
+              Forgot Password?
+            </Link>
+          </p>
 
           <p className="mt-4 text-center text-sm sm:text-base">
             Don't have an account?{" "}

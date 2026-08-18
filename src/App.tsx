@@ -1,5 +1,8 @@
 import { BrowserRouter as Router, Routes, Route } from "react-router-dom";
 import Login from "@/pages/Forms/Login";
+import ForgotPassword from "@/pages/Forms/ForgotPassword";
+import VerifyResetOTP from "@/pages/Forms/VerifyResetOTP";
+import ResetPassword from "@/pages/Forms/ResetPassword";
 import ProtectedRoutes from "./components/Auth/ProtectedRoute";
 import NotFound from "./pages/NotFound";
 import RoleBaseRouting from "./components/Auth/RoleBaseRouting";
@@ -51,6 +54,9 @@ const App = () => {
           <Route path="/" element={<RoleBaseRouting />} />
 
           <Route path="/login" element={<Login />} />
+          <Route path="/forgot-password" element={<ForgotPassword />} />
+          <Route path="/reset-password"element={<ResetPassword />}/>
+          <Route path="/verify-reset-otp"element={<VerifyResetOTP />}/>
           <Route path="/logout" element={<Logout />} />
           <Route path="/register" element={<RegisterAndLogout />} />
           <Route

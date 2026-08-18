@@ -6,7 +6,6 @@ export const userLoginSchema = z.object({
 })
 
 export type userLoginType = z.infer<typeof userLoginSchema>
-
 export interface UserResponse {
   employee_id: string;
   first_name: string;
@@ -36,5 +35,28 @@ export const userUpdatePasswordSchema = z.object({
 
 export type userUpdatePasswordType = z.infer<typeof userUpdatePasswordSchema>;
 
+export const forgotPasswordSchema = z.object({
+  email: z.string().email("Please enter a valid email address."),
+});
 
+export type forgotPasswordType = z.infer<typeof forgotPasswordSchema>;
 
+export const verifyResetOTPSchema = z.object({
+  email: z.string().email("Please enter a valid email address."),
+  otp_code: z.string().min(6, "OTP must be 6 digits.").max(6, "OTP must be 6 digits."),
+});
+
+export type verifyResetOTPType = z.infer<typeof verifyResetOTPSchema>;
+
+export const resetPasswordSchema = z
+  .object({
+    reset_token: z.string().min(1, "Reset token is required."),
+    new_password: z.string().min(8, "Password must be at least 8 characters."),
+    confirm_password: z.string().min(1, "Please confirm your password."),
+  })
+  .refine((data) => data.new_password === data.confirm_password, {
+    message: "Passwords do not match.",
+    path: ["confirm_password"],
+  });
+
+export type resetPasswordType = z.infer<typeof resetPasswordSchema>;
