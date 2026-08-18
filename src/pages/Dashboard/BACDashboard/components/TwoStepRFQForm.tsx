@@ -32,7 +32,7 @@ import { v4 as uuidv4 } from "uuid";
 import { formatTIN } from "@/services/formatTIN";
 import { MessageDialog } from "../../shared/components/MessageDialog";
 import { AxiosError } from "axios";
-import { useRequestForQuotation } from "@/services/requestForQuotationServices";
+//import { useRequestForQuotation } from "@/services/requestForQuotationServices";
 import {Command, CommandEmpty, CommandGroup, CommandItem, CommandList,} from "@/components/ui/command";
 
 import { ChevronsUpDown, Check } from "lucide-react";
@@ -72,7 +72,7 @@ export const TwoStepRFQForm: React.FC<TwoStepRFQFormProps> = ({
   const rfq_no = pr_no; //set the initial value rfq_no to pr_no and later in submit handler it have a random Letter
 
   const { mutate: addRFQMutation } = useAddRequestForQuotation();
-  const { data: rfqData } = useRequestForQuotation();
+  //const { data: rfqData } = useRequestForQuotation();
   const { data: supplierProfileData } = useSupplierProfiles();
   const supplierProfiles = supplierProfileData?.data || [];
   console.log("SUPPLIER PROFILES FOR FORM:", supplierProfiles);
