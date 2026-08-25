@@ -144,3 +144,32 @@ export const arraySort = <T>(array: T[], key: keyof T): T[] => {
       })
     : [];
 };
+export interface BulkItemImportResponse {
+  status: string;
+  message: string;
+  imported_count: number;
+  skipped_count: number;
+  duplicates: string[];
+}
+
+export const bulkImportItems = async (
+  purchase_request: string,
+  items: ItemType[]
+): Promise<BulkItemImportResponse> => {
+  const response = await api.post(
+    "/api/item/bulk-import/",
+    {
+      purchase_request,
+      items: items.map((item) => ({
+        item_no: item.item_no,
+        stock_property_no: item.stock_property_no,
+        unit: item.unit,
+        item_description: item.item_description,
+        quantity: item.quantity,
+        unit_cost: item.unit_cost,
+      })),
+    }
+  );
+
+  return response.data;
+};

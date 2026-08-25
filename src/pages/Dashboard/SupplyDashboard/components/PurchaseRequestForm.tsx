@@ -26,9 +26,10 @@ import {
 import useAuthStore from "@/components/Auth/AuthStore";
 import { Loader2 } from "lucide-react";
 import { getAllCampusDirector } from "@/services/campusDirectorServices";
-// import { getAllFundClusters, FundCluster } from "@/services/fundClusterServices"; // Add this
-import { getAllOffices, Office } from "@/services/officeServices"; // Add this
+import { getAllOffices, Office } from "@/services/officeServices"; 
 import { MessageDialog } from "../../shared/components/MessageDialog";
+
+import PPMPImportDialog from "@/pages/Dashboard/SupplyDashboard/components/PPMPImportDialog";
 
 interface PurchaseRequestFormProps {
   isDialogOpen: boolean;
@@ -59,7 +60,7 @@ const PurchaseRequestForm: React.FC<PurchaseRequestFormProps> = ({
   lastPrNo,
 }) => {
   const [isLoading, setIsLoading] = useState<boolean>(false);
-  // const [fundClusters, setFundClusters] = useState<option[]>([]);
+  const [showPPMPImport, setShowPPMPImport] = useState(false);
   const [offices, setOffices] = useState<numberOption[]>([]);
   const [loadingData, setLoadingData] = useState<boolean>(false);
   const [messageDialog, setMessageDialog] = useState<messageDialogProps>({
@@ -392,6 +393,7 @@ console.log("REQUISITIONER VALUE:", watch("requisitioner"));
                         "Submit Purchase Request"
                       )}
                     </Button>
+
                   </div>
                 </div>
               </form>
@@ -399,6 +401,16 @@ console.log("REQUISITIONER VALUE:", watch("requisitioner"));
           </ScrollArea>
         </DialogContent>
       </Dialog>
+      {showPPMPImport && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 p-4">
+          <PPMPImportDialog
+            onClose={() => setShowPPMPImport(false)}
+            onImport={(items) => {
+              console.log("SELECTED PPMP ITEMS:", items);
+            }}
+          />
+        </div>
+      )}
       <MessageDialog
         open={messageDialog.open}
         message={messageDialog.message}
