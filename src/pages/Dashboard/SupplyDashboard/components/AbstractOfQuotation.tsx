@@ -81,55 +81,85 @@ export default function SupplyAOQ() {
   }, [supplier_item]);
 
   const memoizedHandleOrderPlaced = useCallback(
-    (pr_no: string) => {
-      handleOrderPlaced(pr_no);
+    async (pr_no: string) => {
+      await handleOrderPlaced(pr_no);
       console.log("updated to order placed");
     },
     [handleOrderPlaced]
   );
 
   const filteredSupplierData = useCallback(
-  (pr_no: string) => {
+    (pr_no: string) => {
+      // Get all manually selected supplier items for this PR
+      const selectedItemsForPR = supplierItemData.filter(
+        (item) => item.rfq_details?.purchase_request === pr_no
+      );
 
-    console.log(
-      "FILTERED SUPPLIERS",
-      pr_no,
-      supplierData.filter(
-        (item) =>
-          item.rfq_details.purchase_request === pr_no &&
-          !orderPlacedSupplierNo.includes(item.supplier_no) &&
-          !item.is_added
-      )
-    );
+      // Get all unique items that belong to this PR
+      const itemNos = [
+        ...new Set(
+          selectedItemsForPR.map(
+            (item) => item.item_quotation_details.item_details.item_no
+          )
+        ),
+      ];
 
-    return supplierData.filter(
-      (item) =>
-        item.rfq_details.purchase_request === pr_no &&
-        !orderPlacedSupplierNo.includes(item.supplier_no) &&
-        !item.is_added
-    );
-  },
-  [supplierData, orderPlacedSupplierNo]
-);
+      // Get all suppliers that have manually selected items
+      const supplierNos = [
+        ...new Set(
+          selectedItemsForPR
+            .map((item) => item.supplier_details?.supplier_no)
+            .filter((supplierNo): supplierNo is string => Boolean(supplierNo))
+        ),
+      ];
+
+      // A supplier is a winner only if they were manually
+      // selected for EVERY item in the PR.
+      const winningSupplierNos = supplierNos.filter((supplierNo) => {
+        return itemNos.every((itemNo) => {
+          return selectedItemsForPR.some(
+            (item) =>
+              item.supplier_details?.supplier_no === supplierNo &&
+              item.item_quotation_details.item_details.item_no === itemNo
+          );
+        });
+      });
+
+      console.log("PR:", pr_no);
+      console.log("Selected Items:", selectedItemsForPR);
+      console.log("Items:", itemNos);
+      console.log("Winning Suppliers:", winningSupplierNos);
+
+      return supplierData.filter(
+        (supplier) =>
+          supplier.rfq_details?.purchase_request === pr_no &&
+          winningSupplierNos.includes(supplier.supplier_no) &&
+          !orderPlacedSupplierNo.includes(supplier.supplier_no) &&
+          !supplier.is_added
+      );
+    },
+    [supplierData, supplierItemData, orderPlacedSupplierNo]
+  );
 
   const filterItemBySupplier = useCallback(
-    (supplier_no: string) => {
+    (supplier_no: string, pr_no: string) => {
       return supplierItemData.filter(
-        (data) => data.supplier_details.supplier_no === supplier_no
+        (item) =>
+          item.supplier_details?.supplier_no === supplier_no &&
+          item.rfq_details?.purchase_request === pr_no
       );
     },
     [supplierItemData]
   );
 
   const calculateSupplierTotal = useCallback(
-    (supplierNo: string) => {
-      return filterItemBySupplier(supplierNo).reduce((total, item) => {
-        const itemQuantity = Number(
-          item.item_quantity
-        );
+    (supplierNo: string, prNo: string) => {
+      return filterItemBySupplier(supplierNo, prNo).reduce((total, item) => {
+        const itemQuantity = Number(item.item_quantity);
         const itemUnitPrice = Number(
           item.item_quotation_details.unit_price
         );
+
         return total + itemQuantity * itemUnitPrice;
       }, 0);
     },
@@ -146,7 +176,7 @@ export default function SupplyAOQ() {
 
     const checkPRSuppliers = (prNo: string) => {
       const prSuppliers = supplierData.filter(
-        (item) => item.rfq_details.purchase_request === prNo
+        (item) => item.rfq_details?.purchase_request === prNo
       );
       return (
         prSuppliers.length > 0 &&
@@ -194,8 +224,8 @@ export default function SupplyAOQ() {
       const isMultipleSupplier = filteredSupplierData(pr_no).length > 1;
       const poNoOfMultipleSupplier = `${pr_no}${supplierData.extra_character}`;
       const poNo = isMultipleSupplier ? poNoOfMultipleSupplier : pr_no;
-      const totalAmount = calculateSupplierTotal(supplierNo);
-      const supplierItemData = filterItemBySupplier(supplierNo);
+      const totalAmount = calculateSupplierTotal(supplierNo, pr_no);
+      const selectedSupplierItems = filterItemBySupplier(supplierNo, pr_no);
       console.log("CREATING PURCHASE ORDER", poNo);
 
       try {
@@ -213,21 +243,15 @@ export default function SupplyAOQ() {
               if (response.status === "success") {
                 console.log("PO RESPONSE", response);
                 const po_no = response.data?.po_no;
-                const purchaseOrderItem = supplierItemData.map((item) => {
+                const purchaseOrderItem = selectedSupplierItems.map((item) => {
                   return {
                     
                     po_item_no: uuidv4(),
-
                     purchase_request: pr_no,
-
                     purchase_order: po_no!,
-
                     supplier_item: item.supplier_item_no,
-
                     quantity_ordered: item.item_quantity,
-
                     unit_price: item.item_cost,
-
                     total_price: item.total_amount,
                   };
                 });
@@ -320,7 +344,7 @@ console.log("ALL PO ITEM RESULTS", results);
           <h3 className="text-lg font-semibold mb-2">
             {supplier.rfq_details.supplier_name}
             <span className="text-primary mx-2">
-              Total: ₱{calculateSupplierTotal(supplier.supplier_no).toFixed(2)}
+             Total: ₱{calculateSupplierTotal(supplier.supplier_no, prNo).toFixed(2)}
             </span>
             <span>{index}</span>
           </h3>
@@ -334,7 +358,7 @@ console.log("ALL PO ITEM RESULTS", results);
               </TableRow>
             </TableHeader>
             <TableBody>
-              {filterItemBySupplier(supplier.supplier_no).map((item, index) => {
+              {filterItemBySupplier(supplier.supplier_no, prNo).map((item, index) => {
                 const itemDescription =
                   item.item_quotation_details.item_details.item_description;
                 const itemQuantity = Number(

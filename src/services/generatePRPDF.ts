@@ -125,7 +125,7 @@ const drawSignatures = (
 ) => {
 
 
-  const requestby1 = (item[0].pr_details.requisitioner_details.name ?? "").toUpperCase();
+  const requestby1 = (item[0]?.pr_details?.requisitioner_details?.name ?? "").toUpperCase();
     page.drawText(requestby1, {
       x: 165,
       y: 172,
@@ -144,7 +144,7 @@ const drawSignatures = (
       color: rgb(0, 0, 0),
     });
 
-    const coordinatorText = "Coordinator, Civil and Sanitary";
+    const coordinatorText = (item[0]?.pr_details?.requisitioner_details?.designation ?? "").toUpperCase();
 
     page.drawText(coordinatorText, {
       x: 180,
@@ -153,9 +153,7 @@ const drawSignatures = (
       font: Helveticafont,
     });
 
-    const reviewedby1 = (
-      item[0].pr_details.reviewed_by_details?.name || ""
-    ).toUpperCase();
+    const reviewedby1 = (item[0]?.pr_details?.reviewed_by_details?.name || "").toUpperCase();
 
     page.drawText("Reviewed by:", {
       x: 375,
@@ -178,8 +176,7 @@ const drawSignatures = (
       color: rgb(0, 0, 0),
     });
 
-    const maintenanceText = "Campus Maintenance Chairperson";
-
+   const maintenanceText = (item[0]?.pr_details?.reviewed_by_details?.designation ?? "").toUpperCase();
     page.drawText(maintenanceText, {
       x: 390,
       y: 155,
@@ -187,8 +184,7 @@ const drawSignatures = (
       font: Helveticafont,
     });
 
-    const approvedby1 = (item[0].pr_details.campus_director_details.name || "").toUpperCase();
-    //const approvedbywidth = Helveticabold.widthOfTextAtSize(approvedby1, 10);
+    const approvedby1 = (item[0]?.pr_details?.campus_director_details?.name || "").toUpperCase();
     page.drawText("Approved by:", {
       x: 137,
       y: 135,
@@ -222,6 +218,7 @@ const drawSignatures = (
 export const generatePRPDF = async (
   item: itemType[]
 ) => {
+
   const pdfDoc = await PDFDocument.create();
   const headerBytes = await fetch("/header.jpeg").then(res => res.arrayBuffer());
   const headerImage = await pdfDoc.embedJpg(headerBytes);

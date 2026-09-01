@@ -1,8 +1,19 @@
-import { ItemType } from "@/types/request/item"
+import { ItemType } from "@/types/request/item";
 
 export const generateStockPropertyNo = (items: ItemType[]) => {
-  const last_stock_no: number  = items && parseInt(items![items!.length - 1]?.stock_property_no)
-  const next_stock_no = last_stock_no ? last_stock_no + 1 : 1
+  if (!items || items.length === 0) {
+    return 1;
+  }
 
-  return next_stock_no
-}
+  const stockNumbers = items
+    .map((item) => Number(item.stock_property_no))
+    .filter((number) => Number.isFinite(number));
+
+  if (stockNumbers.length === 0) {
+    return 1;
+  }
+
+  const lastStockNo = Math.max(...stockNumbers);
+
+  return lastStockNo + 1;
+};

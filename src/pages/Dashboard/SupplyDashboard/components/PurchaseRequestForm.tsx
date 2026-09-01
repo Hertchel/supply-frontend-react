@@ -76,8 +76,7 @@ const PurchaseRequestForm: React.FC<PurchaseRequestFormProps> = ({
     user?.role === "Requisitioner";
 
   const { data: dashboardData } =
-  useAuthenticatedRequisitionerDashboard();
-  console.log("DASHBOARD DATA:", dashboardData);
+  useAuthenticatedRequisitionerDashboard(isRequisitioner);
 
   const { mutate: addPurchaseRequestMutation } = useAddPurchaseRequest();
   const currentPurchaseNumber = lastPrNo && lastPrNo;
@@ -88,7 +87,6 @@ const PurchaseRequestForm: React.FC<PurchaseRequestFormProps> = ({
   setValue,
   formState: { errors },
   reset,
-  watch,
 } = useForm<PurchaseRequestData>({
   resolver: zodResolver(purchaseRequestFormSchema),
   defaultValues: {
@@ -96,7 +94,6 @@ const PurchaseRequestForm: React.FC<PurchaseRequestFormProps> = ({
     reviewed_by: null,      
   },
 });
-console.log("REQUISITIONER VALUE:", watch("requisitioner"));
 
   // Load dropdown data when dialog opens
   useEffect(() => {
@@ -230,7 +227,6 @@ console.log("REQUISITIONER VALUE:", watch("requisitioner"));
   };
 
   const onSubmit = async (data: PurchaseRequestData) => {
-    console.log(data);
     setIsLoading(true);
 
     const result = purchaseRequestFormSchema.safeParse(data);
@@ -260,9 +256,7 @@ console.log("REQUISITIONER VALUE:", watch("requisitioner"));
             });
           }
         },
-        onError: (error: any) => {
-           console.log("API ERROR:", error);
-           console.log("BACKEND RESPONSE:", error?.response?.data);
+        onError: () => {
           reset()
           setIsDialogOpen(false);
           setIsLoading(false);
@@ -405,8 +399,7 @@ console.log("REQUISITIONER VALUE:", watch("requisitioner"));
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 p-4">
           <PPMPImportDialog
             onClose={() => setShowPPMPImport(false)}
-            onImport={(items) => {
-              console.log("SELECTED PPMP ITEMS:", items);
+            onImport={() => {
             }}
           />
         </div>

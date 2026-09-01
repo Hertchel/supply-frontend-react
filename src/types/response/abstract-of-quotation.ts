@@ -18,6 +18,7 @@ export type supplierType_ = {
     };
   };
   is_added: boolean;
+  is_selected_winner: boolean;
   extra_character: string;
   created_at: Date;
 };

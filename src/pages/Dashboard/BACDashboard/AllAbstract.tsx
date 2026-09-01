@@ -46,9 +46,13 @@ export const AllAbstract = () => {
   const supplierName = (aoq_no: string) => {
     const names = new Set(
       supplierData
-        .filter((data) => data.supplier_details.aoq_details.aoq_no === aoq_no)
+        .filter(
+          (data) =>
+            data.supplier_details?.aoq_details?.aoq_no === aoq_no
+        )
         .map((data) => data.rfq_details.supplier_name)
     );
+
     return Array.from(names);
   };
 

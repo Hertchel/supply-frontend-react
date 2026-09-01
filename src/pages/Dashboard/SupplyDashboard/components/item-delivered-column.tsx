@@ -40,7 +40,7 @@ export const itemDeliveredColumns: ColumnDef<purchaseRequestType>[] = [
   return supplierItemData.filter((data) => {
 
     const status =
-      data.supplier_details.aoq_details.pr_details.status
+      data.supplier_details?.aoq_details?.pr_details?.status
         ?.toLowerCase()
         ?.trim();
 

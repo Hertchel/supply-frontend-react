@@ -265,9 +265,20 @@ export const useUpdatePurchaseRequestStatus = () => {
     onSuccess: (_, variables) => {
       const { pr_no } = variables;
 
-      queryClient.invalidateQueries({ queryKey: ["purchase-request", pr_no] });
-      queryClient.invalidateQueries({ queryKey: ["purchase-requests"] });
-      queryClient.invalidateQueries({ queryKey: ["abstract-of-quotations"] });
+      // Refresh the purchase request list
+      queryClient.invalidateQueries({
+        queryKey: ["purchase-request"],
+      });
+
+      // Refresh the specific purchase request
+      queryClient.invalidateQueries({
+        queryKey: ["purchase-request", pr_no],
+      });
+
+      // Refresh related AOQ data
+      queryClient.invalidateQueries({
+        queryKey: ["abstract-of-quotations"],
+      });
     },
     onError: () => {
       setIsPending(false);

@@ -239,3 +239,47 @@ export const useAddReviewer = () => {
   });
 
 };
+export const updateReviewer = async (
+  id: string,
+  data: UsersType
+): Promise<ApiResponse<UsersType>> => {
+  try {
+    const response = await api.patch(
+      `/api/reviewers/${id}`,
+      {
+        employee_id: data.employee_id,
+        first_name: data.first_name,
+        last_name: data.last_name,
+        email: data.email,
+        designation: data.designation,
+      }
+    );
+
+    return handleSucess(response);
+  } catch (error) {
+    return handleError(error);
+  }
+};
+export const useUpdateReviewer = () => {
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: ({
+      id,
+      data,
+    }: {
+      id: string;
+      data: UsersType;
+    }) => updateReviewer(id, data),
+
+    onSuccess: () => {
+      queryClient.invalidateQueries({
+        queryKey: ["reviewers"],
+      });
+
+      toast.success("Reviewer Updated!", {
+        description: "Reviewer information updated successfully",
+      });
+    },
+  });
+};

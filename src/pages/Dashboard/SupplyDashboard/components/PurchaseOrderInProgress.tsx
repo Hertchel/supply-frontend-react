@@ -43,7 +43,7 @@ export default function PurchaseOrderInProgess() {
   const { data, isLoading } = useGetAllPurchaseOrder();
   const { data: supplier_item } = useGetAllSupplierItem();
   const navigate = useNavigate();
-  const { data: order_item} = useGetPurchaseOrderItem()
+  const {data: order_item, isLoading: isOrderItemLoading,} = useGetPurchaseOrderItem(); 
 
   const orderItemData = useMemo(() => {
       return Array.isArray(order_item?.data) ? order_item.data : []
@@ -83,9 +83,20 @@ export default function PurchaseOrderInProgess() {
 
 
   const handleGeneratePOPDF = async (po_no: string) => {
-    const url = await generatePOPDF(filteredOrderItemData(po_no))
-    window.open(url, "_blank")
-  }
+    if (isOrderItemLoading) {
+      return;
+    }
+
+    const filteredData = filteredOrderItemData(po_no);
+
+    if (filteredData.length === 0) {
+      console.error(`No purchase order items found for PO ${po_no}`);
+      return;
+    }
+
+    const url = await generatePOPDF(filteredData);
+    window.open(url, "_blank");
+  };
 
   const handleCancelOrder = (po_no: string) => {
     setIsCancelDialogOpen(true);
@@ -140,7 +151,13 @@ export default function PurchaseOrderInProgess() {
                   <TableCell>{formatDate(order.created_at)}</TableCell>
                   <TableCell>
                     <div className="flex justify-between items-center ">
-                      <Button variant={"outline"} onClick={() => handleGeneratePOPDF(order.po_no)}>Generate PO PDF</Button>
+                      <Button
+                        variant="outline"
+                        onClick={() => handleGeneratePOPDF(order.po_no)}
+                        disabled={isOrderItemLoading}
+                      >
+                        {isOrderItemLoading ? "Loading..." : "Generate PO PDF"}
+                      </Button>
                       <DropdownMenu
                         open={openDropdowns[order.po_no]}
                         onOpenChange={() => toggleDropdown(order.po_no)}

@@ -10,6 +10,7 @@ import {
 
 import { Button } from "@/components/ui/button";
 import { Checkbox } from "@/components/ui/checkbox";
+import { Loader2 } from "lucide-react";
 
 export interface PPMPItem {
   rowNumber: number;
@@ -20,10 +21,12 @@ export interface PPMPItem {
   mode_of_procurement: string;
   unit_price: number;
   selected: boolean;
+  isValid: boolean;
+  validationErrors: string[];
 }
 
 interface PPMPImportDialogProps {
-  onImport?: (items: PPMPItem[]) => void;
+  onImport?: (items: PPMPItem[]) => void | Promise<void>;
   onClose?: () => void;
 }
 
@@ -35,18 +38,25 @@ const PPMPImportDialog = ({
   const [items, setItems] = useState<PPMPItem[]>([]);
   const [error, setError] = useState<string | null>(null);
   const [isReading, setIsReading] = useState(false);
+  const [isImporting, setIsImporting] = useState(false);
   
+  const validItems = items.filter(
+    (item) => item.isValid
+  );
+
   const allSelected =
-    items.length > 0 &&
-    items.every((item) => item.selected);
+    validItems.length > 0 &&
+    validItems.every((item) => item.selected);
 
     const toggleSelectAll = () => {
-    setItems((currentItems) =>
+      setItems((currentItems) =>
         currentItems.map((item) => ({
-        ...item,
-        selected: !allSelected,
+          ...item,
+          selected: item.isValid
+            ? !allSelected
+            : false,
         }))
-    );
+      );
     };
 
   const handleFileChange = async (
@@ -94,74 +104,75 @@ const PPMPImportDialog = ({
       const parsedItems: PPMPItem[] = [];
 
       rows.forEach((row, index) => {
-        /*
-         * Your PPMP structure:
-         *
-         * B = Item & Specifications
-         * C = Quantity
-         * D = Unit
-         * E = Estimated Budget
-         * F = Mode of Procurement
-         * S = Unit Price
-         *
-         * Since arrays are zero-indexed:
-         * B = index 1
-         * C = index 2
-         * D = index 3
-         * E = index 4
-         * F = index 5
-         * S = index 18
-         */
+        const itemDescription =
+          typeof row[1] === "string"
+            ? row[1].trim()
+            : "";
 
-        const itemDescription = row[1];
-        const quantity = row[2];
-        const unit = row[3];
-        const estimatedBudget = row[4];
-        const modeOfProcurement = row[5];
-        const unitPrice = row[18];
+        const quantity =
+          typeof row[2] === "number"
+            ? row[2]
+            : Number(row[2]);
 
-        // Ignore rows that aren't actual item rows.
+        const unit =
+          typeof row[3] === "string"
+            ? row[3].trim()
+            : "";
+
+        const estimatedBudget =
+          typeof row[4] === "number"
+            ? row[4]
+            : Number(row[4]);
+
+        const modeOfProcurement =
+          typeof row[5] === "string"
+            ? row[5].trim()
+            : "";
+
+        const unitPrice =
+          typeof row[18] === "number"
+            ? row[18]
+            : Number(row[18]);
+
+
         if (
-          typeof itemDescription !== "string" ||
-          !itemDescription.trim()
-        ) {
-          return;
-        }
-
-        // Ignore rows without a valid quantity.
-        if (
-          typeof quantity !== "number" ||
+          !itemDescription ||
+          !unit ||
+          !Number.isFinite(quantity) ||
           quantity <= 0
         ) {
           return;
         }
 
-        // Ignore category/header rows.
+        const validationErrors: string[] = [];
+
         if (
-          typeof unit !== "string" ||
-          !unit.trim()
+          !Number.isFinite(unitPrice) ||
+          unitPrice < 0
         ) {
-          return;
+          validationErrors.push(
+            "Unit price is invalid"
+          );
         }
 
         parsedItems.push({
           rowNumber: index + 1,
-          item_description: itemDescription.trim(),
-          quantity,
-          unit: unit.trim(),
+          item_description: itemDescription,
+          quantity: Number.isFinite(quantity) ? quantity : 0,
+          unit,
           estimated_budget:
-            typeof estimatedBudget === "number"
+            Number.isFinite(estimatedBudget)
               ? estimatedBudget
               : 0,
-          mode_of_procurement:
-            typeof modeOfProcurement === "string"
-              ? modeOfProcurement.trim()
-              : "",
+          mode_of_procurement: modeOfProcurement,
           unit_price:
-            typeof unitPrice === "number"
+            Number.isFinite(unitPrice)
               ? unitPrice
               : 0,
           selected: false,
+
+          isValid: validationErrors.length === 0,
+          validationErrors,
         });
       });
 
@@ -201,7 +212,7 @@ const PPMPImportDialog = ({
   };
 
   const selectedItems = items.filter(
-    (item) => item.selected
+    (item) => item.selected && item.isValid
   );
 
   const selectedTotal = selectedItems.reduce(
@@ -209,13 +220,19 @@ const PPMPImportDialog = ({
     0
   );
 
-  const handleImport = () => {
+  const handleImport = async () => {
     if (selectedItems.length === 0) {
       setError("Please select at least one item.");
       return;
     }
 
-    onImport?.(selectedItems);
+    try {
+      setIsImporting(true);
+
+      await onImport?.(selectedItems);
+    } finally {
+      setIsImporting(false);
+    }
   };
 
   return (
@@ -291,14 +308,18 @@ const PPMPImportDialog = ({
         {!isReading && items.length > 0 && (
             <>
             {/* Item Count */}
-            <div className="mb-3 flex items-center justify-between">
-                <p className="text-sm text-gray-600">
+            <div>
+              <p className="text-sm text-gray-600">
                 {items.length} PPMP items found
-                </p>
+              </p>
 
-                <p className="text-sm font-medium">
-                Selected: {selectedItems.length}
+              {items.some((item) => !item.isValid) && (
+                <p className="text-sm text-red-600">
+                  {
+                    items.filter((item) => !item.isValid).length
+                  } invalid items cannot be selected
                 </p>
+              )}
             </div>
 
             {/* Select All */}
@@ -352,21 +373,32 @@ const PPMPImportDialog = ({
 
                 <tbody>
                     {items.map((item) => (
-                    <tr
+                      <tr
                         key={item.rowNumber}
-                        className="border-t hover:bg-gray-50"
-                    >
+                        className={`border-t ${
+                          item.isValid
+                            ? "hover:bg-gray-50"
+                            : "bg-red-50"
+                        }`}
+                      > 
                         <td className="px-3 py-3 text-center">
                         <Checkbox
-                            checked={item.selected}
-                            onCheckedChange={() =>
+                          checked={item.selected}
+                          disabled={!item.isValid}
+                          onCheckedChange={() =>
                             toggleItem(item.rowNumber)
-                            }
+                          }
                         />
                         </td>
 
                         <td className="px-3 py-3">
-                        {item.item_description}
+                          {item.item_description || "(No description)"}
+
+                          {!item.isValid && (
+                            <div className="mt-1 text-xs text-red-600">
+                              {item.validationErrors.join(", ")}
+                            </div>
+                          )}
                         </td>
 
                         <td className="px-3 py-3 text-center">
@@ -441,12 +473,19 @@ const PPMPImportDialog = ({
             </Button>
 
             <Button
-            type="button"
-            onClick={handleImport}
-            disabled={selectedItems.length === 0 || isReading}
-            className="bg-orange-400 text-white hover:bg-orange-500"
+              type="button"
+              onClick={handleImport}
+              disabled={selectedItems.length === 0 || isReading || isImporting}
+              className="bg-orange-400 text-white hover:bg-orange-500"
             >
-            Add Selected Items
+              {isImporting ? (
+                <>
+                  <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                  Adding Items...
+                </>
+              ) : (
+                "Add Selected Items"
+              )}
             </Button>
         </div>
         </DialogContent>

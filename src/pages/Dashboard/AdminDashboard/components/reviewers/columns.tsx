@@ -39,6 +39,22 @@ export const columns: ColumnDef<UsersType>[] = [
   },
 
   {
+    accessorKey: "designation",
+    header: ({ column }) => (
+      <DataTableColumnHeader column={column} title="Designation" />
+    ),
+    cell: ({ row }) => {
+      return (
+        <div className="flex space-x-2">
+          <span className="max-w-[500px] truncate font-medium">
+            {row.getValue("designation") || ""}
+          </span>
+        </div>
+      );
+    },
+  },
+
+  {
     accessorKey: "email",
     header: ({ column }) => (
       <DataTableColumnHeader column={column} title="Email" />
@@ -53,6 +69,7 @@ export const columns: ColumnDef<UsersType>[] = [
       );
     },
   },
+
   {
     accessorKey: "role",
     header: ({ column }) => (

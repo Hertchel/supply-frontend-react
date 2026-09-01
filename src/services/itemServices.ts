@@ -135,11 +135,31 @@ export const useUpdateItem = () => {
   });
 };
 
-export const arraySort = <T>(array: T[], key: keyof T): T[] => {
+export const arraySort = <T>(
+  array: T[],
+  key: keyof T
+): T[] => {
   return array
     ? [...array].sort((a, b) => {
-        if (a[key] < b[key]) return -1;
-        if (a[key] > b[key]) return 1;
+        const valueA = a[key];
+        const valueB = b[key];
+
+        // Numeric sorting when both values are numbers
+        // or numeric strings.
+        const numberA = Number(valueA);
+        const numberB = Number(valueB);
+
+        if (
+          Number.isFinite(numberA) &&
+          Number.isFinite(numberB)
+        ) {
+          return numberA - numberB;
+        }
+
+        // Normal string sorting for non-numeric values.
+        if (valueA < valueB) return -1;
+        if (valueA > valueB) return 1;
+
         return 0;
       })
     : [];

@@ -101,18 +101,12 @@ export const AbstractItemContentList = () => {
   const supplierItemData = useMemo(() => {
     return Array.isArray(items?.data) ? items.data : [];
   }, [items?.data]);  
-  
-  console.log("RAW supplierItemData:", supplierItemData);
-  console.log("FIRST ITEM:", supplierItemData[0]);
 
   const filteredSupplierItemData = useMemo(() => {
     return supplierItemData.filter(
-      (data) => data.supplier_details.aoq_details.aoq_no === aoq_no
-      
+      (data) => data.supplier_details?.aoq_details?.aoq_no === aoq_no
     );
   }, [supplierItemData, aoq_no]);
-
-  console.log("FILTERED COUNT:", filteredSupplierItemData.length);
 
 filteredSupplierItemData.forEach((item, index) => {
   console.log(
@@ -145,16 +139,6 @@ filteredSupplierItemData.forEach((item, index) => {
 
   }, [rfqData, abstractData]);
 
-  console.log(
-      "-------BIDDERS FOR CURRENT PR",
-      biddersForCurrentPR
-  );
-
-  console.log(
-  "ALL SUPPLIERS FOR CURRENT PR",
-  quotationsForPR
-);
-
 quotationsForPR.forEach((supplier, index) => {
   console.log(
     index,
@@ -168,14 +152,10 @@ quotationsForPR.forEach((supplier, index) => {
     "CURRENT PR STATUS",
     abstractData?.pr_details.status
   );
-  console.log(
-    "ALL RFQ QUOTATIONS FOR PR",
-    quotationsForPR
-  );
 
   const NOAData = useMemo(() => {
     return supplierItemData.find(
-      (data) => data.supplier_details.aoq_details.aoq_no === aoq_no
+      (data) => data.supplier_details?.aoq_details?.aoq_no === aoq_no
     );
   }, [supplierItemData, aoq_no]);
   console.log(NOAData);

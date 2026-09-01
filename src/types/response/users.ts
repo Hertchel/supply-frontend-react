@@ -4,11 +4,10 @@ export type UsersType = {
   first_name: string,
   last_name: string,
   email: string,
+  designation: string,
   role: string,
   is_active: string,
   date_joined: Date,
   last_login: Date,
   is_reviewer?: boolean,
 }
-
-//Step 1: define the type

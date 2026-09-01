@@ -161,9 +161,12 @@ export const getAuthenticatedRequisitionerDashboard = async () => {
   }
 };
 
-export const useAuthenticatedRequisitionerDashboard = () => {
+export const useAuthenticatedRequisitionerDashboard = (
+  enabled: boolean = true
+) => {
   return useQuery({
     queryKey: ["authenticated-requisitioner-dashboard"],
     queryFn: getAuthenticatedRequisitionerDashboard,
+    enabled,
   });
 };
