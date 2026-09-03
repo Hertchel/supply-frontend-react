@@ -51,7 +51,7 @@ const BACmemberForm = () => {
         ...data,
         member_id: member_id,
         name: `${data.last_name}, ${data.first_name} ${data.middle_name}`,
-        position: data.position,
+        position: data.designation,
       });
 
       if (result.success) {
@@ -62,7 +62,7 @@ const BACmemberForm = () => {
           middle_name: data.middle_name,
           name: `${data.last_name.toUpperCase()}, ${data.first_name.toUpperCase()} ${data.middle_name?.toUpperCase()}`,
           designation: data.designation,
-          position: data.position,
+          position: data.designation, 
         });
         reset({
           member_id: uuidv4(), // Update default value with the new UUID
@@ -121,20 +121,13 @@ const BACmemberForm = () => {
             "Designation",
             "designation",
             <Input {...register("designation")} />
-
           )}
-
-          {renderField(
-            "Position",
-            "position",
-            <Input {...register("position")} />
-          )}
-          
-        </div>
-        <Button
-          className="text-slate-950 bg-orange-200 hover:bg-orange-300"
-          type="submit"
-        >
+                    
+                  </div>
+                  <Button
+                    className="text-slate-950 bg-orange-200 hover:bg-orange-300"
+                    type="submit"
+                  >
           {isPending ? <Loader2 className="animate-spin" /> : "Add BAC Member"}
         </Button> 
       </form>

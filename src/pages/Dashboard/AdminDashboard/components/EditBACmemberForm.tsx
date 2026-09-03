@@ -50,7 +50,6 @@ const EditBACmemberForm: React.FC<EditBACmemberFormProps> = ({
       member_id: BACmember?.data?.member_id,
       name: BACmember?.data?.name,
       designation: BACmember?.data?.designation,
-      position: BACmember?.data?.position,
     },
   });
 
@@ -59,20 +58,23 @@ const EditBACmemberForm: React.FC<EditBACmemberFormProps> = ({
       setValue("member_id", BACmember?.data?.member_id);
       setValue("name", BACmember?.data?.name);
       setValue("designation", BACmember?.data?.designation);
-      setValue("position", BACmember?.data?.position);
     }
   }, [BACmember, setValue]);
 
   const onSubmit = async (data: EditBACmemberType) => {
     try {
-      const result = EditBACmemberSchema.safeParse({...data, 
-        name:`${data.last_name}, ${data.first_name} ${data.middle_name}`
-      });
+      const updatedData = {
+        member_id: data.member_id,
+        first_name: BACmember?.data?.first_name ?? "",
+        last_name: BACmember?.data?.last_name ?? "",
+        middle_name: BACmember?.data?.middle_name ?? "",
+        name: data.name,
+        designation: data.designation,
+        position: data.designation,
+      };
 
-      if (result.success) {
-        mutate(data);
-        setIsEditDialogOpen(false);
-      }
+      mutate(updatedData);
+      setIsEditDialogOpen(false);
     } catch (error) {
       console.log(error);
     }
@@ -115,12 +117,6 @@ const EditBACmemberForm: React.FC<EditBACmemberFormProps> = ({
                     "Designation",
                     "designation",
                     <Input {...register("designation")} />
-                  )}
-
-                  {renderField(
-                    "Position",
-                    "position",
-                    <Input {...register("position")} />
                   )}
 
                   <div className="mt-6 fixed bottom-6 right-6"> 
