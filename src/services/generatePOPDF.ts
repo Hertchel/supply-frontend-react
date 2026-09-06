@@ -53,17 +53,10 @@ export const generatePOPDF = async (purchaseOrderItem: purchaseOrderItemType_[])
   pages.push(page);
   for (const [index, item] of purchaseOrderItem.entries()) {
     const item_description = item.supplier_item_details.item_quotation_details.item_details.item_description ?? ""
-
-    const unit_price =
-      item.supplier_item_details.item_quotation_details.unit_price
-
+    const unit_price = item.supplier_item_details.item_quotation_details.unit_price
     const quantity = item.supplier_item_details.item_quantity
-
-    const unit =
-      item.supplier_item_details.item_quotation_details.item_details.unit
-
-    const unit_cost =
-      item.supplier_item_details.item_quotation_details.unit_price
+    const unit = item.supplier_item_details.item_quotation_details.item_details.unit
+    const unit_cost = item.supplier_item_details.item_quotation_details.unit_price
     /*
     const unit_price = item.supplier_item_details.item_cost
     const quantity = item.supplier_item_details.item_quantity
@@ -72,15 +65,10 @@ export const generatePOPDF = async (purchaseOrderItem: purchaseOrderItemType_[])
     */
 
     // Calculate height needed for wrapped description
-    const wrappedDescription = wrapText(
-      item_description,
-      maxWidth,
-      9
-    );
+    const wrappedDescription = wrapText(item_description, maxWidth, 9);
     const descriptionHeight = wrappedDescription.length * lineHeight;
-
-    // Calculate total height required for the current item
-    const itemHeight = Math.max(descriptionHeight, lineHeight);
+    const rowPadding = 8;
+    const itemHeight = descriptionHeight + rowPadding;
 
     // Check if the content will fit on the current page
     if (yPosition - itemHeight < footerHeight) {
@@ -197,9 +185,38 @@ export const generatePOPDF = async (purchaseOrderItem: purchaseOrderItemType_[])
       font: timesRomanFont,
     });
 
+    // Calculate the bottom of the current item row
+    const rowBottom = yPosition - itemHeight;
+
+    // Draw horizontal line separating this row from the next row
+    page.drawLine({
+      start: { x: 34, y: rowBottom },
+      end: { x: 567, y: rowBottom },
+      thickness: 1,
+      color: rgb(0, 0, 0),
+    });
+
     // Update yPosition for the next item
-    yPosition -= itemHeight + 5; // Add spacing between items
+    yPosition = rowBottom - 12;
   };
+
+  yPosition += 12;
+  // Fill the remaining table area with empty rows
+  const emptyRowHeight = 30;
+  const tableBottom = 337;
+
+  while (yPosition - emptyRowHeight > tableBottom) {
+    const emptyRowBottom = yPosition - emptyRowHeight;
+
+    page.drawLine({
+      start: { x: 34, y: emptyRowBottom },
+      end: { x: 567, y: emptyRowBottom },
+      thickness: 1,
+      color: rgb(0, 0, 0),
+    });
+
+    yPosition = emptyRowBottom;
+  }
 
 
   // Final Footer

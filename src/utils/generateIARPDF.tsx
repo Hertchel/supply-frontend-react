@@ -15,7 +15,7 @@ export const generateIARPDF = async (itemData: _itemsDeliveredType[]) => {
   );
   const italicbold = await pdfDoc.embedFont(StandardFonts.TimesRomanBoldItalic);
 
-  const maxWidth = 320;
+  const maxWidth = 330;
   const lineHeight = 12;
   const footerHeight = 250;
   const pageHeight = 936;
@@ -45,6 +45,24 @@ export const generateIARPDF = async (itemData: _itemsDeliveredType[]) => {
   let pageIndex = 0; // Page counter
   let page = pdfDoc.addPage([612, pageHeight]);
   pages.push(page);
+
+  const drawBlankRows = (page: PDFPage, currentY: number) => {
+  const blankRowHeight = 22;
+  const tableBottom = 255;
+
+  let rowY = currentY;
+
+  while (rowY - blankRowHeight > tableBottom) {
+    rowY -= blankRowHeight;
+
+    page.drawLine({
+      start: { x: 34, y: rowY },
+      end: { x: 578, y: rowY },
+      thickness: 1,
+      color: rgb(0, 0, 0),
+    });
+  }
+};
 
 
 /*
@@ -98,11 +116,9 @@ export const generateIARPDF = async (itemData: _itemsDeliveredType[]) => {
 
 
   itemData.forEach((data) => {
-    const no =
-      data.item_details.item_quotation_details.item_details.stock_property_no;
+    const no = data.item_details.item_quotation_details.item_details.stock_property_no;
     const unit = data.item_details.item_quotation_details.item_details.unit;
-    const description =
-      data.item_details.item_quotation_details.item_details.item_description;
+    const description = data.item_details.item_quotation_details.item_details.item_description;
     const quantity = data.item_details.item_quantity;
     const unitcost = data.item_details.item_cost;
 
@@ -110,11 +126,17 @@ export const generateIARPDF = async (itemData: _itemsDeliveredType[]) => {
     const wrappedDescription = wrapText(description, maxWidth, 9);
     const descriptionHeight = wrappedDescription.length * lineHeight;
 
-    // Calculate total height required for the current item
+    // Height of the current row
     const itemHeight = Math.max(descriptionHeight, lineHeight);
 
+    // Space below each row
+    const rowSpacing = 5;
+
     // Check if the content will fit on the current page
-    if (yPosition - itemHeight < footerHeight) {
+    if (yPosition - itemHeight - rowSpacing < footerHeight) {
+      // Fill remaining table space with blank rows
+      drawBlankRows(page, yPosition);
+
       // Add footer to current page
       drawFooter(page);
 
@@ -179,8 +201,23 @@ export const generateIARPDF = async (itemData: _itemsDeliveredType[]) => {
     });
 
     // Update yPosition for the next item
-    yPosition -= itemHeight + 5; // Add spacing between items
+    // Calculate the bottom of the current row
+    const rowBottom = yPosition - itemHeight - rowSpacing;
+
+    // Draw horizontal line below the current row
+    page.drawLine({
+      start: { x: 34, y: rowBottom },
+      end: { x: 578, y: rowBottom },
+      thickness: 1,
+      color: rgb(0, 0, 0),
+    });
+
+    // Update yPosition for the next item
+    yPosition = rowBottom - 5;
   });
+
+  // Fill remaining table space with blank rows
+  drawBlankRows(page, yPosition);
 
   // Final Footer
   drawFooter(page);

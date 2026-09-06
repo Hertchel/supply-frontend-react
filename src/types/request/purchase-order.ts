@@ -112,7 +112,7 @@ export const itemsDeliveredSchema = z.object({
 export type itemsDeliveredType = z.infer<typeof itemsDeliveredSchema>;
 
 export type _itemsDeliveredType = {
-  id: number;
+  delivery_id: string;
   pr_details: {
     pr_no: string;
     res_center_code: string;
@@ -198,3 +198,22 @@ export type _itemsDeliveredType = {
 };
 
 export type StockItemType = Omit<itemsDeliveredType, "id">;
+
+export type ICSItemRequest = {
+  delivered_item: string;
+  quantity: number;
+};
+
+export type InventoryCustodianSlipRequest = {
+  purchase_order: string;
+  delivered_items: ICSItemRequest[];
+};
+
+export type InventoryCustodianSlipResponse = {
+  id: number;
+  ics_no: string;
+  purchase_order: string;
+  created_by: number;
+  date_issued: Date;
+  created_at: Date;
+};

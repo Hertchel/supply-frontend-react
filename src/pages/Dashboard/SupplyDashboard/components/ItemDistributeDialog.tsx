@@ -18,6 +18,7 @@ import { Checkbox } from "@/components/ui/checkbox";
 import { generateICSPDF } from "@/utils/generateICSPDF";
 import { _itemsDeliveredType } from "@/types/request/purchase-order";
 import useAuthStore from "@/components/Auth/AuthStore";
+import { createInventoryCustodianSlip } from "@/services/puchaseOrderServices";
 
 interface ItemDistributeDialogProps {
   itemsDeliveredData: _itemsDeliveredType[]
@@ -36,13 +37,35 @@ export default function GenerateICSPDFDialog({
   const handleItemToggle = (data: _itemsDeliveredType) => {
     setSelectedItems((prev) =>
       prev.includes(data)
-        ? prev.filter((id) => id.id !== data.id)
+        ? prev.filter((item) => item.delivery_id !== data.delivery_id)
         : [...prev, data]
     );
   };
 
   const generateICS = async () => {
-    const url = await generateICSPDF(selectedItems, user);
+    const purchaseOrder = selectedItems[0]?.inspection_details.po_details.po_no;
+
+    if (!purchaseOrder) {
+      console.error("Purchase order not found.");
+      return;
+    }
+
+    const deliveredItems = selectedItems.map((item) => ({
+      delivered_item: item.delivery_id,
+      quantity: Number(item.quantity_delivered),
+    }));
+
+    const response = await createInventoryCustodianSlip({
+      purchase_order: purchaseOrder,
+      delivered_items: deliveredItems,
+    });
+
+    if (!response.data) {
+      console.error("Failed to create ICS.");
+      return;
+    }
+    const icsNo = response.data.ics_no;
+    const url = await generateICSPDF(selectedItems, user, icsNo);
     window.open(url, "_blank");
   };
 
@@ -64,7 +87,7 @@ export default function GenerateICSPDFDialog({
               </TableHeader>
               <TableBody>
                 {itemsDeliveredData && itemsDeliveredData.length > 0 && itemsDeliveredData.map((item) => (
-                  <TableRow key={item.id}>
+                  <TableRow key={item.delivery_id}>
                     <TableCell>
                       {
                         item.item_details.item_quotation_details.item_details
@@ -72,9 +95,9 @@ export default function GenerateICSPDFDialog({
                       }
                     </TableCell>
                     <TableCell>
-                      {
+                      {Number(
                         item.item_details.item_quotation_details.item_details
-                          .quantity
+                          .quantity)
                       }
                     </TableCell>
                     <TableCell>

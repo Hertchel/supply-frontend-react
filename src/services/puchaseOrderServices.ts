@@ -5,6 +5,8 @@ import {
   itemsDeliveredType,
   purchaseOrderItemType,
   purchaseOrderType,
+  InventoryCustodianSlipRequest,
+  InventoryCustodianSlipResponse,
 } from "@/types/request/purchase-order";
 import api from "@/api";
 import { handleError, handleSucess } from "@/utils/apiHelper";
@@ -235,6 +237,22 @@ export const addItemsDelivered = async (
   } catch (error) {
     console.log(error);
     return handleError(error);
+  }
+};
+
+export const createInventoryCustodianSlip = async (
+  data: InventoryCustodianSlipRequest
+) => {
+  try {
+    const response = await api.post<InventoryCustodianSlipResponse>(
+      "api/inventory-custodian-slips/create/",
+      data
+    );
+
+    return handleSucess(response);
+  } catch (error) {
+    handleError(error);
+    throw error;
   }
 };
 

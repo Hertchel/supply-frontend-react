@@ -10,6 +10,7 @@ type collectedDataType = {
   description: string;
   unitCost: number;
   purpose: string;
+  fundcluster: string;
   receivedfromname: string;
   receivedfromposition: string;
   receivedbyname: string;
@@ -17,7 +18,7 @@ type collectedDataType = {
   suppliername: string;
 };
 
-export const generateICSPDF = async (itemData: _itemsDeliveredType[], user: User | null) => {
+export const generateICSPDF = async (itemData: _itemsDeliveredType[], user: User | null, icsNo: string) => {
   const pdfDoc = await PDFDocument.create();
   const timesRomanFont = await pdfDoc.embedFont(StandardFonts.TimesRoman);
   const timesRomanItalicFont = await pdfDoc.embedFont(
@@ -29,7 +30,7 @@ export const generateICSPDF = async (itemData: _itemsDeliveredType[], user: User
   const lineHeight = 12;
   const footerHeight = 258;
   const pageHeight = 792;
-  let yPosition = 530;
+  let yPosition = 544;
   const wrapText = (text: string, maxWidth: number, fontSize: number) => {
     const words = text.split(" ");
     const lines = [];
@@ -51,6 +52,24 @@ export const generateICSPDF = async (itemData: _itemsDeliveredType[], user: User
   const pages = [];
   let pageIndex = 0;
   let page = pdfDoc.addPage([612, pageHeight]);
+
+  const drawBlankRows = (page: PDFPage, currentY: number) => {
+  const blankRowHeight = 20;
+  const tableBottom = 255;
+
+  let rowY = currentY;
+
+  while (rowY - blankRowHeight > tableBottom) {
+    rowY -= blankRowHeight;
+
+    page.drawLine({
+      start: { x: 37, y: rowY },
+      end: { x: 570, y: rowY },
+      thickness: 0.5,
+      color: rgb(0, 0, 0),
+    });
+  }
+};
 
   const purposewidth = 580;
   pages.push(page);
@@ -119,6 +138,7 @@ export const generateICSPDF = async (itemData: _itemsDeliveredType[], user: User
       data.item_details.item_quotation_details.item_details.item_description;
     const unitCost = Number(data.item_details.item_cost);
     const purpose = data.inspection_details.po_details.pr_details.purpose;
+    const fundcluster = data.inspection_details.po_details.pr_details.fund_cluster || "";
     const receivedfromname = user? `${user.first_name} ${user.last_name}` : "";
     const receivedfromposition = user?.role || "Project Proponent";
     const receivedbyname = data.inspection_details.po_details.pr_details.requisitioner_details.name;
@@ -131,6 +151,7 @@ export const generateICSPDF = async (itemData: _itemsDeliveredType[], user: User
       description,
       unitCost,
       purpose,
+      fundcluster,
       receivedfromname,
       receivedfromposition,
       receivedbyname,
@@ -141,7 +162,7 @@ export const generateICSPDF = async (itemData: _itemsDeliveredType[], user: User
     const descriptionHeight = wrappedDescription.length * lineHeight;
 
     const itemHeight = Math.max(descriptionHeight, lineHeight);
-    if (yPosition - itemHeight < footerHeight) {
+    if (yPosition - itemHeight -5 < footerHeight) {
       textandlines(
         pdfDoc,
         page,
@@ -153,30 +174,31 @@ export const generateICSPDF = async (itemData: _itemsDeliveredType[], user: User
         firstPurposeHeight,
         firstPurposeSplit,
         lineHeight,
+        icsNo,
       );
 
       page = pdfDoc.addPage([612, pageHeight]);
       pages.push(page);
-      yPosition = 530;
+      yPosition = 544;
       pageIndex++;
     }
 
     // Calculate total height required for the current item
-
+    const textY = yPosition - 14;
     const totalamount = quantity * unitCost;
     const unittext = unit || "";
     const unitwidth = timesRomanFont.widthOfTextAtSize(unittext, 11);
     const unitplace = (88 + 125) / 2;
     page.drawText(unittext, {
       x: unitplace - unitwidth / 2,
-      y: yPosition,
+      y: textY,
       size: 10,
       font: timesRomanFont,
     });
     wrappedDescription.forEach((line, lineIndex) => {
       page.drawText(line, {
         x: 255,
-        y: yPosition - lineIndex * lineHeight,
+        y: textY - lineIndex * lineHeight,
         size: 9,
         font: Helveticafont,
       });
@@ -190,7 +212,7 @@ export const generateICSPDF = async (itemData: _itemsDeliveredType[], user: User
     const quantityplace = (37 + 88) / 2;
     page.drawText(quantitytext.toString(), {
       x: quantityplace - quantitywidth / 2,
-      y: yPosition,
+      y: textY,
       size: 10,
       font: timesRomanFont,
     });
@@ -205,7 +227,7 @@ export const generateICSPDF = async (itemData: _itemsDeliveredType[], user: User
     const unitCostPlace = 180;
     page.drawText(unitCostFormatted, {
       x: unitCostPlace - unitCostWidth,
-      y: yPosition,
+      y: textY,
       size: 10,
       font: timesRomanFont,
     });
@@ -222,12 +244,30 @@ export const generateICSPDF = async (itemData: _itemsDeliveredType[], user: User
     const totalCostPlace = 248;
     page.drawText(totalCostFormatted, {
       x: totalCostPlace - totalCostWidth,
-      y: yPosition,
+      y: textY,
       size: 10,
       font: timesRomanFont,
     });
-    yPosition -= itemHeight + 5;
+    // Calculate the bottom of the current row
+    // Minimum height of a normal row
+const rowHeight = Math.max(itemHeight + 5, 20);
+
+// Calculate the bottom of the current row
+const rowBottom = yPosition - rowHeight;
+
+  // Draw horizontal line below the current row
+  page.drawLine({
+    start: { x: 37, y: rowBottom },
+    end: { x: 570, y: rowBottom },
+    thickness: 0.5,
+    color: rgb(0, 0, 0),
   });
+
+  // Move to the next row
+  yPosition = rowBottom;
+  });
+
+  drawBlankRows(page, yPosition);
 
   await textandlines(
     pdfDoc,
@@ -240,6 +280,7 @@ export const generateICSPDF = async (itemData: _itemsDeliveredType[], user: User
     firstPurposeHeight,
     firstPurposeSplit,
     lineHeight,
+    icsNo,
   );
 
   // Serialize the PDF to bytes
@@ -262,6 +303,7 @@ const textandlines = async (
   firstPurposeHeight: number,
   firstPurposeSplit: string[],
   lineHeight: number,
+  icsNo: string,
 ) => {
   const currentDate = new Date();
 
@@ -482,6 +524,12 @@ const textandlines = async (
     thickness: 1,
     color: rgb(0, 0, 0),
   });
+  page.drawText(collectedData[0]?.fundcluster || "", {
+    x: 115,
+    y: 603,
+    size: 10,
+    font: timesRomanFont,
+  });
   page.drawText("ICS No.:", { x: 422, y: 603, size: 11, font: timesBoldFont });
   page.drawLine({
     start: { x: 468, y: 602 },
@@ -489,6 +537,13 @@ const textandlines = async (
     thickness: 1,
     color: rgb(0, 0, 0),
   });
+  page.drawText(icsNo, {
+    x: 470,
+    y: 603,
+    size: 10,
+    font: timesRomanFont,
+  });
+
   const quant = "Quantity";
   const quantwidth = timesBoldFont.widthOfTextAtSize(quant, 11);
   const quantplace = (37 + 88) / 2;
@@ -710,14 +765,6 @@ const textandlines = async (
     thickness: 2,
     color: rgb(0, 0, 0),
   }); //1
-  for (let i = 525; i > 255; i -= 20) {
-    page.drawLine({
-      start: { x: 37, y: i },
-      end: { x: 570, y: i },
-      thickness: 0.5,
-      color: rgb(0, 0, 0),
-    });
-  }
 
   // const headerjpg = "/header.jpeg";
   // const headerjpgBytes = await fetch(headerjpg).then((res) =>
