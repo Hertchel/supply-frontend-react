@@ -19,7 +19,10 @@ import { ScrollArea } from "@/components/ui/scroll-area";
 
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import {arraySort, FilteredItemInPurchaseRequest,} from "@/services/itemServices";
-import {useAddItemQuotation, useAddRequestForQuotation,} from "@/services/requestForQuotationServices";
+import {useAddItemQuotation, 
+  useAddRequestForQuotation,  
+  useRequestForQuotation,
+  useGetItemQuotation,} from "@/services/requestForQuotationServices";
 import { useSupplierProfiles } from "@/services/supplierProfileServices";
 import {requestForQuotationSchema, requestForQuotationType,} from "@/types/request/request_for_quotation";
 import { zodResolver } from "@hookform/resolvers/zod";
@@ -75,9 +78,9 @@ export const TwoStepRFQForm: React.FC<TwoStepRFQFormProps> = ({
   //const { data: rfqData } = useRequestForQuotation();
   const { data: supplierProfileData } = useSupplierProfiles();
   const supplierProfiles = supplierProfileData?.data || [];
-  console.log("SUPPLIER PROFILES FOR FORM:", supplierProfiles);
-  console.log("SUPPLIER PROFILE DATA:", supplierProfileData);
   const { mutateAsync: addItemMutation } = useAddItemQuotation();
+  const { data: rfqData } = useRequestForQuotation();
+  const { data: itemQuotationData } = useGetItemQuotation();
 
   const uniqueSuppliers = supplierProfiles.map((profile) => ({
     supplier_profile_id: profile.supplier_profile_id,
@@ -117,16 +120,31 @@ export const TwoStepRFQForm: React.FC<TwoStepRFQFormProps> = ({
     },
   });
 
-  console.log(
-  "CURRENT SUPPLIER PROFILE ID:",
-  watch("supplier_profile_id")
-);
+  const watchedSupplierName = watch("supplier_name");
+
+  const alreadyQuotedItemNos = useMemo(() => {
+    const quotedItems = new Set<string>();
+
+    rfqData?.data?.forEach((rfq) => {
+      if (
+        rfq.purchase_request === pr_no &&
+        rfq.supplier_name === watchedSupplierName
+      ) {
+        itemQuotationData?.data?.forEach((itemQuotation) => {
+          if (itemQuotation.rfq === rfq.rfq_no) {
+            quotedItems.add(itemQuotation.item_details.item_no);
+          }
+        });
+      }
+    });
+
+    return quotedItems;
+  }, [rfqData, itemQuotationData, pr_no, watchedSupplierName]);
 
   const { fields } = useFieldArray({
     control,
     name: "items",
   });
-  const watchedSupplierName = watch("supplier_name");
   const watchedSupplierAddress = watch("supplier_address");
   const watchedTIN = watch("tin");
 
@@ -225,8 +243,6 @@ export const TwoStepRFQForm: React.FC<TwoStepRFQFormProps> = ({
 
 
   const onSubmit = async (data: requestForQuotationType) => {
-    console.log("Submitting RFQ:", data);
-    console.log(data);
     
     setIsLoading(true);
     try {
@@ -245,15 +261,6 @@ export const TwoStepRFQForm: React.FC<TwoStepRFQFormProps> = ({
         tin: data.tin ?? "",
         is_VAT: data.is_VAT,
       };
-      console.log(
-        "RFQ PAYLOAD:",
-        quotationData
-      );
-
-      console.log(
-        "RFQ NUMBER BEING SENT:",
-        pr_no
-      );
 
       addRFQMutation(quotationData, {
         onSuccess: async (rfqResponse) => {
@@ -262,14 +269,12 @@ export const TwoStepRFQForm: React.FC<TwoStepRFQFormProps> = ({
             rfqResponse
           );
 
-          console.log(
-            "RFQ RESPONSE DATA:",
-            rfqResponse?.data
-          );
           const rfqNo = rfqResponse.data?.rfq_no;
 
           // Map over the items and perform addItemMutation with rfqNo from the response
-          const itemDataArray = data.items.map((item) => {
+          const itemDataArray = data.items
+          .filter((item) => !alreadyQuotedItemNos.has(item.item ?? ""))
+          .map((item) => {
             const sortedItem = sortedItems.find(
               (sorted) => sorted.item_no === item.item
             );
@@ -279,7 +284,6 @@ export const TwoStepRFQForm: React.FC<TwoStepRFQFormProps> = ({
               purchase_request: pr_no!,
               rfq: rfqNo ?? "",
               item: item.item ?? "",
-              // unit_quantity: item.unit_quantity ?? 0,
               unit_price: item.unit_price ?? 0,
               brand_model: item.brand_model ?? "",
               is_low_price: sortedItem
@@ -314,11 +318,6 @@ export const TwoStepRFQForm: React.FC<TwoStepRFQFormProps> = ({
                 const result =
                   await addItemMutation(itemData);
 
-                console.log(
-                  "ITEM CREATED:",
-                  result
-                );
-
                 return result;
               } catch (error) {
 
@@ -335,6 +334,7 @@ export const TwoStepRFQForm: React.FC<TwoStepRFQFormProps> = ({
           );
 
           setIsLoading(false);
+          setIsInitialized(false);
           setIsDialogOpen(false);
           reset();
           setMessageDialog({
@@ -626,9 +626,12 @@ export const TwoStepRFQForm: React.FC<TwoStepRFQFormProps> = ({
                         fields.map(
                           (field, index) =>
                             sortedItems && (
-                              <div
-                                key={field.id}
-                                className="grid grid-cols-7 gap-2 mb-8 items-center p-2 border-b-2"
+                              <div key={field.id}
+                                className={`grid grid-cols-7 gap-2 mb-8 items-center p-2 border-b-2 ${
+                                  alreadyQuotedItemNos.has(sortedItems[index]?.item_no)
+                                    ? "bg-gray-100"
+                                    : ""
+                                }`}
                               >
                                 <Label className="text-gray-500">
                                   {sortedItems[index]?.unit}
@@ -656,9 +659,16 @@ export const TwoStepRFQForm: React.FC<TwoStepRFQFormProps> = ({
                                   )}
                                 </div> */}
                                 <div className="flex flex-col col-span-2">
+                                  {alreadyQuotedItemNos.has(sortedItems[index]?.item_no) && (
+                                    <span className="text-xs text-red-500 mb-1">
+                                      Already quoted by this supplier
+                                    </span>
+                                  )}
+
                                   <Textarea
                                     {...register(`items.${index}.brand_model`)}
                                     className=""
+                                    disabled={alreadyQuotedItemNos.has(sortedItems[index]?.item_no)}
                                   />
                                   {errors.items?.[index]?.brand_model && (
                                     <span className="text-xs text-red-500">
@@ -672,6 +682,12 @@ export const TwoStepRFQForm: React.FC<TwoStepRFQFormProps> = ({
                                       valueAsNumber: true,
                                     })}
                                     type="number"
+                                    disabled={alreadyQuotedItemNos.has(sortedItems[index]?.item_no)}
+                                    onFocus={(e) => {
+                                      if (e.target.value === "0") {
+                                        e.target.value = "";
+                                      }
+                                    }}
                                   />
                                   {errors.items?.[index]?.unit_price && (
                                     <span className="text-xs text-red-500">

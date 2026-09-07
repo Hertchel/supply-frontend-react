@@ -5,7 +5,7 @@ export type quotationResponseType = {
   items: string;
   supplier_address: string;
   tin: string;
-  is_VAT: boolean;
+  is_vat: boolean;
   created_at: Date;
 };
 

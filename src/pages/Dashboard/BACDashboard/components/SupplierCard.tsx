@@ -4,11 +4,11 @@ import {
   CardHeader,
   CardContent,
 } from "@/components/ui/card";
-import { quotationType } from "@/types/request/request_for_quotation";
+import { quotationResponseType } from "@/types/response/request-for-quotation";
 import { BuildingIcon, CreditCardIcon, MapPinIcon } from "lucide-react";
 
 interface SupplierCardProps {
-  supplier: quotationType;
+  supplier: quotationResponseType;
   isSelected: boolean;
   onToggle: () => void;
 }
@@ -43,7 +43,7 @@ export const SupplierCard: React.FC<SupplierCardProps> = ({
         </div>
         <div>
           <Badge variant={"outline"}>
-            <p className="text-xs font-thin">{supplier.is_VAT ? "VAT" : "non-VAT"}</p>
+            <p className="text-xs font-thin">{supplier.is_vat ? "VAT" : "non-VAT"}</p>
           </Badge>
         </div>
       </CardContent>

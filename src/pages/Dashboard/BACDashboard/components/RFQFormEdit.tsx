@@ -60,7 +60,7 @@ export const RFQFormEdit: React.FC<RFQFormEditProps> = ({
 }) => {
   const [isLoading, setIsLoading] = useState<boolean>(false);
   const [selectedOption, setSelectedOption] = useState<string>(
-  quotation?.is_VAT ? "vat" : "non-VAT"
+  quotation?.is_vat ? "vat" : "non-VAT"
   );
   const [messageDialog, setMessageDialog] = useState<messageDialogProps>({
     open: false,
@@ -69,13 +69,14 @@ export const RFQFormEdit: React.FC<RFQFormEditProps> = ({
     type: "success" as const,
   });
 
-  const { mutate: editRFQMutation } = useEditRequestForQuotation();
-  const { mutate: editItemMutation } = useEditItemQuotation();
+  const { mutateAsync: editRFQMutation } = useEditRequestForQuotation();
+  const { mutateAsync: editItemMutation } = useEditItemQuotation();
 
   const {
     control,
     register,
     handleSubmit,
+    setValue,
     formState: { errors },
     reset,
   } = useForm({
@@ -86,7 +87,7 @@ export const RFQFormEdit: React.FC<RFQFormEditProps> = ({
       supplier_name: quotation?.supplier_name,
       supplier_address: quotation?.supplier_address,
       tin: quotation?.tin,
-      is_VAT: quotation?.is_VAT,
+      is_VAT: quotation?.is_vat,
       items: itemQuotation?.map((item) => ({
         item_quotation_no: item.item_quotation_no,
         purchase_request: item.purchase_request,
@@ -99,6 +100,7 @@ export const RFQFormEdit: React.FC<RFQFormEditProps> = ({
       })),
     },
   });
+  register("is_VAT");
 
   const { fields } = useFieldArray({ control, name: "items" });
   useEffect(() => {
@@ -109,16 +111,20 @@ export const RFQFormEdit: React.FC<RFQFormEditProps> = ({
         supplier_name: quotation.supplier_name,
         supplier_address: quotation.supplier_address,
         tin: quotation.tin,
-        is_VAT: quotation?.is_VAT,
+        is_VAT: quotation?.is_vat,
         items: itemQuotation.map((item) => ({
           item_quotation_no:item.item_quotation_no,
           purchase_request: item.purchase_request,
           rfq: item.rfq,
           item: item.item_details.item_no,
           unit_price: item.unit_price,
+          unit_quantity: item.unit_quantity,
           brand_model: item.brand_model,
           is_low_price: false,
         })),
+      });
+      setValue("is_VAT", quotation.is_vat, {
+        shouldValidate: true,
       });
     }
   }, [isDialogOpen, quotation, itemQuotation, reset]);
@@ -155,9 +161,33 @@ export const RFQFormEdit: React.FC<RFQFormEditProps> = ({
   const onSubmit = async (data: requestForQuotationType) => {
     setIsLoading(true);
     try {
-      const result = requestForQuotationSchema.safeParse(data);
+      const formData = {
+        ...data,
+        is_VAT: selectedOption === "vat",
+        items: data.items.map((item, index) => ({
+          ...item,
+          purchase_request:
+            item.purchase_request || itemQuotation[index]?.purchase_request,
+        })),
+      };
+
+      console.log("FORM DATA BEFORE VALIDATION:", formData);
+
+      const result = requestForQuotationSchema.safeParse(formData);
       if (!result.success) {
         console.error("Validation failed:", result.error);
+
+        setIsLoading(false);
+
+        setMessageDialog({
+          open: true,
+          message: result.error.issues
+            .map((issue) => `${issue.path.join(".")}: ${issue.message}`)
+            .join("\n"),
+          title: "Validation Error",
+          type: "error",
+        });
+
         return;
       }
 
@@ -170,50 +200,42 @@ export const RFQFormEdit: React.FC<RFQFormEditProps> = ({
         is_VAT: selectedOption === "vat" ? true : false,
       };
 
-      editRFQMutation(quotationData, {
-        onSuccess: async () => {
-          const itemDataArray = data.items.map((item) => {
-            const sortedItem = itemQuotation?.find(
-              (sorted) => sorted.item_details.item_no === item.item
-            );
+      await editRFQMutation(quotationData);
 
-            return {
-              item_quotation_no: item.item_quotation_no,
-              purchase_request: item.purchase_request,
-              rfq: item.rfq,
-              item: item.item,
-              unit_price: item.unit_price,
-              brand_model: item.brand_model,
-              is_low_price: sortedItem
-                ? Number(item.unit_price) <
-                  Number(sortedItem.item_details.unit_cost)
-                : false,
-            };
-          });
-          // Perform all addItemMutation calls in parallel, but only once for each item
-          await Promise.all(
-            itemDataArray.map((itemData) => editItemMutation(itemData))
-          );
+      const itemDataArray = data.items.map((item) => {
+        const sortedItem = itemQuotation?.find(
+          (sorted) => sorted.item_details.item_no === item.item
+        );
 
-          setIsLoading(false);
-          setIsDialogOpen(false);
-          setMessageDialog({
-            open: true,
-            message: "Quotation edited successfully",
-            title: "Success",
-            type: "success"
-          })
-          reset();
-        },
-        onError: (error) => {
-          setMessageDialog({
-            open: true,
-            message: error.message,
-            title: "Error",
-            type: "error"
-          })
-        },
+        return {
+          item_quotation_no: item.item_quotation_no,
+          purchase_request: item.purchase_request,
+          rfq: item.rfq,
+          item: item.item,
+          unit_price: item.unit_price,
+          brand_model: item.brand_model,
+          is_low_price: sortedItem
+            ? Number(item.unit_price) <
+              Number(sortedItem.item_details.unit_cost)
+            : false,
+        };
       });
+
+      await Promise.all(
+        itemDataArray.map((itemData) => editItemMutation(itemData))
+      );
+
+      setIsLoading(false);
+      setIsDialogOpen(false);
+
+      setMessageDialog({
+        open: true,
+        message: "Quotation edited successfully",
+        title: "Success",
+        type: "success",
+      });
+
+      reset();
     } catch (error) {
       setMessageDialog({
         open: true,
@@ -234,7 +256,11 @@ export const RFQFormEdit: React.FC<RFQFormEditProps> = ({
             </DialogTitle>
           </DialogHeader>
           <ScrollArea className="h-[30rem] mb-9">
-            <form onSubmit={handleSubmit(onSubmit)}>
+            <form
+              onSubmit={handleSubmit(onSubmit, (errors) => {
+                console.error("FORM VALIDATION ERRORS:", errors);
+              })}
+            >
               <Tabs defaultValue="supplier">
                 <div className="w-full flex flex-col items-center">
                   <TabsList className="grid grid-cols-2 w-1/2 items-center">
@@ -282,7 +308,10 @@ export const RFQFormEdit: React.FC<RFQFormEditProps> = ({
                         <RadioGroup
                           className="flex items-center mb-3"
                           value={selectedOption}
-                          onValueChange={(value) => setSelectedOption(value)}
+                          onValueChange={(value) => {
+                            setSelectedOption(value);
+                            setValue("is_VAT", value === "vat");
+                          }}
                         >
                           <div className="flex items-center space-x-2">
                             <RadioGroupItem value="non-VAT" id="non-VAT" />
@@ -332,6 +361,11 @@ export const RFQFormEdit: React.FC<RFQFormEditProps> = ({
                                 key={field.id}
                                 className="grid grid-cols-7 gap-2 mb-8 items-center p-2 border-b-2"
                               >
+                                <input
+                                  type="hidden"
+                                  {...register(`items.${index}.purchase_request`)}
+                                  defaultValue={quotation.purchase_request}
+                                />
                                 <Label className="text-gray-500">
                                   {itemQuotation[index].item_details.unit}
                                 </Label>

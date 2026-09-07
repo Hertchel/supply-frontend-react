@@ -256,7 +256,7 @@ const textandlines = async (
   });
 
   page.drawText(
-    rfq.is_VAT ? "[ / ] VAT" : "[  ] VAT",
+    rfq.is_vat ? "[ / ] VAT" : "[  ] VAT",
     {
       x: 230,
       y: 664,
@@ -266,7 +266,7 @@ const textandlines = async (
   );
 
   page.drawText(
-    !rfq.is_VAT ? "[ / ] NON-VAT" : "[  ] NON-VAT",
+    !rfq.is_vat ? "[ / ] NON-VAT" : "[  ] NON-VAT",
     {
       x: 290,
       y: 664,

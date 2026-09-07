@@ -157,7 +157,7 @@ export const QuotationCard: React.FC<QuotationCardProps> = ({
                     <p className="text-base">TIN: {quotation.tin}</p>
                   </div>
                   <Badge className="mt-2" variant={"outline"}>
-                    {quotation.is_VAT ? "VAT" : "non-VAT"}
+                    {quotation.is_vat ? "VAT" : "non-VAT"}
                   </Badge>
                 </CardContent>
                 <CardFooter>

@@ -16,7 +16,7 @@ import {
   useGetItemQuotation,
   useRequestForQuotation,
 } from "@/services/requestForQuotationServices";
-import { quotationType } from "@/types/request/request_for_quotation";
+import { quotationResponseType } from "@/types/response/request-for-quotation";
 import { useEffect, useMemo, useState } from "react";
 import { Loader2 } from "lucide-react";
 import { SupplierCard } from "./SupplierCard";
@@ -213,7 +213,7 @@ export const AbstractForm: React.FC<AbstractFormProps> = ({
     );
   };
 
-  const handleToggle = (supplier: quotationType) => {
+  const handleToggle = (supplier: quotationResponseType) => {
     setSelectedSupplier(
       supplier.rfq_no === selectedSupplier ? null : supplier.rfq_no,
     );

@@ -176,6 +176,7 @@ export const useEditItemQuotation = () => {
     mutationFn: editItemQuotation,
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["items-quotation"] });
+      queryClient.invalidateQueries({ queryKey: ["rfq-detail"] });
     },
   });
 };

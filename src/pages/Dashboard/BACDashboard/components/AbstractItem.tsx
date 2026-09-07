@@ -47,7 +47,7 @@ export const AbstractItem = () => {
   }, [supplier?.data])
 
   const filteredSupplierData = useMemo(() => {
-    return supplierData.filter(data => data.rfq_details.purchase_request === pr_no)
+    return supplierData.filter(data => data.rfq_details?.purchase_request === pr_no)
   }, [supplierData, pr_no])
 
   const supplierName = filteredSupplierData.map(
@@ -58,8 +58,11 @@ export const AbstractItem = () => {
   const abstractData = useMemo(() => {
     if (aoq_data) {
       const items = Array.isArray(aoq_data?.data) ? aoq_data.data : [];
-      return items.filter((item) => item.pr_details.pr_no === pr_no);
+
+      return items.filter((item) => item.pr_details?.pr_no === pr_no);
     }
+
+    return [];
   }, [aoq_data, pr_no]);
 
   const handleOpenDialog = (aoq_no: string) => {
