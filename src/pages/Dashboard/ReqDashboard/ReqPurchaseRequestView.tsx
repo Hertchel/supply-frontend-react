@@ -4,6 +4,7 @@ import {
   FilteredItemInPurchaseRequest,
   arraySort,
   useGetItemInPurchaseRequest,
+  bulkImportItems,
 } from "@/services/itemServices";
 import {
   usePurchaseRequestList,
@@ -30,6 +31,7 @@ import PurchaseRequestForm from "../SupplyDashboard/components/PurchaseRequestFo
 import { itemType } from "@/types/response/item";
 import { useEffect } from "react";
 import ItemForm from "../SupplyDashboard/components/ItemForm";
+import PPMPImportDialog, {PPMPItem,} from "../SupplyDashboard/components/PPMPImportDialog";
 import { toast } from "sonner";
 import { DeleteDialog } from "../SupplyDashboard/components/DeleteDialog";
 import Loading from "../shared/components/Loading";
@@ -42,6 +44,13 @@ import {
   TargetIcon,
   UserIcon,
 } from "lucide-react";
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+  DialogDescription,
+} from "@/components/ui/dialog";
 import { useNavigate } from "react-router-dom";
 import {
   Card,
@@ -58,6 +67,9 @@ import useStatusStore from "@/store";
 import { MessageDialog } from "../shared/components/MessageDialog";
 import { RESTRICTED_ACTION_STATUS } from "@/constants";
 import Layout from "./components/Layout/ReqDashboardLayout";
+import { v4 as uuidv4 } from "uuid";
+import { ItemType } from "@/types/request/item";
+import { generateStockPropertyNo } from "@/services/generateStockPropertyNo";
 
 interface messageDialogProps {
   open: boolean;
@@ -280,7 +292,20 @@ const ItemList = ({ sortedItems }: { sortedItems: itemType[] }) => {
   const [isDialogOpen, setIsDialogOpen] = useState<boolean>(false);
   const [selectedItemNo, setSelectedItemNo] = useState<string | null>(null);
   const [isEditDialogOpen, setIsEditDialogOpen] = useState<boolean>(false);
+  const [isPPMPDialogOpen, setIsPPMPDialogOpen] = useState<boolean>(false);
 
+  const [importResult, setImportResult] = useState<{
+    open: boolean;
+    importedCount: number;
+    skippedCount: number;
+    duplicates: string[];
+  }>({
+    open: false,
+    importedCount: 0,
+    skippedCount: 0,
+    duplicates: [],
+  });
+  
   const { pr_no } = useParams();
   const queryClient = useQueryClient();
   const { status } = useStatusStore();
@@ -300,9 +325,123 @@ const ItemList = ({ sortedItems }: { sortedItems: itemType[] }) => {
   const handleItemDelete = () => {
     deleteItemMutation.mutate(selectedItemNo!);
   };
+
+  const handlePPMPImport = async (ppmpItems: PPMPItem[]) => {
+    if (!pr_no) {
+      toast.error("Purchase Request number is missing.");
+      return;
+    }
+
+    try {
+      const existingDescriptions = new Set(
+        (sortedItems ?? []).map((item) =>
+          item.item_description.trim().toLowerCase()
+        )
+      );
+
+      const existingItemsForStock = (sortedItems ?? []).map((item) => ({
+        ...item,
+        purchase_request: pr_no,
+      }));
+
+      let currentStockNumber =
+        generateStockPropertyNo(existingItemsForStock) - 1;
+
+      let frontendSkippedCount = 0;
+
+      const frontendDuplicates: string[] = [];
+      const itemsToImport: ItemType[] = [];
+
+      for (const ppmpItem of ppmpItems) {
+        const normalizedDescription =
+          ppmpItem.item_description.trim().toLowerCase();
+
+        if (existingDescriptions.has(normalizedDescription)) {
+          frontendSkippedCount++;
+          frontendDuplicates.push(ppmpItem.item_description);
+          continue;
+        }
+
+        currentStockNumber += 1;
+
+        const quantity = Number(ppmpItem.quantity);
+        const unitCost = Number(ppmpItem.unit_price);
+
+        const itemData: ItemType = {
+          purchase_request: pr_no,
+          item_no: uuidv4(),
+          stock_property_no: currentStockNumber.toString(),
+          unit: ppmpItem.unit,
+          item_description: ppmpItem.item_description,
+          quantity,
+          unit_cost: unitCost,
+          total_cost: quantity * unitCost,
+        };
+
+        itemsToImport.push(itemData);
+
+        existingDescriptions.add(normalizedDescription);
+      }
+
+      if (itemsToImport.length === 0) {
+        setImportResult({
+          open: true,
+          importedCount: 0,
+          skippedCount: frontendSkippedCount,
+          duplicates: frontendDuplicates,
+        });
+
+        setIsPPMPDialogOpen(false);
+        return;
+      }
+
+      const result = await bulkImportItems(
+        pr_no,
+        itemsToImport
+      );
+
+      const importedCount = result.imported_count;
+      const totalSkipped =
+        frontendSkippedCount + result.skipped_count;
+
+      const allDuplicates = [
+        ...frontendDuplicates,
+        ...result.duplicates,
+      ];
+
+      setImportResult({
+        open: true,
+        importedCount,
+        skippedCount: totalSkipped,
+        duplicates: allDuplicates,
+      });
+
+      await queryClient.invalidateQueries({
+        queryKey: ["items"],
+      });
+
+      setIsPPMPDialogOpen(false);
+    } catch (error) {
+      console.error("PPMP IMPORT ERROR:", error);
+      toast.error("Failed to import PPMP items.");
+    }
+  };
   return (
     <div className="border-none">
-      <ItemForm pr_no={pr_no!} />
+      <div className="flex items-center justify-between gap-4">
+        <div className="flex-1">
+          <ItemForm pr_no={pr_no!} />
+        </div>
+
+        <Button
+          type="button"
+          disabled={actionDisabled}
+          onClick={() => setIsPPMPDialogOpen(true)}
+          className="bg-orange-300 hover:bg-orange-400 text-gray-950"
+        >
+          Import from PPMP
+        </Button>
+      </div>
       <p className="font-bold pt-5">Items</p>
       <div className="grid grid-cols-7 gap-2 mb-4 items-center border-b-2 py-4">
         <Label className="text-base">Stock Property No.</Label>
@@ -397,6 +536,93 @@ const ItemList = ({ sortedItems }: { sortedItems: itemType[] }) => {
         setIsEditDialogOpen={setIsEditDialogOpen}
         item_no={selectedItemNo!}
       />
+      <PPMPImportDialog
+        open={isPPMPDialogOpen}
+        onClose={() => setIsPPMPDialogOpen(false)}
+        onImport={handlePPMPImport}
+      />
+      <Dialog
+        open={importResult.open}
+        onOpenChange={(open) =>
+          setImportResult((prev) => ({
+            ...prev,
+            open,
+          }))
+        }
+      >
+        <DialogContent className="max-w-lg">
+          <DialogHeader>
+            <DialogTitle>
+              PPMP Import Result
+            </DialogTitle>
+
+            <DialogDescription>
+              The PPMP import has finished.
+            </DialogDescription>
+          </DialogHeader>
+
+          <div className="space-y-4">
+            <div className="rounded-md bg-green-50 p-3">
+              <p className="text-sm font-medium text-green-700">
+                Successfully imported
+              </p>
+
+              <p className="text-2xl font-bold text-green-700">
+                {importResult.importedCount}
+              </p>
+            </div>
+
+            {importResult.skippedCount > 0 && (
+              <div className="rounded-md bg-orange-50 p-3">
+                <p className="text-sm font-medium text-orange-700">
+                  Duplicates skipped
+                </p>
+
+                <p className="text-2xl font-bold text-orange-700">
+                  {importResult.skippedCount}
+                </p>
+              </div>
+            )}
+
+            {importResult.duplicates.length > 0 && (
+              <div>
+                <p className="mb-2 text-sm font-semibold">
+                  Duplicate items:
+                </p>
+
+                <div className="max-h-60 overflow-y-auto rounded-md border">
+                  <ul className="divide-y">
+                    {importResult.duplicates.map(
+                      (description, index) => (
+                        <li
+                          key={`${description}-${index}`}
+                          className="px-3 py-2 text-sm"
+                        >
+                          {description}
+                        </li>
+                      )
+                    )}
+                  </ul>
+                </div>
+              </div>
+            )}
+
+            <div className="flex justify-end">
+              <Button
+                type="button"
+                onClick={() =>
+                  setImportResult((prev) => ({
+                    ...prev,
+                    open: false,
+                  }))
+                }
+              >
+                Done
+              </Button>
+            </div>
+          </div>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 };

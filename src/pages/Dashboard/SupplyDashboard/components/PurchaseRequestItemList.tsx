@@ -819,6 +819,7 @@ const ItemList = ({ sortedItems }: { sortedItems: itemType[] }) => {
       />
       {isPPMPDialogOpen && (
         <PPMPImportDialog
+          open={isPPMPDialogOpen}
           onClose={() => setIsPPMPDialogOpen(false)}
           onImport={handlePPMPImport}
         />

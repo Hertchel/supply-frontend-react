@@ -396,7 +396,7 @@ export const PurchaseOrderForm: React.FC<PurchaseOrderFormProps> = ({
                   {isLoading ? "Processing..." : "Place Order"}
                 </Button>
               </DialogFooter>
-            </form>
+            </form> 
           )}
         </DialogContent>
       </Dialog>

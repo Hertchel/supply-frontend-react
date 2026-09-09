@@ -175,13 +175,40 @@ export default function SupplyAOQ() {
       return {};
 
     const checkPRSuppliers = (prNo: string) => {
-      const prSuppliers = supplierData.filter(
+      const selectedItemsForPR = supplierItemData.filter(
         (item) => item.rfq_details?.purchase_request === prNo
       );
+
+      const itemNos = [
+        ...new Set(
+          selectedItemsForPR.map(
+            (item) => item.item_quotation_details.item_details.item_no
+          )
+        ),
+      ];
+
+      const supplierNos = [
+        ...new Set(
+          selectedItemsForPR
+            .map((item) => item.supplier_details?.supplier_no)
+            .filter((supplierNo): supplierNo is string => Boolean(supplierNo))
+        ),
+      ];
+
+      const winningSupplierNos = supplierNos.filter((supplierNo) => {
+        return itemNos.every((itemNo) => {
+          return selectedItemsForPR.some(
+            (item) =>
+              item.supplier_details?.supplier_no === supplierNo &&
+              item.item_quotation_details.item_details.item_no === itemNo
+          );
+        });
+      });
+
       return (
-        prSuppliers.length > 0 &&
-        prSuppliers.every((supplier) =>
-          orderPlacedSupplierNo.includes(supplier.supplier_no)
+        winningSupplierNos.length > 0 &&
+        winningSupplierNos.every((supplierNo) =>
+          orderPlacedSupplierNo.includes(supplierNo)
         )
       );
     };
@@ -194,6 +221,7 @@ export default function SupplyAOQ() {
     filteredPurchaseRequestData,
     isAllLoading,
     supplierData,
+    supplierItemData,
     orderPlacedSupplierNo,
   ]);
 

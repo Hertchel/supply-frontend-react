@@ -4,6 +4,7 @@ import { Button } from "@/components/ui/button";
 import { useMemo, useState } from "react";
 import { useEffect } from "react";
 import Loading from "../../shared/components/Loading";
+import { MessageDialog } from "../../shared/components/MessageDialog";
 import {
   useGetItemQuotation,
   useRequestForQuotation
@@ -43,9 +44,13 @@ import { formatDate } from "@/services/formatDate";
 import { useGetAllBACmember } from "@/services/BACmemberServices";
 
 export default function Abstract() {
-  console.log("===== ABSTRACT COMPONENT RENDERED =====");
   const [pdfUrl, setPdfUrl] = useState<string | undefined>(undefined);
-
+  const [messageDialog, setMessageDialog] = useState({
+    open: false,
+    message: "",
+    title: "",
+    type: "error" as "success" | "error" | "info",
+  });
   const { pr_no } = useParams();
 
     useAbstractOfQuotation();
@@ -93,51 +98,9 @@ export default function Abstract() {
     rfqs?.data,
     pr_no
   ]);
-  console.log("ALL RFQS FROM API", rfqs?.data);
-
-  console.log(
-    "QUOTATIONS FOR PR:",
-    quotationsForPR
-  );
-  quotationsForPR.forEach((q, index) => {
-    console.log(
-      index,
-      q.rfq,
-      q.unit_price,
-      q.brand_model
-    );
-  });
-  console.log(
-    "ITEM QUOTATION COUNT:",
-    itemQuotationData.length
-  );
-
-  console.log(
-    "ITEM QUOTATION RAW:",
-    itemQuotationData
-  );
-  quotationsForPR.forEach((quotation, index) => {
-    console.log(
-      "QUOTATION",
-      index,
-      quotation
-    );
-  });
 
   const filteredSupplierItem = useMemo(() => {
-  console.log("PR NO:", pr_no);
-
-  console.log(
-    "SUPPLIER ITEMS:",
-    supplierItemData
-  );
-
   return supplierItemData.filter((data) => {
-    console.log(
-      "purchase_request value:",
-      data.rfq_details.purchase_request
-    );
-
     return (
       data.rfq_details.purchase_request?.toString() ===
       pr_no?.toString()
@@ -174,30 +137,59 @@ export default function Abstract() {
   if (isLoading) return <Loading />;
   if (error) return <div>{error.message}</div>;
 
-
   const handlePrintClick = async () => {
+    if (filteredSupplierItem.length === 0) {
+      setMessageDialog({
+        open: true,
+        message: "Cannot generate the Abstract of Quotation because this Purchase Request has not selected a supplier yet.",
+        title: "No Supplier Selected",
+        type: "error",
+      });
 
-  console.log("BAC MEMBERS RAW:", bac_members);
-  console.log("BAC MEMBERS DATA:", bacMembersData);
+      return;
+    }
 
-  if (!bacMembersData || bacMembersData.length === 0) {
-    console.error("BAC MEMBERS NOT LOADED");
-    return;
-  }
+    if (quotationsForPR.length === 0) {
+      setMessageDialog({
+        open: true,
+        message: "Cannot generate the Abstract of Quotation because there are no item quotations available.",
+        title: "No Quotations Available",
+        type: "error",
+      });
 
-  const url = await generateAOQPDF(
-    filteredSupplierItem!,
-    quotationsForPR,
-    bacMembersData
-  );
+      return;
+    }
 
-  if (!url) {
-    console.error("PDF generation failed");
-    return;
-  }
+    if (bacMembersData.length === 0) {
+      setMessageDialog({
+        open: true,
+        message: "Cannot generate the Abstract of Quotation because no BAC members are available.",
+        title: "BAC Members Unavailable",
+        type: "error",
+      });
 
-  window.open(url, "_blank");
-};
+      return;
+    }
+
+    const url = await generateAOQPDF(
+      filteredSupplierItem,
+      quotationsForPR,
+      bacMembersData
+    );
+
+    if (!url) {
+      setMessageDialog({
+        open: true,
+        message: "The Abstract of Quotation PDF could not be generated. Please try again.",
+        title: "PDF Generation Failed",
+        type: "error",
+      });
+
+      return;
+    }
+
+    window.open(url, "_blank");
+  };
 
   return (
   
@@ -277,7 +269,7 @@ export default function Abstract() {
                       </Button>
                     </TooltipTrigger>
                     <TooltipContent side="top">
-                      Download AOQ Form
+                      Download Empty AOQ Form
                     </TooltipContent>
                   </Tooltip>
                 </TooltipProvider>
@@ -291,6 +283,15 @@ export default function Abstract() {
         </CardContent>
         <CardFooter className="flex justify-between"></CardFooter>
       </Card>
+      <MessageDialog
+        message={messageDialog.message}
+        title={messageDialog.title}
+        type={messageDialog.type}
+        open={messageDialog.open}
+        onOpenChange={(open) =>
+          setMessageDialog((prev) => ({ ...prev, open }))
+        }
+      />
     </div>
   );
 }

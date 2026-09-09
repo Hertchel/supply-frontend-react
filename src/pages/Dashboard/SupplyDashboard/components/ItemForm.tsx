@@ -88,6 +88,28 @@ const ItemForm: React.FC<ItemFormProps> = ({ pr_no }) => {
       });
 
       if (result.success) {
+        const normalizedDescription = data.item_description
+          .trim()
+          .toLowerCase();
+
+        const isDuplicate = items.some(
+          (item) =>
+            item.item_description.trim().toLowerCase() ===
+            normalizedDescription
+        );
+
+        if (isDuplicate) {
+          setMessageDialog({
+            open: true,
+            message:
+              "This item has already been added to this Purchase Request.",
+            title: "Duplicate Item",
+            type: "error",
+          });
+
+          return;
+        }
+
         mutate(data, {
           onSuccess: (response) => {
             if (response.status === "success") {
@@ -109,6 +131,7 @@ const ItemForm: React.FC<ItemFormProps> = ({ pr_no }) => {
             });
           },
         });
+
         reset();
       }
     } catch (error) {

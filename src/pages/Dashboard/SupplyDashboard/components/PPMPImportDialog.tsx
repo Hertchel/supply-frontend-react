@@ -26,11 +26,13 @@ export interface PPMPItem {
 }
 
 interface PPMPImportDialogProps {
+  open: boolean;
   onImport?: (items: PPMPItem[]) => void | Promise<void>;
   onClose?: () => void;
 }
 
 const PPMPImportDialog = ({
+  open,
   onImport,
   onClose,
 }: PPMPImportDialogProps) => {
@@ -237,7 +239,7 @@ const PPMPImportDialog = ({
 
   return (
     <Dialog
-        open={true}
+        open={open}
         onOpenChange={(open) => {
         if (!open) {
             onClose?.();
