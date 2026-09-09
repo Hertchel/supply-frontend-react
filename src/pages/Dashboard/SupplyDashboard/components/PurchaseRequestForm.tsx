@@ -398,6 +398,7 @@ const PurchaseRequestForm: React.FC<PurchaseRequestFormProps> = ({
       {showPPMPImport && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 p-4">
           <PPMPImportDialog
+            open={showPPMPImport}
             onClose={() => setShowPPMPImport(false)}
             onImport={() => {
             }}
