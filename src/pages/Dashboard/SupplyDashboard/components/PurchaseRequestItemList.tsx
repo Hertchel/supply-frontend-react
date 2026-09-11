@@ -679,7 +679,7 @@ const ItemList = ({ sortedItems }: { sortedItems: itemType[] }) => {
           type="button"
           disabled={actionDisabled}
           onClick={() => setIsPPMPDialogOpen(true)}
-          className="bg-orange-300 hover:bg-orange-400 text-gray-950"
+          className="bg-orange-300 hover:bg-orange-400 text-gray-950 translate-y-3"
         >
           Import from PPMP
         </Button>
