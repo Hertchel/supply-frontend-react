@@ -95,6 +95,18 @@ export default function SupplyAOQ() {
         (item) => item.rfq_details?.purchase_request === pr_no
       );
 
+      console.log("=== DEBUG PR ===");
+      console.log("PR NO:", pr_no);
+      console.log(
+        "Selected supplier items:",
+        selectedItemsForPR.map((item) => ({
+          supplier: item.supplier_details?.supplier_no,
+          item_no: item.item_quotation_details?.item_details?.item_no,
+          description:
+            item.item_quotation_details?.item_details?.item_description,
+        }))
+      );
+
       // Get all unique items that belong to this PR
       const itemNos = [
         ...new Set(
@@ -104,8 +116,9 @@ export default function SupplyAOQ() {
         ),
       ];
 
-      // Get all suppliers that have manually selected items
-      const supplierNos = [
+      // A supplier is a winner if they were manually selected
+      // for at least one item in the PR.
+      const winningSupplierNos = [
         ...new Set(
           selectedItemsForPR
             .map((item) => item.supplier_details?.supplier_no)
@@ -113,22 +126,26 @@ export default function SupplyAOQ() {
         ),
       ];
 
-      // A supplier is a winner only if they were manually
-      // selected for EVERY item in the PR.
-      const winningSupplierNos = supplierNos.filter((supplierNo) => {
-        return itemNos.every((itemNo) => {
-          return selectedItemsForPR.some(
-            (item) =>
-              item.supplier_details?.supplier_no === supplierNo &&
-              item.item_quotation_details.item_details.item_no === itemNo
-          );
-        });
-      });
-
       console.log("PR:", pr_no);
       console.log("Selected Items:", selectedItemsForPR);
       console.log("Items:", itemNos);
       console.log("Winning Suppliers:", winningSupplierNos);
+      console.log(
+  "Winning Supplier Items:",
+  winningSupplierNos.map((supplierNo) => ({
+    supplierNo,
+    items: selectedItemsForPR
+      .filter(
+        (item) => item.supplier_details?.supplier_no === supplierNo
+      )
+      .map((item) => ({
+        itemNo: item.item_quotation_details?.item_details?.item_no,
+        description:
+          item.item_quotation_details?.item_details?.item_description,
+        quantity: item.item_quantity,
+      })),
+  }))
+);
 
       return supplierData.filter(
         (supplier) =>
@@ -179,31 +196,13 @@ export default function SupplyAOQ() {
         (item) => item.rfq_details?.purchase_request === prNo
       );
 
-      const itemNos = [
-        ...new Set(
-          selectedItemsForPR.map(
-            (item) => item.item_quotation_details.item_details.item_no
-          )
-        ),
-      ];
-
-      const supplierNos = [
+      const winningSupplierNos = [
         ...new Set(
           selectedItemsForPR
             .map((item) => item.supplier_details?.supplier_no)
             .filter((supplierNo): supplierNo is string => Boolean(supplierNo))
         ),
       ];
-
-      const winningSupplierNos = supplierNos.filter((supplierNo) => {
-        return itemNos.every((itemNo) => {
-          return selectedItemsForPR.some(
-            (item) =>
-              item.supplier_details?.supplier_no === supplierNo &&
-              item.item_quotation_details.item_details.item_no === itemNo
-          );
-        });
-      });
 
       return (
         winningSupplierNos.length > 0 &&
