@@ -258,7 +258,7 @@ export const TwoStepRFQForm: React.FC<TwoStepRFQFormProps> = ({
         supplier_name: data.supplier_name ?? "",
         supplier_address: data.supplier_address ?? "",
         supplier_profile_id: data.supplier_profile_id ?? null,
-        tin: data.tin ?? "",
+        tin: data.tin?.trim() || "N/A",
         is_VAT: data.is_VAT,
       };
 
