@@ -114,16 +114,12 @@ export const PurchaseOrderForm: React.FC<PurchaseOrderFormProps> = ({
       (data) => data.rfq_details.purchase_request === pr_no,
     );
   }, [supplier_, pr_no]);
-  console.log("SUPPLIER DATA:", supplierData);
-  console.log(supplierData);
 
   const filteredSupplierItemData = useMemo(() => {
     return supplierItemData.filter(
       (item) => item.rfq_details.purchase_request === pr_no,
     );
   }, [supplierItemData, pr_no]);
-
-  console.log("FILTERED SUPPLIER ITEMS:", filteredSupplierItemData);
 
   const filterItemBySupplier = useCallback(
     (supplier_no: string) => {

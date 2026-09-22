@@ -213,7 +213,7 @@ export const generateIARPDF = async (itemData: _itemsDeliveredType[]) => {
     });
 
     // Update yPosition for the next item
-    yPosition = rowBottom - 5;
+    yPosition = rowBottom - 12;
   });
 
   // Fill remaining table space with blank rows

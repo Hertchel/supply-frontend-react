@@ -56,7 +56,6 @@ interface messageDialogProps {
 }
 
 export const AbstractItemContentList = () => {
-  console.log("===== ABSTRACT ITEM CONTENT LIST =====");
   const [isInformationDialogOpen, setIsInformationDialogOpen] =
     useState<boolean>(false);
   const [rfqNo, setRfqNo] = useState<string | undefined>(undefined);
@@ -87,11 +86,6 @@ export const AbstractItemContentList = () => {
           ? rfqs.data
           : [];
   }, [rfqs?.data]);
-
-  console.log(
-      "ALL RFQS",
-      rfqs?.data
-  );
 
   const bacMembersData = useMemo(() => {
     return Array.isArray(bac_members?.data) ? bac_members.data : [] 
@@ -148,10 +142,6 @@ quotationsForPR.forEach((supplier, index) => {
 });
 
     const pr_no = abstractData?.pr_details.pr_no;
-    console.log(
-    "CURRENT PR STATUS",
-    abstractData?.pr_details.status
-  );
 
   const NOAData = useMemo(() => {
     return supplierItemData.find(
@@ -176,9 +166,6 @@ quotationsForPR.forEach((supplier, index) => {
   abstractData?.pr_details.status === "Ready to Order";
 
   const handleGenerateAOQPDF = async () => {
-
-  console.log("BAC MEMBERS RAW:", bac_members);
-  console.log("BAC MEMBERS DATA:", bacMembersData);
 
   if (!bacMembersData || bacMembersData.length === 0) {
     console.error("BAC MEMBERS NOT LOADED");

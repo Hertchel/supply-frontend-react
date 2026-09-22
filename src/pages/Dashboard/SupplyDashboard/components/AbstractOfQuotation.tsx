@@ -438,7 +438,7 @@ console.log("ALL PO ITEM RESULTS", results);
     <>
       {filteredPurchaseRequestData.length > 0 ? (
         filteredPurchaseRequestData.map((data) => (
-          <Card key={data.pr_no} className="mb-6">
+          <Card key={data.pr_no} className="mb-6 border-2 border-gray-300 rounded-lg">
             <CardHeader>
               <CardTitle className="flex flex-col">
                 <div className="flex gap-2 my-2">

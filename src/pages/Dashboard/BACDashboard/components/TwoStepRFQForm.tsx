@@ -264,10 +264,6 @@ export const TwoStepRFQForm: React.FC<TwoStepRFQFormProps> = ({
 
       addRFQMutation(quotationData, {
         onSuccess: async (rfqResponse) => {
-          console.log(
-            "RFQ RESPONSE:",
-            rfqResponse
-          );
 
           const rfqNo = rfqResponse.data?.rfq_no;
 
@@ -285,7 +281,7 @@ export const TwoStepRFQForm: React.FC<TwoStepRFQFormProps> = ({
               rfq: rfqNo ?? "",
               item: item.item ?? "",
               unit_price: item.unit_price ?? 0,
-              brand_model: item.brand_model ?? "",
+              brand_model: item.brand_model || "N/A",
               is_low_price: sortedItem
                 ? Number(item.unit_price) <= Number(sortedItem.unit_cost)
                 : false,
@@ -321,11 +317,6 @@ export const TwoStepRFQForm: React.FC<TwoStepRFQFormProps> = ({
                 return result;
               } catch (error) {
 
-                console.error(
-                  "ITEM CREATION FAILED:",
-                  itemData
-                );
-
                 console.error(error);
 
                 throw error;
@@ -345,15 +336,6 @@ export const TwoStepRFQForm: React.FC<TwoStepRFQFormProps> = ({
           })
         },
         onError: (error: any) => {
-          console.error(
-            "RFQ CREATE ERROR FULL:",
-            error
-          );
-
-          console.error(
-            "RFQ CREATE ERROR RESPONSE:",
-            error?.response?.data
-          );
 
           setMessageDialog({
             open: true,
