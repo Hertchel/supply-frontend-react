@@ -23,13 +23,13 @@ import {useAddItemQuotation,
   useAddRequestForQuotation,  
   useRequestForQuotation,
   useGetItemQuotation,} from "@/services/requestForQuotationServices";
-import { useSupplierProfiles } from "@/services/supplierProfileServices";
+import { useSupplierProfiles, createSupplierProfile, updateSupplierProfile, SupplierProfileType } from "@/services/supplierProfileServices";
 import {requestForQuotationSchema, requestForQuotationType,} from "@/types/request/request_for_quotation";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { FieldErrors, useFieldArray, useForm } from "react-hook-form";
 import Loading from "../../shared/components/Loading";
 import { useEffect, useMemo, useState } from "react";
-import { Loader2 } from "lucide-react";
+import { Loader2, Pencil } from "lucide-react";
 import { Textarea } from "@/components/ui/textarea";
 import { v4 as uuidv4 } from "uuid";
 import { formatTIN } from "@/services/formatTIN";
@@ -60,6 +60,8 @@ export const TwoStepRFQForm: React.FC<TwoStepRFQFormProps> = ({
 }) => {
   const [isLoading, setIsLoading] = useState<boolean>(false);
   const [isInitialized, setIsInitialized] = useState(false);
+  const [supplierSaved, setSupplierSaved] = useState(false);
+  const [activeTab, setActiveTab] = useState("supplier");
   const [selectedOption, setSelectedOption] = useState<string>("non-VAT");
   const [messageDialog, setMessageDialog] = useState<messageDialogProps>({
     open: false,
@@ -76,7 +78,7 @@ export const TwoStepRFQForm: React.FC<TwoStepRFQFormProps> = ({
 
   const { mutate: addRFQMutation } = useAddRequestForQuotation();
   //const { data: rfqData } = useRequestForQuotation();
-  const { data: supplierProfileData } = useSupplierProfiles();
+  const { data: supplierProfileData, refetch: refetchSupplierProfiles, } = useSupplierProfiles();
   const supplierProfiles = supplierProfileData?.data || [];
   const { mutateAsync: addItemMutation } = useAddItemQuotation();
   const { data: rfqData } = useRequestForQuotation();
@@ -87,7 +89,7 @@ export const TwoStepRFQForm: React.FC<TwoStepRFQFormProps> = ({
     supplier_name: profile.name,
     supplier_address: profile.address,
     tin: profile.tin ?? "",
-    is_VAT: false,
+    is_VAT: profile.is_VAT,
   }));
 
   const {
@@ -149,6 +151,9 @@ export const TwoStepRFQForm: React.FC<TwoStepRFQFormProps> = ({
   const watchedTIN = watch("tin");
 
   const [openSupplier, setOpenSupplier] = useState(false);
+  const [openEditSupplier, setOpenEditSupplier] = useState(false);
+  const [supplierSearch, setSupplierSearch] = useState("");
+  const [selectedSupplier, setSelectedSupplier] = useState<SupplierProfileType | null>(null);
   const filteredSuppliers = uniqueSuppliers.filter((supplier) =>
     supplier.supplier_name
       .toLowerCase()
@@ -240,7 +245,103 @@ export const TwoStepRFQForm: React.FC<TwoStepRFQFormProps> = ({
       </div>
     );
   };
+  
+  const saveSupplier = async () => {
+    const supplierName = watch("supplier_name")?.trim();
+    const supplierAddress = watch("supplier_address")?.trim();
+    const tin = watch("tin")?.trim() || "";
+    const existingProfileId = watch("supplier_profile_id");
+    const isVAT = watch("is_VAT");
 
+    if (!supplierName || !supplierAddress) {
+      setMessageDialog({
+        open: true,
+        message: "Please provide the supplier name and address.",
+        title: "Supplier Information Required",
+        type: "error",
+      });
+      return;
+    }
+
+    // Use an existing supplier selected from the dropdown.
+    if (existingProfileId) {
+      setSupplierSaved(true);
+
+      setMessageDialog({
+        open: true,
+        message: "Existing supplier selected successfully.",
+        title: "Supplier Selected",
+        type: "success",
+      });
+      return;
+    }
+
+    setIsLoading(true);
+
+    try {
+      const response = await createSupplierProfile({
+        name: supplierName,
+        address: supplierAddress,
+        tin,
+        is_VAT: isVAT,
+      });
+
+      if (response.status === "error") {
+        const axiosError = response.error as AxiosError<{
+          duplicate?: boolean;
+          supplier_profile_id?: string;
+          message?: string;
+        }>;
+
+        const errorData = axiosError.response?.data;
+
+        setSupplierSaved(false);
+
+        setMessageDialog({
+          open: true,
+          message:
+            errorData?.message ||
+            "Unable to save supplier. Please try again.",
+          title: errorData?.duplicate
+            ? "Duplicate Supplier"
+            : "Save Failed",
+          type: "error",
+        });
+
+        return;
+      }
+
+      const profile = response.data;
+
+      if (!profile?.supplier_profile_id) {
+        throw new Error("Supplier profile was not created.");
+      }
+
+      setValue("supplier_profile_id", profile.supplier_profile_id);
+      setSupplierSaved(true);
+
+      setMessageDialog({
+        open: true,
+        message: "Supplier profile saved successfully.",
+        title: "Supplier Saved",
+        type: "success",
+      });
+    } catch (error) {
+      setSupplierSaved(false);
+
+      setMessageDialog({
+        open: true,
+        message:
+          error instanceof Error
+            ? error.message
+            : "Unable to save supplier. Please try again.",
+        title: "Save Failed",
+        type: "error",
+      });
+    } finally {
+      setIsLoading(false);
+    }
+  };
 
   const onSubmit = async (data: requestForQuotationType) => {
     
@@ -258,7 +359,7 @@ export const TwoStepRFQForm: React.FC<TwoStepRFQFormProps> = ({
         supplier_name: data.supplier_name ?? "",
         supplier_address: data.supplier_address ?? "",
         supplier_profile_id: data.supplier_profile_id ?? null,
-        tin: data.tin?.trim() || "N/A",
+        tin: data.tin?.trim() || "",
         is_VAT: data.is_VAT,
       };
 
@@ -357,6 +458,91 @@ export const TwoStepRFQForm: React.FC<TwoStepRFQFormProps> = ({
       })
     }
   };
+  const saveEditedSupplier = async () => {
+  if (!selectedSupplier) return;
+
+  if (!selectedSupplier.name.trim() || !selectedSupplier.address.trim()) {
+    setMessageDialog({
+      open: true,
+      message: "Please provide the supplier name and address.",
+      title: "Supplier Information Required",
+      type: "error",
+    });
+    return;
+  }
+
+  setIsLoading(true);
+
+  try {
+    const response = await updateSupplierProfile(
+      selectedSupplier.supplier_profile_id,
+      {
+        name: selectedSupplier.name.trim(),
+        address: selectedSupplier.address.trim(),
+        tin: selectedSupplier.tin?.trim() || "",
+        is_VAT: selectedSupplier.is_VAT,
+      }
+    );
+
+    if (response.status === "error") {
+      const axiosError = response.error as AxiosError<{
+        message?: string;
+        duplicate?: boolean;
+      }>;
+
+      const errorData = axiosError.response?.data;
+
+      setMessageDialog({
+        open: true,
+        message:
+          errorData?.message ||
+          "Unable to update supplier. Please try again.",
+        title: errorData?.duplicate
+          ? "Duplicate Supplier"
+          : "Update Failed",
+        type: "error",
+      });
+
+      return;
+    }
+
+    await refetchSupplierProfiles();
+
+    setSelectedSupplier(null);
+    setOpenEditSupplier(false);
+
+    setMessageDialog({
+      open: true,
+      message: "Supplier profile updated successfully.",
+      title: "Supplier Updated",
+      type: "success",
+    });
+  } catch (error) {
+    setMessageDialog({
+      open: true,
+      message:
+        error instanceof Error
+          ? error.message
+          : "Unable to update supplier. Please try again.",
+      title: "Update Failed",
+      type: "error",
+    });
+  } finally {
+    setIsLoading(false);
+  }
+};
+
+const filteredEditSuppliers = supplierProfiles.filter((supplier) => {
+  const search = supplierSearch.toLowerCase().trim();
+
+  if (!search) return true;
+
+  return (
+    supplier.name.toLowerCase().includes(search) ||
+    supplier.address.toLowerCase().includes(search) ||
+    (supplier.tin ?? "").toLowerCase().includes(search)
+  );
+});
 
   return (
     <>
@@ -366,6 +552,7 @@ export const TwoStepRFQForm: React.FC<TwoStepRFQFormProps> = ({
 
         if (!open) {
           setIsInitialized(false);
+          setSupplierSaved(false);
           reset();
         }
 
@@ -377,8 +564,15 @@ export const TwoStepRFQForm: React.FC<TwoStepRFQFormProps> = ({
             </DialogTitle>
           </DialogHeader>
           <ScrollArea className="h-[30rem] mb-9">
-            <form onSubmit={handleSubmit(onSubmit)}>
-              <Tabs defaultValue="supplier">
+            <form
+              onSubmit={handleSubmit(
+                onSubmit,
+                (errors) => {
+                  console.log("FORM VALIDATION ERRORS:", errors);
+                }
+              )}
+            >
+              <Tabs value={activeTab} onValueChange={setActiveTab}>
                 <div className="w-full flex flex-col items-center">
                   <TabsList className="grid grid-cols-2 w-1/2 items-center">
                     <TabsTrigger className="" value="supplier">
@@ -398,7 +592,23 @@ export const TwoStepRFQForm: React.FC<TwoStepRFQFormProps> = ({
                 <TabsContent value="supplier" className="">
                   <Card>
                     <CardHeader>
-                      <CardTitle className="text-xl">Supplier</CardTitle>
+                      <div className="flex items-center justify-between">
+                        <CardTitle className="text-xl">Supplier</CardTitle>
+
+                        <Button
+                          type="button"
+                          variant="outline"
+                          onClick={() => {
+                            setSupplierSearch("");
+                            setOpenEditSupplier(true);
+                          }}
+                          className="flex items-center gap-2"
+                        >
+                          <Pencil className="h-4 w-4" />
+                          Edit Supplier
+                        </Button>
+                      </div>
+
                       <CardDescription>
                         Please fill up the supplier information
                       </CardDescription>
@@ -417,6 +627,12 @@ export const TwoStepRFQForm: React.FC<TwoStepRFQFormProps> = ({
                                 }}
                                 onChange={(e) => {
                                   setValue("supplier_name", e.target.value);
+
+                                  // when user is typing a new supplier name,
+                                  // so remove the previously selected supplier profile.
+                                  setValue("supplier_profile_id", null);
+                                  setSupplierSaved(false);
+
                                   setOpenSupplier(true);
                                 }}
                                 onBlur={() => {
@@ -444,23 +660,13 @@ export const TwoStepRFQForm: React.FC<TwoStepRFQFormProps> = ({
                                                 supplier.supplier_name
                                               );
 
-                                              setValue(
-                                                "supplier_address",
-                                                supplier.supplier_address
-                                              );
+                                              setValue("supplier_address", supplier.supplier_address);
+                                              setValue("tin", supplier.tin);
+                                              setValue("supplier_profile_id", supplier.supplier_profile_id);
+                                              setValue("is_VAT", supplier.is_VAT);
 
-                                              setValue(
-                                                "tin",
-                                                supplier.tin
-                                              );
-
-                                              setValue(
-                                                "supplier_profile_id",
-                                                supplier.supplier_profile_id
-                                              );
-
-                                              setSelectedOption("non-vat");
-
+                                              setSupplierSaved(true);
+                                              setSelectedOption(supplier.is_VAT ? "vat" : "non-VAT");
                                               setOpenSupplier(false);
                                             }}
                                           >
@@ -485,63 +691,6 @@ export const TwoStepRFQForm: React.FC<TwoStepRFQFormProps> = ({
                               <ChevronsUpDown className="absolute right-3 top-3 h-4 w-4 opacity-50" />
                             </div>
 
-                            
-                              <Command>
-
-                                <CommandList>
-                                  <CommandEmpty>
-                                    No supplier found.
-                                  </CommandEmpty>
-
-                                  <CommandGroup>
-                                    {filteredSuppliers.map((supplier) => (
-                                      <CommandItem
-                                        key={supplier.supplier_name}
-                                        value={supplier.supplier_name}
-                                        onMouseDown={(e) => {
-                                          e.preventDefault();
-                                        }}
-                                        onSelect={() => {
-                                          setValue(
-                                            "supplier_name",
-                                            supplier.supplier_name
-                                          );
-
-                                          setValue(
-                                            "supplier_address",
-                                            supplier.supplier_address
-                                          );
-
-                                          setValue(
-                                            "tin",
-                                            supplier.tin
-                                          );
-
-                                          setValue(
-                                            "supplier_profile_id",
-                                            supplier.supplier_profile_id
-                                          );
-
-                                          setSelectedOption("non-vat");
-
-                                          setOpenSupplier(false);
-                                        }}
-                                      >
-                                        <Check
-                                          className={`mr-2 h-4 w-4 ${
-                                            watch("supplier_name") ===
-                                            supplier.supplier_name
-                                              ? "opacity-100"
-                                              : "opacity-0"
-                                          }`}
-                                        />
-
-                                        {supplier.supplier_name}
-                                      </CommandItem>
-                                    ))}
-                                  </CommandGroup>
-                                </CommandList>
-                              </Command>
                         </div>
                         {renderField({
                           label: "Supplier Address",
@@ -575,14 +724,28 @@ export const TwoStepRFQForm: React.FC<TwoStepRFQFormProps> = ({
                       </div>
 
                       <div className="fixed bottom-6 right-10">
-                        <TabsList className="bg-orange-200">
-                          <TabsTrigger
-                            className="bg-orange-200 px-6 py-1 text-gray-950"
-                            value="items"
+                        <div className="flex gap-2">
+                          {!watch("supplier_profile_id") && (
+                            <Button
+                              type="button"
+                              className="bg-orange-200 px-6 py-1 text-gray-950 hover:bg-orange-300"
+                              onClick={saveSupplier}
+                            >
+                              Save Supplier
+                            </Button>
+                          )}
+
+                          <Button
+                            type="button"
+                            className="bg-orange-200 px-6 py-1 text-gray-950 hover:bg-orange-300"
+                            disabled={!supplierSaved}
+                            onClick={() => {
+                              setActiveTab("items");
+                            }}
                           >
                             Next
-                          </TabsTrigger>
-                        </TabsList>
+                          </Button>
+                        </div>
                       </div>
                     </CardContent>
                   </Card>
@@ -715,6 +878,178 @@ export const TwoStepRFQForm: React.FC<TwoStepRFQFormProps> = ({
               </Tabs>
             </form>
           </ScrollArea>
+        </DialogContent>
+      </Dialog>
+      <Dialog
+        open={openEditSupplier}
+        onOpenChange={setOpenEditSupplier}
+      >
+        <DialogContent className="max-w-3xl">
+          <DialogHeader>
+            <DialogTitle className="text-xl">
+              Edit Supplier
+            </DialogTitle>
+          </DialogHeader>
+
+          <div className="space-y-3">
+            <Input
+              type="text"
+              placeholder="Search supplier..."
+              value={supplierSearch}
+              onChange={(e) => setSupplierSearch(e.target.value)}
+            />
+
+            <ScrollArea className="h-[28rem] pr-4">
+              {filteredEditSuppliers.length === 0 ? (
+                <div className="py-8 text-center text-sm text-muted-foreground">
+                  No supplier profiles found.
+                </div>
+              ) : (
+                <div className="space-y-3">
+                  {filteredEditSuppliers.map((supplier) => (
+                    <div
+                      key={supplier.supplier_profile_id}
+                      className="flex items-center justify-between rounded-lg border p-4"
+                    >
+                      <div className="space-y-1">
+                        <p className="font-medium">
+                          {supplier.name}
+                        </p>
+
+                        <p className="text-sm text-muted-foreground">
+                          {supplier.address}
+                        </p>
+
+                        <p className="text-sm text-muted-foreground">
+                          TIN: {supplier.tin || "—"}
+                        </p>
+                      </div>
+
+                      <Button
+                        type="button"
+                        variant="outline"
+                        onClick={() => {
+                          setSelectedSupplier(supplier);
+                          setOpenEditSupplier(false);
+                        }}
+                      >
+                        <Pencil className="mr-2 h-4 w-4" />
+                        Edit
+                      </Button>
+                    </div>
+                  ))}
+                </div>
+              )}
+            </ScrollArea>
+          </div>
+        </DialogContent>
+      </Dialog>
+
+      <Dialog
+        open={selectedSupplier !== null}
+        onOpenChange={(open) => {
+          if (!open) {
+            setSelectedSupplier(null);
+          }
+        }}
+      >
+        <DialogContent className="max-w-lg">
+          <DialogHeader>
+            <DialogTitle className="text-xl">
+              Edit Supplier
+            </DialogTitle>
+          </DialogHeader>
+
+          {selectedSupplier && (
+            <div className="space-y-5">
+              <div className="space-y-2">
+                <Label>Supplier Name</Label>
+                <Input
+                  value={selectedSupplier.name}
+                  onChange={(e) =>
+                    setSelectedSupplier({
+                      ...selectedSupplier,
+                      name: e.target.value,
+                    })
+                  }
+                />
+              </div>
+
+              <div className="space-y-2">
+                <Label>Supplier Address</Label>
+                <Textarea
+                  value={selectedSupplier.address}
+                  onChange={(e) =>
+                    setSelectedSupplier({
+                      ...selectedSupplier,
+                      address: e.target.value,
+                    })
+                  }
+                />
+              </div>
+
+              <div className="space-y-2">
+                <Label>TIN</Label>
+                <Input
+                  value={selectedSupplier.tin ?? ""}
+                  onChange={(e) =>
+                    setSelectedSupplier({
+                      ...selectedSupplier,
+                      tin: formatTIN(e.target.value),
+                    })
+                  }
+                />
+              </div>
+
+              <div className="space-y-2">
+                <Label>Supplier Type</Label>
+
+                <RadioGroup
+                  value={selectedSupplier.is_VAT ? "vat" : "non-vat"}
+                  onValueChange={(value) => {
+                    setSelectedSupplier({
+                      ...selectedSupplier,
+                      is_VAT: value === "vat",
+                    });
+                  }}
+                  className="flex items-center gap-6"
+                >
+                  <div className="flex items-center space-x-2">
+                    <RadioGroupItem value="non-vat" id="edit-non-vat" />
+                    <Label htmlFor="edit-non-vat">Non VAT</Label>
+                  </div>
+
+                  <div className="flex items-center space-x-2">
+                    <RadioGroupItem value="vat" id="edit-vat" />
+                    <Label htmlFor="edit-vat">VAT</Label>
+                  </div>
+                </RadioGroup>
+              </div>
+
+              <div className="flex justify-end gap-2 pt-2">
+                <Button
+                  type="button"
+                  variant="outline"
+                  onClick={() => setSelectedSupplier(null)}
+                >
+                  Cancel
+                </Button>
+
+                <Button
+                  type="button"
+                  disabled={isLoading}
+                  onClick={saveEditedSupplier}
+                  className="bg-orange-200 text-slate-950 hover:bg-orange-300"
+                >
+                  {isLoading ? (
+                    <Loader2 className="h-4 w-4 animate-spin" />
+                  ) : (
+                    "Save Changes"
+                  )}
+                </Button>
+              </div>
+            </div>
+          )}
         </DialogContent>
       </Dialog>
       <MessageDialog
