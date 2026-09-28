@@ -10,7 +10,7 @@ export interface SupplierProfileType {
   contact_person?: string | null;
   contact_number?: string | null;
   tin?: string | null;
-  is_VAT: boolean;
+  is_VAT?: boolean;
 }
 
 export const getAllSupplierProfiles = async (): Promise<

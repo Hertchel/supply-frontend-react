@@ -62,7 +62,7 @@ export const TwoStepRFQForm: React.FC<TwoStepRFQFormProps> = ({
   const [isInitialized, setIsInitialized] = useState(false);
   const [supplierSaved, setSupplierSaved] = useState(false);
   const [activeTab, setActiveTab] = useState("supplier");
-  const [selectedOption, setSelectedOption] = useState<string>("non-VAT");
+  const [selectedOption, setSelectedOption] = useState<string>("");
   const [messageDialog, setMessageDialog] = useState<messageDialogProps>({
     open: false,
     message: "",
@@ -109,7 +109,7 @@ export const TwoStepRFQForm: React.FC<TwoStepRFQFormProps> = ({
       supplier_address: "",
       supplier_profile_id: null,
       tin: "",
-      is_VAT: selectedOption === "vat" ? true : false,
+      is_VAT: undefined,
       items: sortedItems?.map((item) => ({
         item_quotation_no: "",
         purchase_request: pr_no,
@@ -121,6 +121,7 @@ export const TwoStepRFQForm: React.FC<TwoStepRFQFormProps> = ({
       })),
     },
   });
+  register("is_VAT");
 
   const watchedSupplierName = watch("supplier_name");
 
@@ -352,6 +353,10 @@ export const TwoStepRFQForm: React.FC<TwoStepRFQFormProps> = ({
         console.error("Validation failed:", result.error);
         return;
       }
+      console.log("RFQ VAT DEBUG:", {
+        selectedOption,
+        formIsVAT: data.is_VAT,
+      });
 
       const quotationData = {
         rfq_no: `${pr_no}-${uuidv4().substring(0,8)}`,
@@ -474,6 +479,10 @@ export const TwoStepRFQForm: React.FC<TwoStepRFQFormProps> = ({
   setIsLoading(true);
 
   try {
+    console.log("EDIT SUPPLIER DATA:", {
+      name: selectedSupplier.name,
+      is_VAT: selectedSupplier.is_VAT,
+    });
     const response = await updateSupplierProfile(
       selectedSupplier.supplier_profile_id,
       {
@@ -506,8 +515,29 @@ export const TwoStepRFQForm: React.FC<TwoStepRFQFormProps> = ({
       return;
     }
 
-    await refetchSupplierProfiles();
+    const refreshed = await refetchSupplierProfiles();
 
+      console.log(
+        "SUPPLIER AFTER DATABASE REFRESH:",
+        refreshed.data?.data?.find(
+          (supplier) =>
+            supplier.supplier_profile_id ===
+            selectedSupplier.supplier_profile_id
+        )
+      );
+    const currentSupplierId = watch("supplier_profile_id");
+
+    if (currentSupplierId === selectedSupplier.supplier_profile_id) {
+      setValue("is_VAT", selectedSupplier.is_VAT, {
+        shouldValidate: true,
+        shouldDirty: true,
+        shouldTouch: true,
+      });
+
+      setSelectedOption(
+        selectedSupplier.is_VAT ? "vat" : "non-VAT"
+      );
+    }
     setSelectedSupplier(null);
     setOpenEditSupplier(false);
 
@@ -547,12 +577,11 @@ const filteredEditSuppliers = supplierProfiles.filter((supplier) => {
   return (
     <>
       <Dialog open={isDialogOpen} onOpenChange={(open) => {
-
         setIsDialogOpen(open);
-
         if (!open) {
           setIsInitialized(false);
           setSupplierSaved(false);
+          setSelectedOption("");
           reset();
         }
 
@@ -627,12 +656,10 @@ const filteredEditSuppliers = supplierProfiles.filter((supplier) => {
                                 }}
                                 onChange={(e) => {
                                   setValue("supplier_name", e.target.value);
-
-                                  // when user is typing a new supplier name,
-                                  // so remove the previously selected supplier profile.
                                   setValue("supplier_profile_id", null);
-                                  setSupplierSaved(false);
+                                  setValue("is_VAT", undefined);
 
+                                  setSupplierSaved(false);
                                   setOpenSupplier(true);
                                 }}
                                 onBlur={() => {
@@ -655,20 +682,29 @@ const filteredEditSuppliers = supplierProfiles.filter((supplier) => {
                                               e.preventDefault();
                                             }}
                                             onSelect={() => {
-                                              setValue(
-                                                "supplier_name",
-                                                supplier.supplier_name
-                                              );
+                                                  const supplierIsVAT = Boolean(supplier.is_VAT);
 
-                                              setValue("supplier_address", supplier.supplier_address);
-                                              setValue("tin", supplier.tin);
-                                              setValue("supplier_profile_id", supplier.supplier_profile_id);
-                                              setValue("is_VAT", supplier.is_VAT);
+                                                  setValue("supplier_name", supplier.supplier_name);
+                                                  setValue("supplier_address", supplier.supplier_address);
+                                                  setValue("tin", supplier.tin);
+                                                  setValue(
+                                                    "supplier_profile_id",
+                                                    supplier.supplier_profile_id
+                                                  );
 
-                                              setSupplierSaved(true);
-                                              setSelectedOption(supplier.is_VAT ? "vat" : "non-VAT");
-                                              setOpenSupplier(false);
-                                            }}
+                                                  setValue("is_VAT", supplierIsVAT, {
+                                                    shouldValidate: true,
+                                                    shouldDirty: true,
+                                                    shouldTouch: true,
+                                                  });
+
+                                                  setSelectedOption(
+                                                    supplierIsVAT ? "vat" : "non-VAT"
+                                                  );
+
+                                                  setSupplierSaved(true);
+                                                  setOpenSupplier(false);
+                                                }}
                                           >
                                             <Check
                                               className={`mr-2 h-4 w-4 ${
@@ -708,8 +744,15 @@ const filteredEditSuppliers = supplierProfiles.filter((supplier) => {
                           className="flex items-center mb-3"
                           value={selectedOption}
                           onValueChange={(value) => {
+                            const isVAT = value === "vat";
+
                             setSelectedOption(value);
-                            setValue("is_VAT", value === "vat");
+
+                            setValue("is_VAT", isVAT, {
+                              shouldValidate: true,
+                              shouldDirty: true,
+                              shouldTouch: true,
+                            });
                           }}
                         >
                           <div className="flex items-center space-x-2">
@@ -1007,9 +1050,13 @@ const filteredEditSuppliers = supplierProfiles.filter((supplier) => {
                 <RadioGroup
                   value={selectedSupplier.is_VAT ? "vat" : "non-vat"}
                   onValueChange={(value) => {
-                    setSelectedSupplier({
-                      ...selectedSupplier,
-                      is_VAT: value === "vat",
+                    setSelectedSupplier((prev) => {
+                      if (!prev) return null;
+
+                      return {
+                        ...prev,
+                        is_VAT: value === "vat",
+                      };
                     });
                   }}
                   className="flex items-center gap-6"

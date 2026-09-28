@@ -28,7 +28,7 @@ export const quotationSchema = z.object({
       });
     }
   }),
-  is_VAT: z.boolean(),
+  is_VAT: z.boolean().optional(),
 });
 
 export type itemQuotationRequestType = {

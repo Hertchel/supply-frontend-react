@@ -126,6 +126,7 @@ export const RFQFormEdit: React.FC<RFQFormEditProps> = ({
       setValue("is_VAT", quotation.is_vat, {
         shouldValidate: true,
       });
+      setSelectedOption(quotation.is_vat ? "vat" : "non-VAT");
     }
   }, [isDialogOpen, quotation, itemQuotation, reset]);
 
@@ -197,7 +198,7 @@ export const RFQFormEdit: React.FC<RFQFormEditProps> = ({
         supplier_name: data.supplier_name,
         supplier_address: data.supplier_address,
         tin: data.tin,
-        is_VAT: selectedOption === "vat" ? true : false,
+        is_vat: selectedOption === "vat",
       };
 
       await editRFQMutation(quotationData);
