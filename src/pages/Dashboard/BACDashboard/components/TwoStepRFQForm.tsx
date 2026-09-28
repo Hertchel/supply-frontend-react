@@ -101,6 +101,7 @@ export const TwoStepRFQForm: React.FC<TwoStepRFQFormProps> = ({
     formState: { errors },
     reset,
   } = useForm<requestForQuotationType>({
+    mode: "onChange",
     resolver: zodResolver(requestForQuotationSchema),
     defaultValues: {
       rfq_no: rfq_no,
@@ -393,6 +394,41 @@ export const TwoStepRFQForm: React.FC<TwoStepRFQFormProps> = ({
                 : false,
             };
           });
+
+          const overpricedItems = itemDataArray.filter((itemData) => {
+            const prItem = sortedItems.find(
+              (item) => item.item_no === itemData.item
+            );
+
+            return (
+              prItem &&
+              Number(itemData.unit_price) > Number(prItem.unit_cost)
+            );
+          });
+
+          if (overpricedItems.length > 0) {
+            setIsLoading(false);
+
+            const messages = overpricedItems.map((itemData) => {
+              const prItem = sortedItems.find(
+                (item) => item.item_no === itemData.item
+              );
+
+              return `${prItem?.item_description ?? itemData.item}: `
+                + `quoted price cannot exceed PR price of ₱${Number(
+                    prItem?.unit_cost ?? 0
+                  ).toFixed(2)}.`;
+            });
+
+            setMessageDialog({
+              open: true,
+              message: messages.join("\n"),
+              title: "Invalid Quotation Price",
+              type: "error",
+            });
+
+            return;
+          }
 
           const validItems = itemDataArray.filter(
             (itemData) =>
@@ -868,12 +904,33 @@ const filteredEditSuppliers = supplierProfiles.filter((supplier) => {
                                   <Input
                                     {...register(`items.${index}.unit_price`, {
                                       valueAsNumber: true,
+                                      validate: (value) => {
+                                        const prPrice = Number(sortedItems[index]?.unit_cost ?? 0);
+
+                                        if (Number(value) > prPrice) {
+                                          return `Price cannot exceed ₱${prPrice.toFixed(2)}`;
+                                        }
+
+                                        return true;
+                                      },
                                     })}
                                     type="number"
+                                    max={sortedItems[index]?.unit_cost}
                                     disabled={alreadyQuotedItemNos.has(sortedItems[index]?.item_no)}
                                     onFocus={(e) => {
                                       if (e.target.value === "0") {
                                         e.target.value = "";
+                                      }
+                                    }}
+                                    onBlur={(e) => {
+                                      if (e.target.value.trim() === "") {
+                                        e.target.value = "0";
+
+                                        setValue(`items.${index}.unit_price`, 0, {
+                                          shouldValidate: true,
+                                          shouldDirty: true,
+                                          shouldTouch: true,
+                                        });
                                       }
                                     }}
                                   />

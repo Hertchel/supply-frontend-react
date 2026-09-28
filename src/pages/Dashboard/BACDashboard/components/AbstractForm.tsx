@@ -205,6 +205,22 @@ export const AbstractForm: React.FC<AbstractFormProps> = ({
     );
   };
 
+  const getSelectedSupplierForItem = (item_no: string) => {
+    const selectedQuotation = quotations.find(
+      (quotation) =>
+        quotation.rfq_no !== selectedSupplier &&
+        quotation.items.some((item) => item.item_no === item_no),
+    );
+
+    if (!selectedQuotation) return null;
+
+    return (
+      quotations_.find(
+        (quotation) => quotation.rfq_no === selectedQuotation.rfq_no,
+      )?.supplier_name ?? null
+    );
+  };
+
   const isItemSelectedForCurrentSupplier = (item_quote_no: string) => {
     return (
       quotations
@@ -467,20 +483,32 @@ export const AbstractForm: React.FC<AbstractFormProps> = ({
                     {item_loading ? (
                       <Loading />
                     ) : editableQuotation && editableQuotation?.length > 0 ? (
-                      editableQuotation.map((item, index) => (
-                        <div
-                          key={item.item_quotation_no}
-                          className="grid grid-cols-9 gap-2 items-center py-6 border-b-2"
-                        >
+                      editableQuotation.map((item, index) => {
+                        const selectedSupplierForItem = getSelectedSupplierForItem(
+                          item.item_details.item_no
+                        );
+
+                        const isSelectedByAnotherSupplier = Boolean(
+                          selectedSupplierForItem
+                        );
+
+                        return (
+                          <div
+                            key={item.item_quotation_no}
+                            className={`grid grid-cols-9 gap-2 items-center py-6 border-b-2 transition-opacity ${
+                              isSelectedByAnotherSupplier
+                                ? "bg-gray-50/60 opacity-50"
+                                : ""
+                            }`}
+                          >
                           <p className="text-gray-500">
                             {editableQuotation[index].item_details.unit}
                           </p>
-                          <p className="text-gray-500 col-span-2">
-                            {
-                              editableQuotation[index].item_details
-                                .item_description
-                            }
-                          </p>
+                          <div className="col-span-2">
+                            <p className="text-gray-500">
+                              {editableQuotation[index].item_details.item_description}
+                            </p>
+                          </div>
                           <Input
                             defaultValue={
                               editableQuotation[index].item_details.quantity
@@ -535,19 +563,32 @@ export const AbstractForm: React.FC<AbstractFormProps> = ({
                             </div>
                           </div>
 
-                          <Checkbox
-                            className="place-self-center"
-                            checked={isItemSelectedForCurrentSupplier(
-                              item.item_quotation_no.toString(),
-                            )}
-                            onCheckedChange={() => handleItemSelection(item)}
-                            disabled={
-                              !selectedSupplier ||
-                              isItemSelected(item.item_details.item_no)
-                            }
-                          />
+                          {isSelectedByAnotherSupplier ? (
+                            <div className="place-self-center text-center">
+                              <span className="inline-flex items-center px-3 py-1 text-xs font-medium text-red-600">
+                                Already Selected
+                              </span>
+
+                              <p className="text-xs font-semibold text-red-600 mt-1">
+                                {selectedSupplierForItem}
+                              </p>
+                            </div>
+                          ) : (
+                            <Checkbox
+                              className="place-self-center"
+                              checked={isItemSelectedForCurrentSupplier(
+                                item.item_quotation_no.toString(),
+                              )}
+                              onCheckedChange={() => handleItemSelection(item)}
+                              disabled={
+                                !selectedSupplier ||
+                                isItemSelected(item.item_details.item_no)
+                              }
+                            />
+                          )}
                         </div>
-                      ))
+                      );
+                    })
                     ) : (
                       <div className="grid place-items-center w-full h-96">
                         <p className="flex">
