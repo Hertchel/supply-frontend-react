@@ -102,7 +102,7 @@ const ItemForm: React.FC<ItemFormProps> = ({ pr_no }) => {
           setMessageDialog({
             open: true,
             message:
-              "This item has already been added to this Purchase Request.",
+              "This item has already been added to this Purchase Request. Use the pencil icon to edit items.",
             title: "Duplicate Item",
             type: "error",
           });

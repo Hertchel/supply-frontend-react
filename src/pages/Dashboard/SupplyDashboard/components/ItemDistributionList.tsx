@@ -5,6 +5,16 @@ import {
   CardHeader,
   CardTitle,
 } from "@/components/ui/card";
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+  DialogDescription,
+  DialogFooter,
+} from "@/components/ui/dialog";
+
+import { Checkbox } from "@/components/ui/checkbox";
 import { formatDate } from "@/services/formatDate";
 import Loading from "../../shared/components/Loading";
 import { useNavigate, useParams } from "react-router-dom";
@@ -54,40 +64,70 @@ export const ItemDistributionList = () => {
   const { pr_no } = useParams();
   const { status, setStatus } = useStatusStore();
   const [isDialogOpen, setIsDialogOpen] = useState<boolean>(false);
+  const [isDistributionConfirmOpen, setIsDistributionConfirmOpen] =
+    useState<boolean>(false);
+
+  const [verifiedItems, setVerifiedItems] = useState<Set<string>>(
+    new Set()
+  );
 
   const { handleDistribute, isError, isSuccess, isPendingDistribute } =
     usePurchaseRequestActions();
   const { data: item_delivered, isLoading: isItemsDeliveredLoading } =
     useGetItemsDeliveredInPurchaseRequest({ pr_no: pr_no });
-    console.log(
-  "ITEM DELIVERED RESPONSE:",
-  JSON.stringify(item_delivered, null, 2)
-);
-  //console.log(item_delivered);
+
+  const handleOpenDistributionConfirmation = () => {
+    setVerifiedItems(new Set());
+    setIsDistributionConfirmOpen(true);
+  };
+
+  const handleVerifyItem = (itemKey: string) => {
+    setVerifiedItems((prev) => {
+      const updated = new Set(prev);
+
+      if (updated.has(itemKey)) {
+        updated.delete(itemKey);
+      } else {
+        updated.add(itemKey);
+      }
+
+      return updated;
+    });
+  };
+
+  const handleVerifyAllItems = () => {
+    if (verifiedItems.size === filteredItemsDeliveredData.length) {
+      // Deselect all
+      setVerifiedItems(new Set());
+      return;
+    }
+
+    // Select all
+    const allItemKeys = filteredItemsDeliveredData.map(
+      (item) =>
+        item.item_details.item_quotation_details.item_details
+          .stock_property_no
+    );
+
+    setVerifiedItems(new Set(allItemKeys));
+  };
 
   const itemsDeliveredData = useMemo(() => {
     return Array.isArray(item_delivered?.data) ? item_delivered.data : [];
   }, [item_delivered?.data]);
-  console.log(itemsDeliveredData);
-  console.log(
-  itemsDeliveredData.map(
-    (item) => item.pr_details.status
-  )
-);
-console.log("PARAM PR NO:", pr_no);
 
   const filteredItemsDeliveredData = useMemo(() => {
-  return itemsDeliveredData.filter((data) => {
-    const status =
-      data.pr_details.status?.toLowerCase()?.trim();
+    return itemsDeliveredData.filter((data) => {
+      const status =
+        data.pr_details.status?.toLowerCase()?.trim();
 
-    return [
-      "ready for distribution",
-      "completed",
-      "distributed",
-    ].includes(status);
-  });
-}, [itemsDeliveredData]);
+      return [
+        "ready for distribution",
+        "completed",
+        "distributed",
+      ].includes(status);
+    });
+  }, [itemsDeliveredData]);
 
   useEffect(() => {
     if (isSuccess) {
@@ -113,6 +153,7 @@ console.log("PARAM PR NO:", pr_no);
   const handleDistributeClick = async () => {
     await handleDistribute(pr_no!);
     if (isSuccess) {
+      setIsDistributionConfirmOpen(false);
       setMessageDialog({
         open: true,
         message: "Distributed Successfully ",
@@ -130,6 +171,14 @@ console.log("PARAM PR NO:", pr_no);
       });
     }
   };
+  const allItemsVerified =
+    filteredItemsDeliveredData.length > 0 &&
+    filteredItemsDeliveredData.every((item) =>
+      verifiedItems.has(
+        item.item_details.item_quotation_details.item_details
+          .stock_property_no
+      )
+    );
 
   return (
     <Layout>
@@ -168,7 +217,7 @@ console.log("PARAM PR NO:", pr_no);
                       >
                         <Tooltip>
                           <TooltipTrigger asChild>
-                            <Button onClick={handleDistributeClick}>
+                            <Button onClick={handleOpenDistributionConfirmation}>
                               {isPendingDistribute ? (
                                 <Loader2 className="animate-spin" />
                               ) : (
@@ -296,6 +345,170 @@ console.log("PARAM PR NO:", pr_no);
         isOpen={isDialogOpen}
         setIsOpen={setIsDialogOpen}
       />
+      <Dialog
+        open={isDistributionConfirmOpen}
+        onOpenChange={setIsDistributionConfirmOpen}
+      >
+        <DialogContent className="max-w-2xl">
+          <DialogHeader>
+            <DialogTitle>
+              Confirm Item Quantities
+            </DialogTitle>
+
+            <DialogDescription>
+              Please verify that the quantity delivered for each item
+              matches the requested quantity before distributing this
+              purchase request.
+            </DialogDescription>
+          </DialogHeader>
+
+          <div className="max-h-[400px] overflow-y-auto space-y-3 pr-2">
+
+            {/* Select All */}
+            <div className="flex items-center justify-between border rounded-lg p-3 bg-gray-50 sticky top-0 z-10">
+              <div className="flex items-center gap-2">
+                <Checkbox
+                  checked={
+                    filteredItemsDeliveredData.length > 0 &&
+                    verifiedItems.size === filteredItemsDeliveredData.length
+                  }
+                  onCheckedChange={handleVerifyAllItems}
+                />
+
+                <span className="font-medium">
+                  {verifiedItems.size === filteredItemsDeliveredData.length
+                    ? "Deselect All"
+                    : "Select All"}
+                </span>
+              </div>
+
+              <span className="text-sm text-gray-500">
+                {verifiedItems.size} / {filteredItemsDeliveredData.length}
+              </span>
+            </div>
+
+            {filteredItemsDeliveredData.map((item) => {
+              const itemKey =
+                item.item_details.item_quotation_details.item_details
+                  .stock_property_no;
+
+              const itemDetails =
+                item.item_details.item_quotation_details.item_details;
+
+              const isVerified = verifiedItems.has(itemKey);
+
+              return (
+                <div
+                  key={itemKey}
+                  className={`border rounded-lg p-4 transition-colors ${
+                    isVerified
+                      ? "bg-green-50 border-green-300"
+                      : "bg-white border-gray-200"
+                  }`}
+                >
+                  <div className="flex items-start gap-3">
+                    <Checkbox
+                      checked={isVerified}
+                      onCheckedChange={() =>
+                        handleVerifyItem(itemKey)
+                      }
+                      className="mt-1"
+                    />
+
+                    <div className="flex-1">
+                      <p className="font-medium">
+                        {itemDetails.item_description}
+                      </p>
+
+                      <div className="grid grid-cols-2 gap-2 mt-2 text-sm">
+                        <div>
+                          <span className="text-gray-500">
+                            Unit:
+                          </span>{" "}
+                          {itemDetails.unit}
+                        </div>
+
+                        <div>
+                          <span className="text-gray-500">
+                            Requested Quantity:
+                          </span>{" "}
+                          {itemDetails.quantity}
+                        </div>
+
+                        <div>
+                          <span className="text-gray-500">
+                            Brand / Model:
+                          </span>{" "}
+                          {item.item_details.item_quotation_details.brand_model ||
+                            "N/A"}
+                        </div>
+
+                        <div>
+                          <span className="text-gray-500">
+                            Property No.:
+                          </span>{" "}
+                          {itemKey}
+                        </div>
+                      </div>
+
+                      <p
+                        className={`text-xs mt-2 font-medium ${
+                          isVerified
+                            ? "text-green-600"
+                            : "text-orange-600"
+                        }`}
+                      >
+                        {isVerified
+                          ? "✓ Quantity verified"
+                          : "Please verify the quantity"}
+                      </p>
+                    </div>
+                  </div>
+                </div>
+              );
+            })}
+          </div>
+
+          <div className="border-t pt-4">
+            <p className="text-sm text-gray-600">
+              Verified:{" "}
+              <span className="font-semibold">
+                {verifiedItems.size}
+              </span>{" "}
+              of{" "}
+              <span className="font-semibold">
+                {filteredItemsDeliveredData.length}
+              </span>{" "}
+              items
+            </p>
+          </div>
+
+          <DialogFooter>
+            <Button
+              type="button"
+              variant="outline"
+              onClick={() => setIsDistributionConfirmOpen(false)}
+            >
+              Cancel
+            </Button>
+
+            <Button
+              type="button"
+              disabled={!allItemsVerified || isPendingDistribute}
+              onClick={handleDistributeClick}
+            >
+              {isPendingDistribute ? (
+                <>
+                  <Loader2 className="animate-spin mr-2" />
+                  Distributing...
+                </>
+              ) : (
+                "Confirm Distribution"
+              )}
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
       <MessageDialog
         message={messageDialog?.message}
         title={messageDialog?.title}

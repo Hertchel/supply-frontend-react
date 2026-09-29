@@ -18,8 +18,11 @@ export const EditPRFormSchema = z.object({
   office: z.number().nullable().refine((val) => val !== null, {
     message: "Required",
   }),
-  purpose: z.string().min(1, 'Required'),
-  requisitioner: z.string().min(1, 'Required'),
+  purpose: z.string().min(1, "Required"),
+  requisitioner: z.string().min(1, "Required"),
+  fund_cluster: z.string().optional(),
+  reviewed_by: z.number().optional().nullable(),
+  campus_director: z.string().min(1, "Required"),
 });
 
 export type EditPRFormType = z.infer<typeof EditPRFormSchema>;

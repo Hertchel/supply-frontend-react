@@ -197,6 +197,89 @@ export const AbstractForm: React.FC<AbstractFormProps> = ({
     });
   };
 
+  const handleSelectAllItems = () => {
+    if (!selectedSupplier) return;
+
+    setQuotations((prevQuotations) => {
+      const supplierQuotation = prevQuotations.find(
+        (q) => q.rfq_no === selectedSupplier
+      );
+
+      const currentItems = supplierQuotation?.items ?? [];
+
+      const selectableItems = editableQuotation.filter(
+        (item) => !isItemSelected(item.item_details.item_no)
+      );
+
+      // Check whether all available items are already selected
+      const allSelectableSelected =
+        selectableItems.length > 0 &&
+        selectableItems.every((item) =>
+          currentItems.some(
+            (selectedItem) =>
+              selectedItem.item_quote_no === item.item_quotation_no
+          )
+        );
+
+      if (allSelectableSelected) {
+        return prevQuotations.map((q) =>
+          q.rfq_no === selectedSupplier
+            ? {
+                ...q,
+                items: q.items.filter(
+                  (selectedItem) =>
+                    !selectableItems.some(
+                      (item) =>
+                        item.item_quotation_no ===
+                        selectedItem.item_quote_no
+                    )
+                ),
+              }
+            : q
+        );
+      }
+
+      const newItems: SelectedItems[] = selectableItems
+        .filter(
+          (item) =>
+            !currentItems.some(
+              (selectedItem) =>
+                selectedItem.item_quote_no === item.item_quotation_no
+            )
+        )
+        .map((item) => ({
+          rfq_no: item.rfq,
+          item_quote_no: item.item_quotation_no,
+          item_no: item.item_details.item_no,
+          item_quantity: Number(item.item_details.quantity),
+          item_cost: Number(item.item_details.unit_cost),
+          total_amount:
+            Number(item.item_details.quantity) *
+            Number(item.unit_price),
+        }));
+
+      if (!supplierQuotation) {
+        return [
+          ...prevQuotations,
+          {
+            rfq_no: selectedSupplier,
+            items: newItems,
+          },
+        ];
+      }
+
+      // Supplier already exists, so add the new items
+      return prevQuotations.map((q) =>
+        q.rfq_no === selectedSupplier
+          ? {
+              ...q,
+              items: [...q.items, ...newItems],
+            }
+          : q
+      );
+    });
+  };
+
   const isItemSelected = (item_no: string) => {
     return quotations.some(
       (quotation) =>
@@ -247,6 +330,22 @@ export const AbstractForm: React.FC<AbstractFormProps> = ({
       ),
     );
   }, [quotations]);
+
+  const allItemsSelected = useMemo(() => {
+    if (!selectedSupplier) return false;
+
+    const availableItems = editableQuotation.filter(
+      (item) => !isItemSelected(item.item_details.item_no)
+    );
+
+    if (availableItems.length === 0) return false;
+
+    return availableItems.every((item) =>
+      isItemSelectedForCurrentSupplier(
+        item.item_quotation_no.toString()
+      )
+    );
+  }, [editableQuotation, quotations, selectedSupplier]);
 
   const restrictedSubmitAction = allItemQuotationCount! > selectedItems.size;
 
@@ -478,7 +577,17 @@ export const AbstractForm: React.FC<AbstractFormProps> = ({
                       <p>UNIT COST</p>
                       <p className="col-span-2">BRAND / MODEL</p>
                       <p>UNIT PRICE </p>
-                      <p>SELECT ITEM</p>
+                      <div className="flex items-center gap-2">
+                        <Checkbox
+                          checked={allItemsSelected}
+                          disabled={!selectedSupplier || editableQuotation.length === 0}
+                          onCheckedChange={handleSelectAllItems}
+                        />
+
+                        <p className="text-sm font-medium">
+                          {allItemsSelected ? "Deselect " : "Select All"}
+                        </p>
+                      </div>
                     </div>
                     {item_loading ? (
                       <Loading />

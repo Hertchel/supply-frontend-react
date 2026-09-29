@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import {
@@ -23,6 +23,9 @@ import {
   EditPRFormType,
 } from "@/types/request/purchase-request";
 import { getAllRequisitioner } from "@/services/requisitionerServices";
+import { getReviewers } from "@/services/userServices";
+import { getAllOffices, Office } from "@/services/officeServices";
+import { getAllCampusDirector } from "@/services/campusDirectorServices";
 import AsyncSelect from "react-select/async";
 import { Textarea } from "@/components/ui/textarea";
 import { MessageDialog } from "../../shared/components/MessageDialog";
@@ -72,11 +75,34 @@ const EditPRForm: React.FC<EditPRFormProps> = ({
   } = useForm<EditPRFormType>({
     resolver: zodResolver(EditPRFormSchema),
     defaultValues: {
-      purpose: purchaseData?.purpose,
-      office: purchaseData?.office ? Number(purchaseData.office): undefined,
-      requisitioner: purchaseData?.requisitioner_details?.requisition_id,
+      purpose: "",
+      office: undefined,
+      requisitioner: "",
+      fund_cluster: "",
+      reviewed_by: null,
+      campus_director: "",
     },
   });
+
+  useEffect(() => {
+    if (purchaseData) {
+      reset({
+        purpose: purchaseData.purpose ?? "",
+        office: purchaseData.office
+          ? Number(purchaseData.office)
+          : undefined,
+        requisitioner:
+          purchaseData.requisitioner_details?.requisition_id ?? "",
+        fund_cluster: purchaseData.fund_cluster ?? "",
+        reviewed_by:
+          purchaseData.reviewed_by !== null &&
+          purchaseData.reviewed_by !== undefined
+            ? Number(purchaseData.reviewed_by)
+            : null,
+        campus_director: purchaseData.campus_director ?? "",
+      });
+    }
+  }, [purchaseData, reset]);
 
   const { mutate } = useUpdatePurchaseRequest();
 
@@ -99,6 +125,84 @@ const EditPRForm: React.FC<EditPRFormProps> = ({
       console.log(error);
       return [];
     }
+  };
+
+  const loadOfficeOptions = async (
+    inputValue: string
+  ): Promise<option[]> => {
+    try {
+      const offices = await getAllOffices();
+
+      return (
+        offices.data
+          ?.filter((office: Office) =>
+            `${office.code} ${office.name} ${office.department}`
+              .toLowerCase()
+              .includes(inputValue.toLowerCase())
+          )
+          .map((office: Office) => ({
+            value: String(office.id),
+            label: `${office.code} - ${office.name}`,
+          })) || []
+      );
+    } catch (error) {
+      console.log(error);
+      return [];
+    }
+  };
+
+  const loadReviewerOptions = async (
+    inputValue: string
+  ): Promise<option[]> => {
+    try {
+      const users = await getReviewers();
+
+      return (
+        users.data
+          ?.filter((user: any) =>
+            `${user.first_name} ${user.last_name}`
+              .toLowerCase()
+              .includes(inputValue.toLowerCase())
+          )
+          .map((user: any) => ({
+            value: String(user.id),
+            label: `${user.first_name} ${user.last_name}`,
+          })) || []
+      );
+    } catch (error) {
+      console.log(error);
+      return [];
+    }
+  };
+
+  const loadCampusDirectorOptions = async (
+        inputValue: string
+      ): Promise<option[]> => {
+        try {
+          const campus_directors = await getAllCampusDirector();
+
+          return (
+            campus_directors.data
+              ?.filter((campus_director) =>
+                campus_director?.name
+                  ?.toLowerCase()
+                  .includes(inputValue.toLowerCase())
+              )
+              .map((campus_director) => ({
+                value: campus_director.cd_id,
+                label: campus_director.name || "Unknown",
+              })) || []
+          );
+        } catch (error) {
+          console.log(error);
+          return [];
+        }
+      };
+
+  const handleCampusDirectorChange = (
+    selectedOption: option | null
+  ) => {
+    setValue("campus_director", selectedOption?.value ?? "");
   };
 
   const handleRequisitionerChange = (selectedOption: option | null) => {
@@ -186,7 +290,26 @@ const EditPRForm: React.FC<EditPRFormProps> = ({
                     {renderField(
                       "Office",
                       "office",
-                      <Input type="number"{...register("office", {valueAsNumber: true,})}/>
+                      <AsyncSelect
+                        defaultOptions
+                        loadOptions={loadOfficeOptions}
+                        onChange={(option) => {
+                          if (option?.value) {
+                            setValue("office", Number(option.value));
+                          }
+                        }}
+                        defaultValue={
+                          purchaseData?.office_details
+                            ? {
+                                value: String(purchaseData.office_details.id),
+                                label: `${purchaseData.office_details.code} - ${purchaseData.office_details.name}`,
+                              }
+                            : null
+                        }
+                        placeholder="Search for Office..."
+                        className="text-sm"
+                        isClearable
+                      />
                     )}
                     {renderField(
                       "Purpose",
@@ -207,6 +330,63 @@ const EditPRForm: React.FC<EditPRFormProps> = ({
                         onChange={handleRequisitionerChange}
                         placeholder="Search for a Requisitioner..."
                         className="mb-4 text-sm"
+                      />
+                    )}
+
+                    {renderField(
+                      "Fund Source",
+                      "fund_cluster",
+                      <Input
+                        type="text"
+                        placeholder="Enter fund source"
+                        {...register("fund_cluster")}
+                      />
+                    )}
+
+                    {renderField(
+                      "Reviewed By",
+                      "reviewed_by",
+                      <AsyncSelect
+                        defaultOptions
+                        loadOptions={loadReviewerOptions}
+                        onChange={(option) =>
+                          setValue(
+                            "reviewed_by",
+                            option?.value ? Number(option.value) : null
+                          )
+                        }
+                        defaultValue={
+                          purchaseData?.reviewed_by_details
+                            ? {
+                                value: String(purchaseData.reviewed_by),
+                                label: purchaseData.reviewed_by_details.name,
+                              }
+                            : null
+                        }
+                        placeholder="Search for Reviewer..."
+                        className="text-sm"
+                        isClearable
+                      />
+                    )}
+
+                    {renderField(
+                      "Campus Director",
+                      "campus_director",
+                      <AsyncSelect
+                        defaultOptions
+                        loadOptions={loadCampusDirectorOptions}
+                        onChange={handleCampusDirectorChange}
+                        defaultValue={
+                          purchaseData?.campus_director_details
+                            ? {
+                                value: purchaseData.campus_director_details.cd_id,
+                                label: purchaseData.campus_director_details.name,
+                              }
+                            : null
+                        }
+                        placeholder="Search for a Campus Director..."
+                        className="text-sm"
+                        isClearable
                       />
                     )}
                   </div>
