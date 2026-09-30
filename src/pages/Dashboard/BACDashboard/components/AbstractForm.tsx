@@ -675,7 +675,7 @@ export const AbstractForm: React.FC<AbstractFormProps> = ({
                           {isSelectedByAnotherSupplier ? (
                             <div className="place-self-center text-center">
                               <span className="inline-flex items-center px-3 py-1 text-xs font-medium text-red-600">
-                                Already Selected
+                                Selected:
                               </span>
 
                               <p className="text-xs font-semibold text-red-600 mt-1">

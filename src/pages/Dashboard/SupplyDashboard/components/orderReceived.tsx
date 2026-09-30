@@ -52,6 +52,9 @@ export function OrderReceivedDialog({
   setIsDialogOpen,
 }: OrderReceivedDialogProps) {
   const [isLoading, setIsLoading] = useState<boolean>(false);
+  const [receivedQuantities, setReceivedQuantities] = useState<
+    Record<string, string>
+  >({});
   const [messageDialog, setMessageDialog] = useState<messageDialogProps>({
     open: false,
     message: "",
@@ -77,44 +80,132 @@ export function OrderReceivedDialog({
       return filteredItems && filteredItems[0].rfq_details.purchase_request;
   }, [filteredItems, isDialogOpen]);
 
+  const handleReceivedQuantityChange = (
+    supplierItemNo: string,
+    value: string
+  ) => {
+    setReceivedQuantities((prev) => ({
+      ...prev,
+      [supplierItemNo]: value,
+    }));
+  };
+
+  const hasEmptyReceivedQuantity = filteredItems?.some((item) => {
+    const quantity = receivedQuantities[item.supplier_item_no];
+
+    return quantity === undefined || quantity.trim() === "";
+  });
+
   const handleOrderReceived = async () => {
+    const hasEmptyQuantity = filteredItems?.some((item) => {
+      const quantity = receivedQuantities[item.supplier_item_no];
+
+      return quantity === undefined || quantity.trim() === "";
+    });
+
+    if (hasEmptyQuantity) {
+      setMessageDialog({
+        open: true,
+        message:
+          "Please enter the received quantity for every item before confirming the order.",
+        title: "Missing Received Quantity",
+        type: "error",
+      });
+
+      return;
+    }
+
+    const hasInvalidQuantity = filteredItems?.some((item) => {
+      const receivedQuantity = Number(
+        receivedQuantities[item.supplier_item_no]
+      );
+
+      const neededQuantity = Number(
+        item.item_quotation_details.item_details.quantity
+      );
+
+      return (
+        Number.isNaN(receivedQuantity) ||
+        receivedQuantity < 0 ||
+        receivedQuantity > neededQuantity
+      );
+    });
+
+    if (hasInvalidQuantity) {
+      setMessageDialog({
+        open: true,
+        message:
+          "The received quantity cannot be greater than the needed quantity.",
+        title: "Invalid Quantity",
+        type: "error",
+      });
+
+      return;
+    }
+
     setIsLoading(true);
+
     const inspectionData = {
-  inspection_no: uuidv4(),
-  purchase_request: pr_no ?? "",
-  purchase_order: po_no,
-  inspector_name: "System Inspector",
-  remarks: "Items received successfully",
-};
+      inspection_no: uuidv4(),
+      purchase_request: pr_no ?? "",
+      purchase_order: po_no,
+      inspector_name: "System Inspector",
+      remarks: "Items received successfully",
+    };
 
     try {
-      const inspectionResponse = await addInspectionReport(inspectionData);
+      const inspectionResponse = await addInspectionReport(
+        inspectionData
+      );
+
       const inspectionNo = inspectionResponse.data?.inspection_no;
 
-      filteredItems?.map(async (data) => {
+      if (!inspectionNo) {
+        throw new Error("Failed to create inspection report.");
+      }
+
+      for (const data of filteredItems ?? []) {
+        // Convert the input string to a number
+        const receivedQuantity = Number(
+          receivedQuantities[data.supplier_item_no]
+        );
+
+        const neededQuantity = Number(
+          data.item_quotation_details.item_details.quantity
+        );
+
         const deliverData = {
+          delivery_data: uuidv4(),
           purchase_request: pr_no ?? "",
           supplier_item: data.supplier_item_no,
-          quantity_delivered: Number(
-            data.item_quotation_details.item_details.quantity
-          ),
-          is_complete: true,
-          inspection: inspectionNo!,
+          quantity_delivered: receivedQuantity,
+          is_complete: receivedQuantity >= neededQuantity,
+          inspection: inspectionNo,
         };
+        console.log("SENDING ITEM DELIVERED DATA:", {
+          item: data.item_quotation_details.item_details.item_description,
+          enteredQuantity: receivedQuantities[data.supplier_item_no],
+          receivedQuantity,
+          neededQuantity,
+          deliverData,
+        });
 
         await addItemsDeliveredMutation(deliverData);
-      });
+      }
 
       await updatePOStatusMutation({
         po_no: po_no,
         status: "Completed",
       });
+
       await updatePRStatusMutation({
         pr_no: pr_no ?? "",
         status: "Ready for Distribution",
       });
+
       setIsLoading(false);
       setIsDialogOpen(false);
+
       setMessageDialog({
         open: true,
         message: "Order has been successfully received",
@@ -122,17 +213,17 @@ export function OrderReceivedDialog({
         type: "success",
       });
     } catch (error) {
+      setIsLoading(false);
+
       setMessageDialog({
         open: true,
         message:
           (error as AxiosError).message ??
-          "Somthing went wrong, please try again later",
+          "Something went wrong, please try again later",
         title: "Error",
         type: "error",
       });
     }
-
-    setIsDialogOpen(false);
   };
 
   return (
@@ -161,30 +252,83 @@ export function OrderReceivedDialog({
                     <TableHeader>
                       <TableRow>
                         <TableHead>Description</TableHead>
-                        <TableHead className="w-[150px]">Quantity</TableHead>
-                        <TableHead className="w-[150px]">Unit Cost</TableHead>
+                        <TableHead className="w-[150px]">
+                          Needed Quantity
+                        </TableHead>
+                        <TableHead className="w-[180px]">
+                          Received Quantity
+                        </TableHead>
+                        <TableHead className="w-[150px]">
+                          Unit Cost
+                        </TableHead>
                       </TableRow>
                     </TableHeader>
                     <TableBody>
-                      {filteredItems?.map((item, index) => (
-                        <TableRow key={index}>
-                          <TableCell>
-                            {
-                              item.item_quotation_details.item_details
-                                .item_description
-                            }
-                          </TableCell>
-                          <TableCell>
-                            {item.item_quotation_details.item_details.quantity}
-                          </TableCell>
-                          <TableCell>
-                            ₱
-                            {parseFloat(
-                              item.item_quotation_details.unit_price
-                            ).toFixed(2)}
-                          </TableCell>
-                        </TableRow>
-                      ))}
+                      {filteredItems?.map((item, index) => {
+                        const supplierItemNo = item.supplier_item_no;
+
+                        const neededQuantity = Number(
+                          item.item_quotation_details.item_details.quantity
+                        );
+
+                        const receivedQuantity =
+                          receivedQuantities[supplierItemNo] ?? "";
+
+                        return (
+                          <TableRow key={index}>
+                            <TableCell>
+                              {
+                                item.item_quotation_details.item_details
+                                  .item_description
+                              }
+                            </TableCell>
+
+                            <TableCell>
+                              {neededQuantity}
+                            </TableCell>
+
+                            <TableCell>
+                              <div className="flex items-center gap-2">
+                                <input
+                                  type="number"
+                                  min="0"
+                                  max={neededQuantity}
+                                  value={receivedQuantity}
+                                  onChange={(e) =>
+                                    handleReceivedQuantityChange(
+                                      supplierItemNo,
+                                      e.target.value
+                                    )
+                                  }
+                                  className="w-full rounded-md border border-input bg-background px-3 py-2 text-sm"
+                                  placeholder="Enter quantity"
+                                />
+
+                                <Button
+                                  type="button"
+                                  variant="outline"
+                                  size="sm"
+                                  onClick={() =>
+                                    handleReceivedQuantityChange(
+                                      supplierItemNo,
+                                      String(neededQuantity)
+                                    )
+                                  }
+                                >
+                                  Full
+                                </Button>
+                              </div>
+                            </TableCell>
+
+                            <TableCell>
+                              ₱
+                              {parseFloat(
+                                item.item_quotation_details.unit_price
+                              ).toFixed(2)}
+                            </TableCell>
+                          </TableRow>
+                        );
+                      })}
                     </TableBody>
                   </Table>
                 </div>
@@ -197,7 +341,10 @@ export function OrderReceivedDialog({
                 >
                   Cancel
                 </Button>
-                <Button onClick={handleOrderReceived} disabled={isLoading}>
+                <Button
+                  onClick={handleOrderReceived}
+                  disabled={isLoading || hasEmptyReceivedQuantity}
+                >
                   {isLoading ? (
                     <Loader2 className="w-4 h-4 animate-spin mr-2" />
                   ) : (

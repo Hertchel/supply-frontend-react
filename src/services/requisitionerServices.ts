@@ -168,5 +168,6 @@ export const useAuthenticatedRequisitionerDashboard = (
     queryKey: ["authenticated-requisitioner-dashboard"],
     queryFn: getAuthenticatedRequisitionerDashboard,
     enabled,
+    refetchOnWindowFocus: false,
   });
 };

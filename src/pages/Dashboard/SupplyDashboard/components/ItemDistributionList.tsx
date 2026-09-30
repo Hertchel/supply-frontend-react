@@ -28,6 +28,7 @@ import {
   Loader2,
   MapPinIcon,
   MoveHorizontal,
+  AlertCircle,
 } from "lucide-react";
 import { useEffect, useMemo, useState } from "react";
 import { Separator } from "@/components/ui/separator";
@@ -142,6 +143,16 @@ export const ItemDistributionList = () => {
   const isAlreadyDistributed = status === "Completed";
 
   console.log(filteredItemsDeliveredData);
+  console.log("DELIVERED QUANTITY CHECK:");
+
+  filteredItemsDeliveredData.forEach((item) => {
+    console.log({
+      item: item.item_details.item_quotation_details.item_details.item_description,
+      received: item.quantity_delivered,
+      requested:
+        item.item_details.item_quotation_details.item_details.quantity,
+    });
+  });
 
   if (isItemsDeliveredLoading) return <Loading />;
 
@@ -314,12 +325,22 @@ export const ItemDistributionList = () => {
                           .item_description
                       }
                     </p>
-                    <p className="text-gray-500">
-                      {
-                        item.item_details.item_quotation_details.item_details
-                          .quantity
-                      }
-                    </p>
+                    <div className="flex items-center gap-2 text-gray-500">
+                      <span>
+                        {item.quantity_delivered}
+                      </span>
+
+                      {Number(item.quantity_delivered) <
+                        Number(
+                          item.item_details.item_quotation_details.item_details
+                            .quantity
+                        ) && (
+                        <AlertCircle
+                          className="h-5 w-5 text-red-500"
+                          aria-label={`Insufficient quantity. Received ${item.quantity_delivered} of ${item.item_details.item_quotation_details.item_details.quantity}.`}
+                        />
+                      )}
+                    </div>
                     <p className="text-gray-500">
                       {item.item_details.item_quotation_details.unit_price}
                     </p>

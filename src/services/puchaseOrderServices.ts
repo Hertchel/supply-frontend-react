@@ -13,6 +13,7 @@ import { handleError, handleSucess } from "@/utils/apiHelper";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { purchaseOrderItemType_, purchaseOrdertype_ } from "@/types/response/purchase-order";
 import { useMemo } from "react";
+import { AxiosError } from "axios";
 
 export const getAllPurchaseOrder = async (): Promise<
   ApiResponse<purchaseOrdertype_[]>
@@ -228,14 +229,25 @@ export const addItemsDelivered = async (
   data: itemsDeliveredType
 ): Promise<ApiResponse<itemsDeliveredType>> => {
   try {
+    console.log("ADDING ITEMS DELIVERED:", data);
+
     const response = await api.post<itemsDeliveredType>(
       "api/items-delivered/",
       data
     );
-    console.log(response);
+
+    console.log("ITEMS DELIVERED RESPONSE:", response);
+
     return handleSucess(response);
   } catch (error) {
-    console.log(error);
+    const axiosError = error as AxiosError;
+
+    console.log("ITEMS DELIVERED ERROR:", axiosError);
+    console.log(
+      "ITEMS DELIVERED ERROR RESPONSE:",
+      axiosError.response?.data
+    );
+
     return handleError(error);
   }
 };
