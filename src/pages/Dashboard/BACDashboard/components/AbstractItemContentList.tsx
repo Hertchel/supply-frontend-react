@@ -35,7 +35,10 @@ import {
   DialogHeader,
   DialogTitle,
 } from "@/components/ui/dialog";
-import { useGetRFQDetail, useRequestForQuotation, } from "@/services/requestForQuotationServices";
+import {
+  useGetRFQDetail,
+  useRequestForQuotation,
+} from "@/services/requestForQuotationServices";
 import {
   Tooltip,
   TooltipContent,
@@ -68,8 +71,8 @@ export const AbstractItemContentList = () => {
 
   const { aoq_no } = useParams();
   if (!aoq_no) {
-  return <Loading />;
-}
+    return <Loading />;
+  }
   const { status, setStatus } = useStatusStore();
   const navigate = useNavigate();
   console.log(status);
@@ -82,70 +85,61 @@ export const AbstractItemContentList = () => {
   const { data: bac_members } = useGetAllBACmember();
   const { data: rfqs } = useRequestForQuotation();
   const rfqData = useMemo(() => {
-      return Array.isArray(rfqs?.data)
-          ? rfqs.data
-          : [];
+    return Array.isArray(rfqs?.data) ? rfqs.data : [];
   }, [rfqs?.data]);
 
   const bacMembersData = useMemo(() => {
-    return Array.isArray(bac_members?.data) ? bac_members.data : [] 
-  }, [bac_members?.data])
-  
+    return Array.isArray(bac_members?.data) ? bac_members.data : [];
+  }, [bac_members?.data]);
 
   const supplierItemData = useMemo(() => {
     return Array.isArray(items?.data) ? items.data : [];
-  }, [items?.data]);  
+  }, [items?.data]);
 
   const filteredSupplierItemData = useMemo(() => {
     return supplierItemData.filter(
-      (data) => data.supplier_details?.aoq_details?.aoq_no === aoq_no
+      (data) => data.supplier_details?.aoq_details?.aoq_no === aoq_no,
     );
   }, [supplierItemData, aoq_no]);
 
-filteredSupplierItemData.forEach((item, index) => {
-  console.log(
-    index,
-    item.rfq_details.rfq_no,
-    item.rfq_details.supplier_name,
-    item.item_quotation_details.unit_price
-  );
-});
+  filteredSupplierItemData.forEach((item, index) => {
+    console.log(
+      index,
+      item.rfq_details.rfq_no,
+      item.rfq_details.supplier_name,
+      item.item_quotation_details.unit_price,
+    );
+  });
   console.log(filteredSupplierItemData);
 
   const abstractData = abstract && abstract.data;
 
   const quotationsForPR = useMemo(() => {
-
     return supplierItemData.filter(
       (item) =>
-        item.rfq_details.purchase_request ===
-        abstractData?.pr_details?.pr_no
+        item.rfq_details.purchase_request === abstractData?.pr_details?.pr_no,
     );
-
   }, [supplierItemData, abstractData]);
 
   const biddersForCurrentPR = useMemo(() => {
-
-      return rfqData.filter(rfq =>
-          rfq.purchase_request ===
-          abstractData?.pr_details?.pr_no
-      );
-
+    return rfqData.filter(
+      (rfq) => rfq.purchase_request === abstractData?.pr_details?.pr_no,
+    );
   }, [rfqData, abstractData]);
 
-quotationsForPR.forEach((supplier, index) => {
-  console.log(
-    index,
-    supplier.rfq_details.supplier_name,
-    supplier.item_quotation_details.unit_price
-  );
-});
+  quotationsForPR.forEach((supplier, index) => {
+    console.log(
+      index,
+      supplier.rfq_details.supplier_name,
+      supplier.item_quotation_details.unit_price,
+    );
+  });
 
-    const pr_no = abstractData?.pr_details.pr_no;
+  const pr_no = abstractData?.pr_details.pr_no;
 
   const NOAData = useMemo(() => {
     return supplierItemData.find(
-      (data) => data.supplier_details?.aoq_details?.aoq_no === aoq_no
+      (data) => data.supplier_details?.aoq_details?.aoq_no === aoq_no,
     );
   }, [supplierItemData, aoq_no]);
   console.log(NOAData);
@@ -163,35 +157,34 @@ quotationsForPR.forEach((supplier, index) => {
   if (isLoading || abstract_loading) return <Loading />;
 
   const isAlreadyForwardedToSupply =
-  abstractData?.pr_details.status === "Ready to Order";
+    abstractData?.pr_details.status === "Ready to Order";
 
   const handleGenerateAOQPDF = async () => {
+    if (!bacMembersData || bacMembersData.length === 0) {
+      console.error("BAC MEMBERS NOT LOADED");
+      return;
+    }
 
-  if (!bacMembersData || bacMembersData.length === 0) {
-    console.error("BAC MEMBERS NOT LOADED");
-    return;
-  }
+    if (!filteredSupplierItemData || filteredSupplierItemData.length === 0) {
+      console.log("Filtered AOQ items:", filteredSupplierItemData);
+      console.log("aoq_no param:", aoq_no);
+      console.error("No AOQ data found");
+      return;
+    }
 
-  if (!filteredSupplierItemData || filteredSupplierItemData.length === 0) {
-    console.log("Filtered AOQ items:", filteredSupplierItemData);
-    console.log("aoq_no param:", aoq_no);
-    console.error("No AOQ data found");
-    return;
-  }
+    const url = await generateAOQPDF(
+      filteredSupplierItemData,
+      biddersForCurrentPR,
+      bacMembersData,
+    );
 
-  const url = await generateAOQPDF(
-    filteredSupplierItemData,
-    biddersForCurrentPR,
-    bacMembersData
-  );
+    if (!url) {
+      console.error("PDF generation failed");
+      return;
+    }
 
-  if (!url) {
-    console.error("PDF generation failed");
-    return;
-  }
-
-  window.open(url, "_blank");
-};
+    /*window.open(url, "_blank");*/
+  };
 
   // const handleGenerateNOAPDF = async () => {
   //   try {
@@ -227,30 +220,26 @@ quotationsForPR.forEach((supplier, index) => {
   };
 
   const handleForwardToProcurement = async () => {
-  try {
+    try {
+      await handleReadyToOrder(pr_no!);
 
-    await handleReadyToOrder(pr_no!);
+      setMessageDialog({
+        open: true,
+        message: "Forwarded Successfully",
+        title: "Success",
+        type: "success",
+      });
 
-    setMessageDialog({
-      open: true,
-      message: "Forwarded Successfully",
-      title: "Success",
-      type: "success",
-    });
-
-    setStatus("Ready to Order");
-
-  } catch (error) {
-
-    setMessageDialog({
-      open: true,
-      message: "Something went wrong, Please try again later",
-      title: "Error",
-      type: "error",
-    });
-
-  }
-};
+      setStatus("Ready to Order");
+    } catch (error) {
+      setMessageDialog({
+        open: true,
+        message: "Something went wrong, Please try again later",
+        title: "Error",
+        type: "error",
+      });
+    }
+  };
 
   return (
     <div className="w-full">
@@ -342,12 +331,8 @@ quotationsForPR.forEach((supplier, index) => {
                   <p className="text-gray-500 col-span-2">
                     {item.item_quotation_details.item_details.item_description}
                   </p>
-                  <p className="text-gray-500">
-                    {item.item_quantity}
-                  </p>
-                  <p className="text-gray-500">
-                    {item.item_cost}
-                  </p>
+                  <p className="text-gray-500">{item.item_quantity}</p>
+                  <p className="text-gray-500">{item.item_cost}</p>
 
                   <p
                     className="text-gray-500 col-span-2 underline hover:cursor-pointer"
