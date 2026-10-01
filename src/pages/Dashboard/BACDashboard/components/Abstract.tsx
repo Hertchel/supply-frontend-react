@@ -7,7 +7,7 @@ import Loading from "../../shared/components/Loading";
 import { MessageDialog } from "../../shared/components/MessageDialog";
 import {
   useGetItemQuotation,
-  useRequestForQuotation
+  useRequestForQuotation,
 } from "@/services/requestForQuotationServices";
 
 import {
@@ -53,62 +53,44 @@ export default function Abstract() {
   });
   const { pr_no } = useParams();
 
-    useAbstractOfQuotation();
+  useAbstractOfQuotation();
   const { data: items } = useGetAllSupplierItem();
-  const { data: bac_members } = useGetAllBACmember()
+  const { data: bac_members } = useGetAllBACmember();
 
   const { data: rfqs } = useRequestForQuotation();
   const { data: itemQuotations } = useGetItemQuotation();
 
   const bacMembersData = useMemo(() => {
-    return Array.isArray(bac_members?.data) ? bac_members.data : [] 
-  }, [bac_members?.data])
+    return Array.isArray(bac_members?.data) ? bac_members.data : [];
+  }, [bac_members?.data]);
 
   const supplierItemData = useMemo(() => {
-    return Array.isArray(items?.data) ? items.data : []
-  }, [items?.data])
+    return Array.isArray(items?.data) ? items.data : [];
+  }, [items?.data]);
 
   const itemQuotationData = useMemo(() => {
-    return Array.isArray(itemQuotations?.data)
-      ? itemQuotations.data
-      : [];
+    return Array.isArray(itemQuotations?.data) ? itemQuotations.data : [];
   }, [itemQuotations?.data]);
 
   const quotationsForPR = useMemo(() => {
-
-    const rfqData = Array.isArray(rfqs?.data)
-      ? rfqs.data
-      : [];
+    const rfqData = Array.isArray(rfqs?.data) ? rfqs.data : [];
 
     return itemQuotationData.filter((quotation) => {
+      const matchingRFQ = rfqData.find((rfq) => rfq.rfq_no === quotation.rfq);
 
-      const matchingRFQ = rfqData.find(
-        rfq => rfq.rfq_no === quotation.rfq
-      );
-
-      return (
-        matchingRFQ?.purchase_request?.toString() ===
-        pr_no?.toString()
-      );
-
+      return matchingRFQ?.purchase_request?.toString() === pr_no?.toString();
     });
-
-  }, [
-    itemQuotationData,
-    rfqs?.data,
-    pr_no
-  ]);
+  }, [itemQuotationData, rfqs?.data, pr_no]);
 
   const filteredSupplierItem = useMemo(() => {
-  return supplierItemData.filter((data) => {
-    return (
-      data.rfq_details.purchase_request?.toString() ===
-      pr_no?.toString()
-    );
-  });
-}, [supplierItemData, pr_no]);
+    return supplierItemData.filter((data) => {
+      return (
+        data.rfq_details.purchase_request?.toString() === pr_no?.toString()
+      );
+    });
+  }, [supplierItemData, pr_no]);
 
-/*
+  /*
   const filteredSupplierItem = useMemo(() => {
     return supplierItemData.filter(data => data.rfq_details.purchase_request === pr_no)
   }, [supplierItemData, pr_no])
@@ -124,7 +106,6 @@ export default function Abstract() {
 
   const navigate = useNavigate();
 
-
   useEffect(() => {
     const fetchPdfUrl = async () => {
       const url = await generateEmptyAOQPDF();
@@ -133,7 +114,6 @@ export default function Abstract() {
     fetchPdfUrl();
   }, []);
 
-
   if (isLoading) return <Loading />;
   if (error) return <div>{error.message}</div>;
 
@@ -141,7 +121,8 @@ export default function Abstract() {
     if (filteredSupplierItem.length === 0) {
       setMessageDialog({
         open: true,
-        message: "Cannot generate the Abstract of Quotation because this Purchase Request has not selected a supplier yet.",
+        message:
+          "Cannot generate the Abstract of Quotation because this Purchase Request has not selected a supplier yet.",
         title: "No Supplier Selected",
         type: "error",
       });
@@ -152,7 +133,8 @@ export default function Abstract() {
     if (quotationsForPR.length === 0) {
       setMessageDialog({
         open: true,
-        message: "Cannot generate the Abstract of Quotation because there are no item quotations available.",
+        message:
+          "Cannot generate the Abstract of Quotation because there are no item quotations available.",
         title: "No Quotations Available",
         type: "error",
       });
@@ -163,7 +145,8 @@ export default function Abstract() {
     if (bacMembersData.length === 0) {
       setMessageDialog({
         open: true,
-        message: "Cannot generate the Abstract of Quotation because no BAC members are available.",
+        message:
+          "Cannot generate the Abstract of Quotation because no BAC members are available.",
         title: "BAC Members Unavailable",
         type: "error",
       });
@@ -174,13 +157,14 @@ export default function Abstract() {
     const url = await generateAOQPDF(
       filteredSupplierItem,
       quotationsForPR,
-      bacMembersData
+      bacMembersData,
     );
 
     if (!url) {
       setMessageDialog({
         open: true,
-        message: "The Abstract of Quotation PDF could not be generated. Please try again.",
+        message:
+          "The Abstract of Quotation PDF could not be generated. Please try again.",
         title: "PDF Generation Failed",
         type: "error",
       });
@@ -188,11 +172,10 @@ export default function Abstract() {
       return;
     }
 
-    window.open(url, "_blank");
+    //window.open(url, "_blank");
   };
 
   return (
-  
     <div className="w-full">
       <Card className="w-full bg-slate-100">
         <CardHeader className="flex flex-col">
@@ -232,7 +215,7 @@ export default function Abstract() {
           </CardTitle>
           <div className="py-4">
             <div className="flex justify-between gap-1">
-               <Button
+              <Button
                 className="bg-green-400 hover:bg-green-500"
                 onClick={() =>
                   navigate(`/bac/item-selected-quotation/${pr_no}`)
@@ -249,7 +232,7 @@ export default function Abstract() {
                         className="px-7 bg-orange-300 hover:bg-orange-200 text-slate-950"
                         onClick={handlePrintClick}
                       >
-                        Generate AOQ <FileText className="h-5 w-5 ml-2"/>
+                        Generate AOQ <FileText className="h-5 w-5 ml-2" />
                       </Button>
                     </TooltipTrigger>
                     <TooltipContent side="top">
@@ -288,9 +271,7 @@ export default function Abstract() {
         title={messageDialog.title}
         type={messageDialog.type}
         open={messageDialog.open}
-        onOpenChange={(open) =>
-          setMessageDialog((prev) => ({ ...prev, open }))
-        }
+        onOpenChange={(open) => setMessageDialog((prev) => ({ ...prev, open }))}
       />
     </div>
   );

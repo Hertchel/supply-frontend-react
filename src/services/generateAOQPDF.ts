@@ -65,9 +65,9 @@ export const generateAOQPDF = async (
 
   const lowestSupplierName = lowestSupplier?.supplier_details?.name ?? "";
 
-  const lowestSupplierPrice = Number(
+  /*const lowestSupplierPrice = Number(
     lowestSupplier?.item_quotation_details?.unit_price ?? 0,
-  );
+  );*/
 
   // ============================================================
   // APPROVED BUDGET
@@ -107,12 +107,12 @@ export const generateAOQPDF = async (
     verticalDpi: 300,
 
     margins: {
-      left: 0.25,
-      right: 0.25,
-      top: 0.5,
-      bottom: 0.5,
-      header: 0.2,
-      footer: 0.2,
+      left: 0.393700787401575,
+      right: 0.393700787401575,
+      top: 1.49606299212598,
+      bottom: 0.708661417322835,
+      header: 0.31496062992126,
+      footer: 0.196850393700787,
     },
   };
   worksheet.properties.defaultRowHeight = 11.25;
@@ -167,7 +167,7 @@ export const generateAOQPDF = async (
 
   const GREEN = "C6EFCE";
   const BLACK = "000000";
-  const RED = "FF0000";
+  //const RED = "FF0000";
   const BLUE = "0000FF";
 
   const border = {
@@ -492,7 +492,7 @@ export const generateAOQPDF = async (
   // HELPER: SUPPLIER ITEM TOTAL
   // ============================================================
 
-  const getQuotationAmount = (quotation: any) => {
+  /*const getQuotationAmount = (quotation: any) => {
     if (quotation?.total_amount != null) {
       return Number(quotation.total_amount);
     }
@@ -503,7 +503,7 @@ export const generateAOQPDF = async (
     );
 
     return unitPrice * quantity;
-  };
+  };*/
 
   // ============================================================
   // ITEMS
@@ -838,9 +838,7 @@ export const generateAOQPDF = async (
   worksheet.mergeCells(`H${bacStartRow + 10}:I${bacStartRow + 10}`);
   worksheet.mergeCells(`H${bacStartRow + 11}:I${bacStartRow + 11}`);
 
-  worksheet.getCell(`H${bacStartRow + 3}`).value =
-    data[0]?.supplier_details?.aoq_details?.pr_details?.requisitioner_details
-      .name ?? "";
+  worksheet.getCell(`H${bacStartRow + 3}`).value = endUser;
   worksheet.getCell(`H${bacStartRow + 3}`).font = boldFont;
   worksheet.getCell(`H${bacStartRow + 3}`).alignment = centered;
 
