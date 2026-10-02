@@ -69,7 +69,7 @@ const maintenance = [
     icon: Building2,
   },
 ];
-
+/*
 const aiassistant = [
   {
     title: "AI Assistant",
@@ -77,6 +77,7 @@ const aiassistant = [
     icon: PackageCheck
   }
 ]
+*/
 
 
 export function SidebarItem() {
@@ -175,7 +176,7 @@ export function SidebarItem() {
 </SidebarMenu>
 
   {/* AI ASSISTANT */}
-
+{/*}
   <SidebarGroupLabel>AI Assistant</SidebarGroupLabel>
   <SidebarMenu>
     {aiassistant.map((item) => (
@@ -193,7 +194,7 @@ export function SidebarItem() {
       </SidebarMenuItem>
     ))}
   </SidebarMenu>
-
+*/}
 </SidebarGroup>
   )
 }
