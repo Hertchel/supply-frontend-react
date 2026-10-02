@@ -2,7 +2,7 @@ import { create } from "zustand";
 import { createJSONStorage, persist } from "zustand/middleware";
 import api from "@/api";
 import { AxiosError } from "axios";
-import { deleteAuthStorage, deleteCookies } from "@/utils/deleteCookies";
+import { deleteAuthStorage } from "@/utils/deleteCookies";
 import {
   forgotPasswordType,
   resetPasswordType,
@@ -98,19 +98,26 @@ const useAuthStore = create<AuthState>()(
       successMessage: null,
 
       checkAuth: async () => {
-        if (get().isAuthenticated && get().user) {
-          console.log("Already authenticated");
-          return;
-        }
         set({ isLoading: true });
+
         try {
           console.log("Checking authentication...");
           const response = await api.get("/api/user/check_auth");
-          console.log(response.data.user);
-          set({ isAuthenticated: true, user: response.data.user });
+          console.log("Authenticated user:", response.data);
+          set({
+            isAuthenticated: true,
+            user: response.data,
+          });
         } catch (error) {
-          set({ isAuthenticated: false, user: null });
-          localStorage.removeItem("auth-storage");
+          set({
+            isAuthenticated: false,
+            user: null,
+          });
+
+          sessionStorage.removeItem("access_token");
+          sessionStorage.removeItem("refresh_token");
+          sessionStorage.removeItem("auth-storage");
+
           console.error("Authentication check failed:", error);
         } finally {
           set({ isLoading: false });
@@ -118,29 +125,71 @@ const useAuthStore = create<AuthState>()(
       },
 
       checkUser: async (email, password, onSuccess, onError) => {
-        set({ isLoading: true, errorMessage: null, successMessage: null });
+        set({
+          isLoading: true,
+          errorMessage: null,
+          successMessage: null,
+        });
+
         deleteAuthStorage();
-        deleteCookies();
+
+        // Clear only this tab's tokens
+        sessionStorage.removeItem("access_token");
+        sessionStorage.removeItem("refresh_token");
+
         try {
           const response = await api.post("/api/user/login_token/", {
             email,
             password,
           });
+
+          const {
+            user,
+            access_token,
+            refresh_token,
+          } = response.data;
+
+          if (!access_token || !refresh_token) {
+            throw new Error("Login response did not contain authentication tokens.");
+          }
+
+          // Store tokens for THIS TAB
+          sessionStorage.setItem(
+            "access_token",
+            access_token
+          );
+
+          sessionStorage.setItem(
+            "refresh_token",
+            refresh_token
+          );
+
           set({
             isAuthenticated: true,
             otpSent: false,
-            user: response.data.user,
-            email: response.data.user.email,
+            user,
+            email: user.email,
             successMessage: response.data.message,
           });
+
           onSuccess?.(response.data.message);
+
         } catch (error) {
           const axiosError = error as AxiosError;
+
           const errorMsg =
             (axiosError.response?.data as { error?: string })?.error ||
-            "Failed to check user. Please try again.";
-          set({ otpSent: false, errorMessage: errorMsg });
+            (error instanceof Error
+              ? error.message
+              : "Failed to check user. Please try again.");
+
+          set({
+            otpSent: false,
+            errorMessage: errorMsg,
+          });
+
           onError?.(errorMsg);
+
         } finally {
           set({ isLoading: false });
         }
@@ -303,26 +352,68 @@ const useAuthStore = create<AuthState>()(
       },
 
       verifyOTP: async (email, otp_code, onSuccess, onError) => {
-        set({ isLoading: true, errorMessage: null, successMessage: null });
+        set({
+          isLoading: true,
+          errorMessage: null,
+          successMessage: null,
+        });
+
         try {
           const response = await api.post("/api/user/login_verify_otp/", {
             email,
             otp_code,
           });
-          console.log(response.data.user);
+
+          const {
+            user,
+            access_token,
+            refresh_token,
+          } = response.data;
+
+          if (!access_token || !refresh_token) {
+            throw new Error(
+              "OTP verification response did not contain authentication tokens."
+            );
+          }
+
+          // Store tokens for THIS TAB
+          sessionStorage.setItem(
+            "access_token",
+            access_token
+          );
+
+          sessionStorage.setItem(
+            "refresh_token",
+            refresh_token
+          );
+
+          console.log("Authenticated user:", user);
+
           set({
             isAuthenticated: true,
-            // otpSent: false,
-            user: response.data.user,
+            otpSent: false,
+            user,
+            email: user.email,
+            successMessage: response.data.message,
           });
+
           onSuccess?.(response.data.message);
+
         } catch (error) {
           const axiosError = error as AxiosError;
+
           const errorMsg =
             (axiosError.response?.data as { error?: string })?.error ||
-            "Failed to verify the token. Please try again.";
-          set({ errorMessage: errorMsg });
+            (error instanceof Error
+              ? error.message
+              : "Failed to verify the token. Please try again.");
+
+          set({
+            errorMessage: errorMsg,
+          });
+
           onError?.(errorMsg);
+
         } finally {
           set({ isLoading: false });
         }
@@ -352,10 +443,13 @@ const useAuthStore = create<AuthState>()(
       },
 
       logout: async (
-        onSuccess?: (succes: string) => void,
+        onSuccess?: (success: string) => void,
         onError?: (error: string) => void
       ) => {
         set({ isLoggingOut: true });
+
+        // Get the refresh token belonging to THIS TAB
+        const refreshToken = sessionStorage.getItem("refresh_token");
 
         const clearState = () => {
           set({
@@ -368,25 +462,37 @@ const useAuthStore = create<AuthState>()(
             successMessage: null,
             isLoggingOut: false,
           });
-          deleteAuthStorage();
-          deleteCookies();
+
+          // Clear only THIS TAB
+          sessionStorage.removeItem("access_token");
+          sessionStorage.removeItem("refresh_token");
+          sessionStorage.removeItem("auth-storage");
         };
 
         try {
-          const response = await api.post("/api/user/logout/");
+          const response = await api.post(
+            "/api/user/logout/",
+            {
+              refresh_token: refreshToken,
+            }
+          );
 
           clearState();
-          set({ isLoggingOut: false });
+
           onSuccess?.(response?.data?.message);
+
           window.location.href = "/login";
+
         } catch (error) {
           console.error("Logout error:", error);
+
           const errorMsg =
             error instanceof Error
               ? error.message
               : "An unknown error occurred during logout";
+
           onError?.(errorMsg);
-          set({ isLoggingOut: false });
+
           clearState();
         }
       },

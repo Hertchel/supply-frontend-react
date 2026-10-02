@@ -1,23 +1,30 @@
 import axios from "axios";
-import Cookies from "js-cookie";
+
 const react_env = import.meta.env.VITE_REACT_ENV;
 const development_url = import.meta.env.VITE_API_URL;
 const production_url = import.meta.env.VITE_RENDER_API_URL;
 
 console.log(`Running in ${react_env} Mode`);
 
-const baseURL = react_env === "development" ? development_url : production_url;
+const baseURL =
+  react_env === "development" ? development_url : production_url;
 
 const api = axios.create({
   baseURL,
   withCredentials: true,
 });
 
-// Request interceptor (optional if no additional headers are required)
+const getAccessToken = () => {
+  return sessionStorage.getItem("access_token");
+};
+
+const getRefreshToken = () => {
+  return sessionStorage.getItem("refresh_token");
+};
+
 api.interceptors.request.use(
   (config) => {
-
-    const token = Cookies.get("access_token");
+    const token = getAccessToken();
 
     if (token) {
       config.headers.Authorization = `Bearer ${token}`;
@@ -30,36 +37,66 @@ api.interceptors.request.use(
   }
 );
 
-// Response interceptor to handle token refresh and retries
 api.interceptors.response.use(
   (response) => response,
+
   async (error) => {
     const originalRequest = error.config;
 
-    // If token is expired and we haven't already retried
-    if (error.response?.status === 401 && !originalRequest._retry) {
+    // Prevent infinite retry loops
+    if (
+      error.response?.status === 401 &&
+      !originalRequest?._retry
+    ) {
       originalRequest._retry = true;
 
       try {
-        // Call the refresh endpoint to get a new access token
+        const refreshToken = getRefreshToken();
+
+        if (!refreshToken) {
+          throw new Error("No refresh token found");
+        }
+
+        // Send refresh token from THIS TAB
         const response = await axios.post(
           `${baseURL}/api/token/refresh/`,
-          {},
-          { withCredentials: true }
+          {
+            refresh_token: refreshToken,
+          },
+          {
+            withCredentials: true,
+          }
         );
 
-        // Store the new access token (e.g., in cookies or localStorage)
-        const { access_token } = response.data; // Assuming your refresh endpoint returns the new token
-        document.cookie = `access_token=${access_token}; path=/;`;
+        const { access_token } = response.data;
 
-        // Update the original request headers with the new access token
-        originalRequest.headers['Authorization'] = `Bearer ${access_token}`;
+        if (!access_token) {
+          throw new Error("No access token returned");
+        }
 
-        // Retry the original request
+        // Save refreshed access token to THIS TAB
+        sessionStorage.setItem(
+          "access_token",
+          access_token
+        );
+
+        // Retry original request with the new token
+        originalRequest.headers.Authorization =
+          `Bearer ${access_token}`;
+
         return api(originalRequest);
+
       } catch (refreshError) {
-        console.error("Token refresh failed:", refreshError);
-        // Optionally handle user logout if refresh fails
+        console.error(
+          "Token refresh failed:",
+          refreshError
+        );
+
+        // Clear only THIS TAB's authentication data
+        sessionStorage.removeItem("access_token");
+        sessionStorage.removeItem("refresh_token");
+        sessionStorage.removeItem("auth-storage");
+
         return Promise.reject(refreshError);
       }
     }

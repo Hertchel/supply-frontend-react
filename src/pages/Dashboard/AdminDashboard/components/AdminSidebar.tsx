@@ -38,12 +38,14 @@ const AdminNav = [
   url: "/admin/reviewers",
   icon: Users,
 },
+/*
   {
     title: "Requisitioner",
     url: "/admin/requisitioner",
     icon: Users,
    
   },
+  */
   {
     title: "Campus Director",
     url: "/admin/campus-director",
