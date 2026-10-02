@@ -93,10 +93,13 @@ export const GetRequisitioner = async (requisition_id: string): Promise<ApiRespo
   }
 };
 
-export const useGetRequisitioner = (requisition_id: string) => {
+export const useGetRequisitioner = (
+  requisition_id: string | undefined
+) => {
   return useQuery<ApiResponse<RequisitionerType>, Error>({
     queryKey: ["requisitioners", requisition_id],
-    queryFn: () => GetRequisitioner(requisition_id!),
+    queryFn: () => GetRequisitioner(requisition_id as string),
+    enabled: !!requisition_id,
   });
 };
 
@@ -169,5 +172,8 @@ export const useAuthenticatedRequisitionerDashboard = (
     queryFn: getAuthenticatedRequisitionerDashboard,
     enabled,
     refetchOnWindowFocus: false,
+    refetchOnReconnect: false,
+    refetchOnMount: false,
+    staleTime: Infinity,
   });
 };

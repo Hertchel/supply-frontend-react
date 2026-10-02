@@ -6,11 +6,16 @@ export const useGetUserInformation = () => {
   const userEmail = user?.email;
   const userFirstName = user?.first_name;
   const userLastName = user?.last_name;
-  const trimmedUserRole = (role = userRole) =>
-    role
-      ?.split(" ")
+  const trimmedUserRole = (role = userRole) => {
+    if (!role) return "";
+
+    return role
+      .replace(/[\[\]'"]/g, "")
+      .trim()
+      .split(" ")
       .map((word) => word[0])
       .join("");
+  };
 
   return { userEmail, userFirstName, userLastName, userRole, trimmedUserRole };
 };

@@ -4,20 +4,28 @@ import { ApiResponse } from "@/types/response/api-response";
 import { handleError, handleSucess } from "@/utils/apiHelper";
 import { useQuery } from "@tanstack/react-query";
 
-export const getAllRecentActivities = async ():Promise<ApiResponse<ActivityType[]>> => {
+export const getAllRecentActivities = async (): Promise<
+  ApiResponse<ActivityType[]>
+> => {
   try {
-    console.log("called")
-    const response = await api.get<ActivityType[]>("api/recent-activities/");
-    console.log(response)
-    return handleSucess(response)
-  } catch (error) {
-    return handleError(error)
-  }
-}
+    console.log("called");
 
-export const useGetAllRecentActivities = () => {
+    const response = await api.get<ActivityType[]>(
+      "api/recent-activities/"
+    );
+
+    console.log(response);
+
+    return handleSucess(response);
+  } catch (error) {
+    return handleError(error);
+  }
+};
+
+export const useGetAllRecentActivities = (role?: string) => {
   return useQuery({
-    queryKey: ["recent-activities"],
-    queryFn: getAllRecentActivities
-  })
-}
+    queryKey: ["recent-activities", role],
+    queryFn: getAllRecentActivities,
+    enabled: !!role,
+  });
+};
