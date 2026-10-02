@@ -126,27 +126,6 @@ export default function SupplyAOQ() {
         ),
       ];
 
-      console.log("PR:", pr_no);
-      console.log("Selected Items:", selectedItemsForPR);
-      console.log("Items:", itemNos);
-      console.log("Winning Suppliers:", winningSupplierNos);
-      console.log(
-  "Winning Supplier Items:",
-  winningSupplierNos.map((supplierNo) => ({
-    supplierNo,
-    items: selectedItemsForPR
-      .filter(
-        (item) => item.supplier_details?.supplier_no === supplierNo
-      )
-      .map((item) => ({
-        itemNo: item.item_quotation_details?.item_details?.item_no,
-        description:
-          item.item_quotation_details?.item_details?.item_description,
-        quantity: item.item_quantity,
-      })),
-  }))
-);
-
       return supplierData.filter(
         (supplier) =>
           supplier.rfq_details?.purchase_request === pr_no &&

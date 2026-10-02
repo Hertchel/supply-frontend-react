@@ -74,7 +74,6 @@ export function OrderReceivedDialog({
         (item) => item.supplier_details.supplier_no === supplier_no
       );
   }, [items_, supplier_no, isDialogOpen]);
-  console.log(filteredItems);
 
   const pr_no = useMemo(() => {
     if (isDialogOpen)
@@ -112,11 +111,6 @@ export function OrderReceivedDialog({
     setReceivedQuantities({});
   }, [isDialogOpen, deliveredItemsData?.data, filteredItems]);
 
-  console.log(
-    "SAVED DELIVERED ITEMS FOR PR:",
-    deliveredItemsData?.data
-  );
-
   const handleReceivedQuantityChange = (
     supplierItemNo: string,
     value: string
@@ -128,17 +122,44 @@ export function OrderReceivedDialog({
   };
 
   const hasEmptyReceivedQuantity = filteredItems?.some((item) => {
-    const quantity = receivedQuantities[item.supplier_item_no];
+    const supplierItemNo = item.supplier_item_no;
+
+    const neededQuantity = Number(
+      item.item_quotation_details.item_details.quantity
+    );
+
+    const savedQuantity = savedQuantities[supplierItemNo] ?? 0;
+
+    const remainingQuantity = Math.max(
+      neededQuantity - savedQuantity,
+      0
+    );
+
+    // Already fully received — no new input is required
+    if (remainingQuantity === 0) {
+      return false;
+    }
+
+    const quantity = receivedQuantities[supplierItemNo];
 
     return quantity === undefined || quantity.trim() === "";
-  });
+  }) ?? false;
 
   const handleOrderReceived = async () => {
     const hasEmptyQuantity = filteredItems?.some((item) => {
-      const quantity = receivedQuantities[item.supplier_item_no];
+      const supplierItemNo = item.supplier_item_no;
+      const neededQuantity = Number(item.item_quotation_details.item_details.quantity);
+      const savedQuantity = savedQuantities[supplierItemNo] ?? 0;
+      const remainingQuantity = Math.max(neededQuantity - savedQuantity, 0);
 
+      // Already fully received — no new input is required
+      if (remainingQuantity === 0) {
+        return false;
+      }
+
+      const quantity = receivedQuantities[supplierItemNo];
       return quantity === undefined || quantity.trim() === "";
-    });
+    }) ?? false;
 
     if (hasEmptyQuantity) {
       setMessageDialog({
@@ -153,20 +174,22 @@ export function OrderReceivedDialog({
     }
 
     const hasInvalidQuantity = filteredItems?.some((item) => {
-      const receivedQuantity = Number(
-        receivedQuantities[item.supplier_item_no]
-      );
+      const supplierItemNo = item.supplier_item_no;
+      const neededQuantity = Number(item.item_quotation_details.item_details.quantity);
+      const savedQuantity = savedQuantities[supplierItemNo] ?? 0;
+      const remainingQuantity = Math.max(neededQuantity - savedQuantity, 0);
 
-      const neededQuantity = Number(
-        item.item_quotation_details.item_details.quantity
-      );
+      if (remainingQuantity === 0) {
+        return false;
+      }
 
+      const receivedQuantity = Number(receivedQuantities[supplierItemNo]);
       return (
         Number.isNaN(receivedQuantity) ||
         receivedQuantity < 0 ||
-        receivedQuantity > neededQuantity
+        receivedQuantity > remainingQuantity
       );
-    });
+    }) ?? false;
 
     if (hasInvalidQuantity) {
       setMessageDialog({
@@ -191,10 +214,7 @@ export function OrderReceivedDialog({
     };
 
     try {
-      const inspectionResponse = await addInspectionReport(
-        inspectionData
-      );
-
+      const inspectionResponse = await addInspectionReport(inspectionData);
       const inspectionNo = inspectionResponse.data?.inspection_no;
 
       if (!inspectionNo) {
@@ -204,10 +224,19 @@ export function OrderReceivedDialog({
       let allItemsComplete = true;
       for (const data of filteredItems ?? []) {
         const supplierItemNo = data.supplier_item_no;
-        const receivedNow = Number(receivedQuantities[supplierItemNo]);
-        const alreadyReceived = savedQuantities[supplierItemNo] ?? 0;
+        const alreadyReceived =savedQuantities[supplierItemNo] ?? 0;
         const neededQuantity = Number(data.item_quotation_details.item_details.quantity);
+        const remainingQuantity = Math.max(neededQuantity - alreadyReceived, 0);
+        if (remainingQuantity === 0) {
+          continue;
+        }
+
+        const receivedNow = Number(
+          receivedQuantities[supplierItemNo]
+        );
+
         const totalReceived = alreadyReceived + receivedNow;
+
         const isComplete = totalReceived >= neededQuantity;
         const isPartial = totalReceived > 0 && !isComplete;
 
@@ -217,21 +246,9 @@ export function OrderReceivedDialog({
 
         const existingDelivery = deliveredItemsData?.data?.find(
           (delivered) =>
-            delivered.item_details?.supplier_item_no === supplierItemNo
+            delivered.item_details?.supplier_item_no ===
+            supplierItemNo
         );
-
-        console.log("RECEIVING ITEM:", {
-          item:
-            data.item_quotation_details.item_details
-              .item_description,
-          alreadyReceived,
-          receivedNow,
-          totalReceived,
-          neededQuantity,
-          isComplete,
-          isPartial,
-          existingDelivery,
-        });
 
         if (existingDelivery) {
           await updateItemsDeliveredMutation({

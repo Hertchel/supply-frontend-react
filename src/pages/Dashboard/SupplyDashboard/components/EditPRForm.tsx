@@ -288,6 +288,16 @@ const EditPRForm: React.FC<EditPRFormProps> = ({
                 >
                   <div className="">
                     {renderField(
+                      "Fund Source",
+                      "fund_cluster",
+                      <Input
+                        type="text"
+                        placeholder="Enter fund source"
+                        {...register("fund_cluster")}
+                      />
+                    )}
+                    
+                    {renderField(
                       "Office",
                       "office",
                       <AsyncSelect
@@ -330,16 +340,6 @@ const EditPRForm: React.FC<EditPRFormProps> = ({
                         onChange={handleRequisitionerChange}
                         placeholder="Search for a Requisitioner..."
                         className="mb-4 text-sm"
-                      />
-                    )}
-
-                    {renderField(
-                      "Fund Source",
-                      "fund_cluster",
-                      <Input
-                        type="text"
-                        placeholder="Enter fund source"
-                        {...register("fund_cluster")}
                       />
                     )}
 

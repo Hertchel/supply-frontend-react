@@ -70,35 +70,62 @@ export default function PurchaseOrderInProgess() {
     ? supplier_item.data
     : [];
 
-  const itemsInSupplierCount = (supplier_no: string) =>
-    supplierItemData.filter(
-      (data) => data.supplier_details.supplier_no === supplier_no
-    ).length;
+  const itemCountBySupplier = useMemo(() => {
+    return supplierItemData.reduce<Record<string, number>>(
+      (counts, item) => {
+        const supplierNo = item.supplier_details?.supplier_no;
 
-  const receivedQuantityForPO = (po_no: string) => {
+        if (supplierNo) {
+          counts[supplierNo] = (counts[supplierNo] ?? 0) + 1;
+        }
+
+        return counts;
+      },
+      {}
+    );
+  }, [supplierItemData]);
+
+  const receivedTotalsByPO = useMemo(() => {
     const deliveredItems = Array.isArray(delivered_items?.data)
       ? delivered_items.data
       : [];
 
-    const received = deliveredItems
-      .filter(
-        (item) =>
-          item.inspection_details?.po_details?.po_no === po_no
-      )
-      .reduce(
-        (total, item) =>
-          total + Number(item.quantity_delivered || 0),
-        0
-      );
+    return deliveredItems.reduce<Record<string, number>>(
+      (totals, item) => {
+        const poNo = item.inspection_details?.po_details?.po_no;
 
-    const ordered = orderItemData
-      .filter((item) => item.po_details.po_no === po_no)
-      .reduce(
-        (total, item) =>
-          total +
-          Number(item.supplier_item_details?.item_quantity || 0),
-        0
-      );
+        if (poNo) {
+          totals[poNo] =
+            (totals[poNo] ?? 0) +
+            Number(item.quantity_delivered || 0);
+        }
+
+        return totals;
+      },
+      {}
+    );
+  }, [delivered_items?.data]);
+
+  const orderedTotalsByPO = useMemo(() => {
+    return orderItemData.reduce<Record<string, number>>(
+      (totals, item) => {
+        const poNo = item.po_details?.po_no;
+
+        if (poNo) {
+          totals[poNo] =
+            (totals[poNo] ?? 0) +
+            Number(item.supplier_item_details?.item_quantity || 0);
+        }
+
+        return totals;
+      },
+      {}
+    );
+  }, [orderItemData]);
+
+  const receivedQuantityForPO = (po_no: string) => {
+    const received = receivedTotalsByPO[po_no] ?? 0;
+    const ordered = orderedTotalsByPO[po_no] ?? 0;
 
     return `${received}/${ordered}`;
   };
@@ -169,8 +196,8 @@ export default function PurchaseOrderInProgess() {
                   <TableCell>
                     <div>
                       <div>
-                        {itemsInSupplierCount(order.supplier_details.supplier_no)} item
-                        {itemsInSupplierCount(order.supplier_details.supplier_no) !== 1
+                        {itemCountBySupplier[order.supplier_details.supplier_no] ?? 0} item
+                        {(itemCountBySupplier[order.supplier_details.supplier_no] ?? 0) !== 1
                           ? "s"
                           : ""}
                       </div>
