@@ -107,6 +107,7 @@ export const itemsDeliveredSchema = z.object({
   supplier_item: z.string(),
   quantity_delivered: z.number().min(0).optional(),
   is_complete: z.boolean(),
+  is_partial: z.boolean(),
 });
 
 export type itemsDeliveredType = z.infer<typeof itemsDeliveredSchema>;

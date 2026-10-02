@@ -283,8 +283,8 @@ export const updateItemsDelivered = async ({
   id,
   data,
 }: {
-  id: number;
-  data: itemsDeliveredType;
+  id: string;
+  data: Partial<itemsDeliveredType>;
 }): Promise<ApiResponse<itemsDeliveredType>> => {
   try {
     const response = await api.patch<itemsDeliveredType>(
@@ -304,7 +304,8 @@ export const useUpdateItemsDelivered = () => {
   return useMutation<
     ApiResponse<unknown>,
     Error,
-    { id: number; data: itemsDeliveredType }
+    { id: string; 
+      data: Partial<itemsDeliveredType> }
   >({
     mutationFn: updateItemsDelivered,
     mutationKey: ["inspection-reports"],

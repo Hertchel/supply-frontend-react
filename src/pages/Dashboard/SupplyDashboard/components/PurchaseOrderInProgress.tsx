@@ -25,7 +25,7 @@ import {
 import { OrderReceivedDialog } from "./orderReceived";
 import { useGetAllSupplierItem } from "@/services/AbstractOfQuotationServices";
 import { useCallback, useMemo, useState } from "react";
-import { useGetAllPurchaseOrder, useGetPurchaseOrderItem } from "@/services/puchaseOrderServices";
+import { useGetAllPurchaseOrder, useGetPurchaseOrderItem, useGetItemsDelivered } from "@/services/puchaseOrderServices";
 import Loading from "../../shared/components/Loading";
 import CancelOrderDialog from "./cancelOrder";
 import { useNavigate } from "react-router-dom";
@@ -44,6 +44,7 @@ export default function PurchaseOrderInProgess() {
   const { data: supplier_item } = useGetAllSupplierItem();
   const navigate = useNavigate();
   const {data: order_item, isLoading: isOrderItemLoading,} = useGetPurchaseOrderItem(); 
+  const { data: delivered_items } = useGetItemsDelivered();
 
   const orderItemData = useMemo(() => {
       return Array.isArray(order_item?.data) ? order_item.data : []
@@ -73,6 +74,34 @@ export default function PurchaseOrderInProgess() {
     supplierItemData.filter(
       (data) => data.supplier_details.supplier_no === supplier_no
     ).length;
+
+  const receivedQuantityForPO = (po_no: string) => {
+    const deliveredItems = Array.isArray(delivered_items?.data)
+      ? delivered_items.data
+      : [];
+
+    const received = deliveredItems
+      .filter(
+        (item) =>
+          item.inspection_details?.po_details?.po_no === po_no
+      )
+      .reduce(
+        (total, item) =>
+          total + Number(item.quantity_delivered || 0),
+        0
+      );
+
+    const ordered = orderItemData
+      .filter((item) => item.po_details.po_no === po_no)
+      .reduce(
+        (total, item) =>
+          total +
+          Number(item.supplier_item_details?.item_quantity || 0),
+        0
+      );
+
+    return `${received}/${ordered}`;
+  };
 
   const handleOpenOrderRecieveForm = (supplier_no: string, po_no: string) => {
     setIsDialogOpen(true);
@@ -138,7 +167,18 @@ export default function PurchaseOrderInProgess() {
                     {order.po_no}
                   </TableCell>
                   <TableCell>
-                    {itemsInSupplierCount(order.supplier_details.supplier_no)}
+                    <div>
+                      <div>
+                        {itemsInSupplierCount(order.supplier_details.supplier_no)} item
+                        {itemsInSupplierCount(order.supplier_details.supplier_no) !== 1
+                          ? "s"
+                          : ""}
+                      </div>
+
+                      <div className="text-xs text-red-500">
+                        Received: {receivedQuantityForPO(order.po_no)}
+                      </div>
+                    </div>
                   </TableCell>
                   <TableCell>
                     ₱{Number(order.total_amount).toFixed(2)}
