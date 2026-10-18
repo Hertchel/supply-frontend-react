@@ -88,6 +88,7 @@ export type supplierItemType_ = {
   };
 };
 
+
 export type abstractType_ = {
   aoq_no: string;
   rfq_details: {
@@ -113,4 +114,7 @@ export type abstractType_ = {
   };
   total_amount: string;
   created_at: Date;
+
+  supplier_quotes?: supplierItemType_[];
 };
+

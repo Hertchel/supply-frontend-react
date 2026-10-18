@@ -18,7 +18,6 @@ import {
   Loader2,
   MapPinIcon,
   MoveHorizontal,
-  AlertCircle,
 } from "lucide-react";
 import { useEffect, useMemo, useState } from "react";
 import { Separator } from "@/components/ui/separator";
@@ -268,17 +267,6 @@ export const ItemDistributionList = () => {
                       <span>
                         {item.quantity_delivered}
                       </span>
-
-                      {Number(item.quantity_delivered) <
-                        Number(
-                          item.item_details.item_quotation_details.item_details
-                            .quantity
-                        ) && (
-                        <AlertCircle
-                          className="h-5 w-5 text-red-500"
-                          aria-label={`Insufficient quantity. Received ${item.quantity_delivered} of ${item.item_details.item_quotation_details.item_details.quantity}.`}
-                        />
-                      )}
                     </div>
                     <p className="text-gray-500">
                       {item.item_details.item_quotation_details.unit_price}

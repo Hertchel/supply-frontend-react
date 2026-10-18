@@ -11,6 +11,9 @@ import {
   verifyResetOTPType,
 } from "@/types/request/user";
 
+let checkAuthPromise: Promise<void> | null = null;
+let hasCheckedAuth = false;
+
 export interface User {
   id: number;
   email: string;
@@ -98,31 +101,53 @@ const useAuthStore = create<AuthState>()(
       successMessage: null,
 
       checkAuth: async () => {
-        set({ isLoading: true });
-
-        try {
-          console.log("Checking authentication...");
-          const response = await api.get("/api/user/check_auth");
-          console.log("Authenticated user:", response.data);
-          set({
-            isAuthenticated: true,
-            user: response.data,
-          });
-        } catch (error) {
-          set({
-            isAuthenticated: false,
-            user: null,
-          });
-
-          sessionStorage.removeItem("access_token");
-          sessionStorage.removeItem("refresh_token");
-          sessionStorage.removeItem("auth-storage");
-
-          console.error("Authentication check failed:", error);
-        } finally {
-          set({ isLoading: false });
+        // Authentication has already been checked during this app session.
+        if (hasCheckedAuth) {
+          return;
         }
+
+        // Reuse an existing request instead of sending another one.
+        if (checkAuthPromise) {
+          return checkAuthPromise;
+        }
+
+        const request: Promise<void> = (async () => {
+          set({ isLoading: true });
+
+          try {
+            console.log("Checking authentication...");
+
+            const response = await api.get("/api/user/check_auth");
+
+            console.log("Authenticated user:", response.data);
+
+            set({
+              isAuthenticated: true,
+              user: response.data,
+            });
+          } catch (error) {
+            set({
+              isAuthenticated: false,
+              user: null,
+            });
+
+            sessionStorage.removeItem("access_token");
+            sessionStorage.removeItem("refresh_token");
+            sessionStorage.removeItem("auth-storage");
+
+            console.error("Authentication check failed:", error);
+          } finally {
+            hasCheckedAuth = true;
+            set({ isLoading: false });
+            checkAuthPromise = null;
+          }
+        })();
+
+        checkAuthPromise = request;
+
+        return request;
       },
+
 
       checkUser: async (email, password, onSuccess, onError) => {
         set({
@@ -152,6 +177,7 @@ const useAuthStore = create<AuthState>()(
           if (!access_token || !refresh_token) {
             throw new Error("Login response did not contain authentication tokens.");
           }
+          hasCheckedAuth = true;
 
           // Store tokens for THIS TAB
           sessionStorage.setItem(
@@ -375,6 +401,7 @@ const useAuthStore = create<AuthState>()(
               "OTP verification response did not contain authentication tokens."
             );
           }
+          hasCheckedAuth = true;
 
           // Store tokens for THIS TAB
           sessionStorage.setItem(
