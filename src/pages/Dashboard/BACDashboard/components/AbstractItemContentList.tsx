@@ -116,12 +116,6 @@ export const AbstractItemContentList = () => {
 
   const abstractData = abstract && abstract.data;
 
-  const supplierQuotesForPR = useMemo(() => {
-    return Array.isArray(abstractData?.supplier_quotes)
-      ? abstractData.supplier_quotes
-      : [];
-  }, [abstractData?.supplier_quotes]);
-
   const quotationsForPR = useMemo(() => {
     const prNo = abstractData?.pr_details?.pr_no;
 
@@ -175,12 +169,6 @@ export const AbstractItemContentList = () => {
     rfqData,
     itemQuotationResponse?.data,
   ]);
-
-  const biddersForCurrentPR = useMemo(() => {
-    return rfqData.filter(
-      (rfq) => rfq.purchase_request === abstractData?.pr_details?.pr_no,
-    );
-  }, [rfqData, abstractData]);
 
   quotationsForPR.forEach((supplier, index) => {
     console.log(
