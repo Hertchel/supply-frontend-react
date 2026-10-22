@@ -38,6 +38,7 @@ import {
 import {
   useGetRFQDetail,
   useRequestForQuotation,
+  useGetItemQuotation,
 } from "@/services/requestForQuotationServices";
 import {
   Tooltip,
@@ -84,6 +85,7 @@ export const AbstractItemContentList = () => {
   const { data: items, isLoading } = useGetAllSupplierItem();
   const { data: bac_members } = useGetAllBACmember();
   const { data: rfqs } = useRequestForQuotation();
+  const {data: itemQuotationResponse,isLoading: itemQuotationsLoading,} = useGetItemQuotation();
   const rfqData = useMemo(() => {
     return Array.isArray(rfqs?.data) ? rfqs.data : [];
   }, [rfqs?.data]);
@@ -114,12 +116,65 @@ export const AbstractItemContentList = () => {
 
   const abstractData = abstract && abstract.data;
 
+  const supplierQuotesForPR = useMemo(() => {
+    return Array.isArray(abstractData?.supplier_quotes)
+      ? abstractData.supplier_quotes
+      : [];
+  }, [abstractData?.supplier_quotes]);
+
   const quotationsForPR = useMemo(() => {
-    return supplierItemData.filter(
-      (item) =>
-        item.rfq_details.purchase_request === abstractData?.pr_details?.pr_no,
+    const prNo = abstractData?.pr_details?.pr_no;
+
+    if (!prNo) return [];
+
+    // All RFQs belonging to this Purchase Request.
+    const relevantRfqs = rfqData.filter(
+      (rfq) => rfq.purchase_request === prNo
     );
-  }, [supplierItemData, abstractData]);
+
+    // Match each quotation to its supplier through the RFQ.
+    const rfqByNo = new Map(
+      relevantRfqs.map((rfq) => [rfq.rfq_no, rfq])
+    );
+
+    const allItemQuotations = Array.isArray(itemQuotationResponse?.data)
+      ? itemQuotationResponse.data
+      : [];
+
+    return allItemQuotations
+      .filter((quotation) => rfqByNo.has(quotation.rfq))
+      .map((quotation) => {
+        const rfq = rfqByNo.get(quotation.rfq)!;
+        const itemDetails = quotation.item_details;
+
+        const unitPrice = Number(quotation.unit_price ?? 0);
+        const quantity = Number(
+          quotation.unit_quantity ?? itemDetails?.quantity ?? 0
+        );
+
+        return {
+          rfq_details: {
+            rfq_no: rfq.rfq_no,
+            supplier_name: rfq.supplier_name,
+            purchase_request: rfq.purchase_request,
+          },
+          supplier_details: {
+            name: rfq.supplier_name,
+          },
+          item_quotation_details: {
+            item_details: itemDetails,
+            unit_price: String(unitPrice),
+          },
+          total_amount: String(unitPrice * quantity),
+          item_description: itemDetails?.item_description,
+          item_id: itemDetails?.item_no,
+        };
+      });
+  }, [
+    abstractData?.pr_details?.pr_no,
+    rfqData,
+    itemQuotationResponse?.data,
+  ]);
 
   const biddersForCurrentPR = useMemo(() => {
     return rfqData.filter(
@@ -154,7 +209,9 @@ export const AbstractItemContentList = () => {
     }
   }, [setStatus, isSuccess]);
 
-  if (isLoading || abstract_loading) return <Loading />;
+  if (isLoading || abstract_loading || itemQuotationsLoading) {
+  return <Loading />;
+}
 
   const isAlreadyForwardedToSupply =
     abstractData?.pr_details.status === "Ready to Order";
@@ -172,10 +229,31 @@ export const AbstractItemContentList = () => {
       return;
     }
 
+    console.log(
+    "All quotations for this PR:",
+    quotationsForPR.map((item) => ({
+      supplier:
+        item.supplier_details?.name ??
+        item.rfq_details?.supplier_name,
+      item:
+        item.item_quotation_details?.item_details?.item_description,
+      totalAmount: item.total_amount,
+    }))
+  );
+
+  console.table(
+    quotationsForPR.map((quotation) => ({
+      supplier: quotation.rfq_details.supplier_name,
+      item: quotation.item_description,
+      unitPrice: quotation.item_quotation_details.unit_price,
+      totalAmount: quotation.total_amount,
+    }))
+  );
+
     const url = await generateAOQPDF(
       filteredSupplierItemData,
-      biddersForCurrentPR,
-      bacMembersData,
+      quotationsForPR,
+      bacMembersData
     );
 
     if (!url) {

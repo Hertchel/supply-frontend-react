@@ -39,15 +39,60 @@ export const generateAOQPDF = async (
   });
 
   // Unique suppliers
-  const uniqueBidders = quotations.filter(
-    (bidder, index, self) =>
-      index === self.findIndex((b) => b.supplier_name === bidder.supplier_name),
-  );
+  // Get supplier name from the quotation data
+  const getSupplierName = (quotation: any): string =>
+    quotation?.supplier_details?.name ??
+    quotation?.rfq_details?.supplier_name ??
+    quotation?.supplier_name ??
+    "";
 
-  const bidder1 = uniqueBidders[0]?.supplier_name ?? "";
-  const bidder2 = uniqueBidders[1]?.supplier_name ?? "";
-  const bidder3 = uniqueBidders[2]?.supplier_name ?? "";
-  const bidder4 = uniqueBidders[3]?.supplier_name ?? "";
+  // Get unique suppliers from all quotations for this PR
+  const uniqueBidders = quotations.filter((quotation, index, self) => {
+    const supplierName = getSupplierName(quotation);
+
+    return (
+      supplierName !== "" &&
+      index ===
+        self.findIndex(
+          (candidate) => getSupplierName(candidate) === supplierName
+        )
+    );
+  });
+
+  const bidder1 = uniqueBidders[0]
+    ? getSupplierName(uniqueBidders[0])
+    : "";
+
+  const bidder2 = uniqueBidders[1]
+    ? getSupplierName(uniqueBidders[1])
+    : "";
+
+  const bidder3 = uniqueBidders[2]
+    ? getSupplierName(uniqueBidders[2])
+    : "";
+
+  const bidder4 = uniqueBidders[3]
+    ? getSupplierName(uniqueBidders[3])
+    : "";
+
+  // Calculate each supplier's total quotation for the entire PR
+  const getSupplierTotal = (supplierName: string): number => {
+    if (!supplierName) return 0;
+
+    return quotations
+      .filter(
+        (quotation) => getSupplierName(quotation) === supplierName
+      )
+      .reduce(
+        (total, quotation) =>
+          total + Number(quotation.total_amount ?? 0),
+        0
+      );
+  };
+
+  const bidder1Total = getSupplierTotal(bidder1);
+  const bidder2Total = getSupplierTotal(bidder2);
+  const bidder3Total = getSupplierTotal(bidder3);
 
   // ============================================================
   // FIND LOWEST SUPPLIER
@@ -475,16 +520,24 @@ export const generateAOQPDF = async (
   // ============================================================
 
   const getItemQuotations = (item: supplierItemType_) => {
+    const itemNo =
+      item.item_quotation_details?.item_details?.item_no;
+
     const itemDescription =
       item.item_quotation_details?.item_details?.item_description;
 
-    const itemNo = item.item_quotation_details?.item_details?.item_no;
-
     return quotations.filter((quotation) => {
-      return (
-        quotation.item_description === itemDescription ||
-        quotation.item_id === itemNo
-      );
+      const quotationItemNo =
+        quotation.item_quotation_details?.item_details?.item_no;
+
+      const quotationDescription =
+        quotation.item_quotation_details?.item_details?.item_description;
+
+      if (itemNo && quotationItemNo) {
+        return quotationItemNo === itemNo;
+      }
+
+      return quotationDescription === itemDescription;
     });
   };
 
@@ -532,31 +585,30 @@ export const generateAOQPDF = async (
 
     // Find bidder quotations
     const bidder1Quotation = itemQuotations.find(
-      (quotation) => quotation.supplier_name === bidder1,
+      (quotation) => getSupplierName(quotation) === bidder1
     );
 
     const bidder2Quotation = itemQuotations.find(
-      (quotation) => quotation.supplier_name === bidder2,
+      (quotation) => getSupplierName(quotation) === bidder2
     );
 
     const bidder3Quotation = itemQuotations.find(
-      (quotation) => quotation.supplier_name === bidder3,
+      (quotation) => getSupplierName(quotation) === bidder3
     );
-
     // Bidder prices
     worksheet.getCell(`F${rowNumber}`).value =
-      bidder1Quotation?.unit_price != null
-        ? Number(bidder1Quotation.unit_price)
+      bidder1Quotation?.total_amount != null
+        ? Number(bidder1Quotation.total_amount)
         : "";
 
     worksheet.getCell(`G${rowNumber}`).value =
-      bidder2Quotation?.unit_price != null
-        ? Number(bidder2Quotation.unit_price)
+      bidder2Quotation?.total_amount != null
+        ? Number(bidder2Quotation.total_amount)
         : "";
 
     worksheet.getCell(`H${rowNumber}`).value =
-      bidder3Quotation?.unit_price != null
-        ? Number(bidder3Quotation.unit_price)
+      bidder3Quotation?.total_amount != null
+        ? Number(bidder3Quotation.total_amount)
         : "";
 
     ["F", "G", "H"].forEach((column) => {
@@ -626,6 +678,30 @@ export const generateAOQPDF = async (
   // ============================================================
 
   const totalRow = firstItemRow + items.length; //12
+  // Merge each bidder column vertically and display the supplier's PR total
+  const bidderColumns = [
+    { column: "F", total: bidder1Total },
+    { column: "G", total: bidder2Total },
+    { column: "H", total: bidder3Total },
+  ];
+
+  bidderColumns.forEach(({ column, total }) => {
+    if (totalRow > firstItemRow + 1) {
+      worksheet.mergeCells(
+        `${column}${firstItemRow}:${column}${totalRow - 1}`
+      );
+    }
+
+    const cell = worksheet.getCell(`${column}${firstItemRow}`);
+
+    cell.value = total;
+    cell.numFmt = moneyFormat;
+    cell.font = normalFont;
+    cell.alignment = {
+      horizontal: "center",
+      vertical: "middle",
+    };
+  });
   //worksheet.mergeCells(`I${firstItemRow}:I${totalRow}`); // Merge winning bidder column for all items
 
   /*worksheet.mergeCells(`A${totalRow}:I${totalRow}`);
@@ -722,9 +798,9 @@ export const generateAOQPDF = async (
     vertical: "middle",
   };
 
-  worksheet.getCell(`F${totalRow}`).value = bidder1;
-  worksheet.getCell(`G${totalRow}`).value = bidder2;
-  worksheet.getCell(`H${totalRow}`).value = bidder3;
+  worksheet.getCell(`F${totalRow}`).value = "";
+  worksheet.getCell(`G${totalRow}`).value = "";
+  worksheet.getCell(`H${totalRow}`).value = "";
 
   worksheet.getCell(`I${totalRow}`).value = lowestSupplierName;
 
