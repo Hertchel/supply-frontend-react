@@ -59,15 +59,26 @@ export default function Abstract() {
 
   const { data: rfqs } = useRequestForQuotation();
   const { data: itemQuotations } = useGetItemQuotation();
+  console.log("ITEM QUOTATIONS RESPONSE:", itemQuotations);
 
   const bacMembersData = useMemo(() => {
     return Array.isArray(bac_members?.data) ? bac_members.data : [];
   }, [bac_members?.data]);
 
   const supplierItemData = useMemo(() => {
+    console.log("FULL supplierItemData:", supplierItemData);
+
+    console.table(
+      supplierItemData.map((item) => ({
+        rfq_no: item.rfq_details?.rfq_no,
+        supplier: item.rfq_details?.supplier_name,
+        supplier_details_name: item.supplier_details?.name,
+        unit_price: item.item_quotation_details?.unit_price,
+        quantity: item.item_quantity,
+      })),
+    );
     return Array.isArray(items?.data) ? items.data : [];
   }, [items?.data]);
-
   const itemQuotationData = useMemo(() => {
     return Array.isArray(itemQuotations?.data) ? itemQuotations.data : [];
   }, [itemQuotations?.data]);
@@ -75,11 +86,27 @@ export default function Abstract() {
   const quotationsForPR = useMemo(() => {
     const rfqData = Array.isArray(rfqs?.data) ? rfqs.data : [];
 
-    return itemQuotationData.filter((quotation) => {
-      const matchingRFQ = rfqData.find((rfq) => rfq.rfq_no === quotation.rfq);
+    console.log("========== INSIDE quotationsForPR ==========");
+    console.log("ITEM QUOTATION DATA:", itemQuotationData);
+    console.log("RFQ DATA:", rfqData);
 
-      return matchingRFQ?.purchase_request?.toString() === pr_no?.toString();
-    });
+    return itemQuotationData
+      .map((quotation) => {
+        const matchingRFQ = rfqData.find((rfq) => rfq.rfq_no === quotation.rfq);
+
+        console.log("ITEM QUOTATION BEING MAPPED:", quotation);
+        console.log("MATCHING RFQ:", matchingRFQ);
+
+        return {
+          ...quotation,
+          supplier_name: matchingRFQ?.supplier_name ?? "",
+        };
+      })
+      .filter((quotation) => {
+        const matchingRFQ = rfqData.find((rfq) => rfq.rfq_no === quotation.rfq);
+
+        return matchingRFQ?.purchase_request?.toString() === pr_no?.toString();
+      });
   }, [itemQuotationData, rfqs?.data, pr_no]);
 
   const filteredSupplierItem = useMemo(() => {
@@ -153,7 +180,29 @@ export default function Abstract() {
 
       return;
     }
+    console.log("========== QUOTATIONS SENT TO AOQ ==========");
+    console.log(quotationsForPR);
 
+    quotationsForPR.forEach((quotation) => {
+      console.log("QUOTATION:", {
+        supplier_name: quotation.supplier_name,
+        unit_price: quotation.unit_price,
+        quantity: quotation.item_details?.quantity,
+        calculation:
+          Number(quotation.unit_price) *
+          Number(quotation.item_details?.quantity),
+      });
+    });
+    console.log("========== FINAL DATA SENT TO PDF ==========");
+
+    console.log(
+      quotationsForPR.map((q) => ({
+        supplier: q.supplier_name,
+        rfq: q.rfq,
+        unit_price: q.unit_price,
+        quantity: q.item_details?.quantity,
+      })),
+    );
     const url = await generateAOQPDF(
       filteredSupplierItem,
       quotationsForPR,

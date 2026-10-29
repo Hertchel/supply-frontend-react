@@ -54,39 +54,24 @@ export const generateAOQPDF = async (
       supplierName !== "" &&
       index ===
         self.findIndex(
-          (candidate) => getSupplierName(candidate) === supplierName
+          (candidate) => getSupplierName(candidate) === supplierName,
         )
     );
   });
 
-  const bidder1 = uniqueBidders[0]
-    ? getSupplierName(uniqueBidders[0])
-    : "";
-
-  const bidder2 = uniqueBidders[1]
-    ? getSupplierName(uniqueBidders[1])
-    : "";
-
-  const bidder3 = uniqueBidders[2]
-    ? getSupplierName(uniqueBidders[2])
-    : "";
-
-  const bidder4 = uniqueBidders[3]
-    ? getSupplierName(uniqueBidders[3])
-    : "";
+  const bidder1 = uniqueBidders[0] ? getSupplierName(uniqueBidders[0]) : "";
+  const bidder2 = uniqueBidders[1] ? getSupplierName(uniqueBidders[1]) : "";
+  const bidder3 = uniqueBidders[2] ? getSupplierName(uniqueBidders[2]) : "";
 
   // Calculate each supplier's total quotation for the entire PR
   const getSupplierTotal = (supplierName: string): number => {
     if (!supplierName) return 0;
 
     return quotations
-      .filter(
-        (quotation) => getSupplierName(quotation) === supplierName
-      )
+      .filter((quotation) => getSupplierName(quotation) === supplierName)
       .reduce(
-        (total, quotation) =>
-          total + Number(quotation.total_amount ?? 0),
-        0
+        (total, quotation) => total + Number(quotation.total_amount ?? 0),
+        0,
       );
   };
 
@@ -168,17 +153,16 @@ export const generateAOQPDF = async (
   // ============================================================
 
   worksheet.columns = [
-    { key: "no", width: 5 },
-    { key: "item", width: 38 },
-    { key: "quantity", width: 9 },
-    { key: "unit", width: 8 },
-    { key: "agencyPrice", width: 13 },
+    { key: "no", width: 3.57 },
+    { key: "item", width: 34.43 },
+    { key: "quantity", width: 9.57 },
+    { key: "agencyPrice", width: 10.14 },
 
-    { key: "bidder1", width: 18 },
-    { key: "bidder2", width: 18 },
-    { key: "bidder3", width: 18 },
+    { key: "bidder1", width: 18.57 },
+    { key: "bidder2", width: 18.57 },
+    { key: "bidder3", width: 18.57 },
 
-    { key: "winningBidder", width: 28 },
+    { key: "winningBidder", width: 35.71 },
 
     { key: "supplier1", width: 16 },
     { key: "supplier2", width: 16 },
@@ -456,7 +440,6 @@ export const generateAOQPDF = async (
   worksheet.getCell(`J${headerRow}`).value = bidder1;
   worksheet.getCell(`K${headerRow}`).value = bidder2;
   worksheet.getCell(`L${headerRow}`).value = bidder3;
-  worksheet.getCell(`M${headerRow}`).value = bidder4;
 
   // Format headers
   for (let row = headerRow; row <= secondHeaderRow; row++) {
@@ -486,6 +469,40 @@ export const generateAOQPDF = async (
       cell.border = border;
     }
   }
+  worksheet.getRow(headerRow).font = {
+    name: "Tahoma",
+    size: 10,
+    bold: true,
+  };
+
+  let highestEstimatedWidth = 0;
+  [bidder1, bidder2, bidder3].forEach((bidder, index) => {
+    const col = ["F", "G", "H"][index];
+    const supplierNameWidth = worksheet.getColumn(col).width!;
+
+    const estimatedWidth = Math.ceil(bidder.length / (supplierNameWidth * 1.5));
+
+    highestEstimatedWidth = Math.max(highestEstimatedWidth, estimatedWidth);
+
+    worksheet.getCell(`${col}${secondHeaderRow}`).font = {
+      name: "Tahoma",
+      size: 8,
+      bold: true,
+    };
+  });
+
+  switch (highestEstimatedWidth) {
+    case 1:
+      worksheet.getRow(secondHeaderRow).height = 21;
+      break;
+    case 2:
+      worksheet.getRow(secondHeaderRow).height = 32.25;
+      break;
+    case 3:
+      worksheet.getRow(secondHeaderRow).height = 43.5;
+      break;
+  }
+
   for (let row = headerRow; row <= secondHeaderRow; row++) {
     for (let col = 10; col <= 13; col++) {
       const cell = worksheet.getCell(row, col);
@@ -512,16 +529,12 @@ export const generateAOQPDF = async (
     }
   }
 
-  worksheet.getRow(headerRow).height = 35;
-  worksheet.getRow(secondHeaderRow).height = 40;
-
   // ============================================================
   // HELPER: FIND QUOTATIONS FOR AN ITEM
   // ============================================================
 
   const getItemQuotations = (item: supplierItemType_) => {
-    const itemNo =
-      item.item_quotation_details?.item_details?.item_no;
+    const itemNo = item.item_quotation_details?.item_details?.item_no;
 
     const itemDescription =
       item.item_quotation_details?.item_details?.item_description;
@@ -585,15 +598,15 @@ export const generateAOQPDF = async (
 
     // Find bidder quotations
     const bidder1Quotation = itemQuotations.find(
-      (quotation) => getSupplierName(quotation) === bidder1
+      (quotation) => getSupplierName(quotation) === bidder1,
     );
 
     const bidder2Quotation = itemQuotations.find(
-      (quotation) => getSupplierName(quotation) === bidder2
+      (quotation) => getSupplierName(quotation) === bidder2,
     );
 
     const bidder3Quotation = itemQuotations.find(
-      (quotation) => getSupplierName(quotation) === bidder3
+      (quotation) => getSupplierName(quotation) === bidder3,
     );
     // Bidder prices
     worksheet.getCell(`F${rowNumber}`).value =
@@ -687,9 +700,7 @@ export const generateAOQPDF = async (
 
   bidderColumns.forEach(({ column, total }) => {
     if (totalRow > firstItemRow + 1) {
-      worksheet.mergeCells(
-        `${column}${firstItemRow}:${column}${totalRow - 1}`
-      );
+      worksheet.mergeCells(`${column}${firstItemRow}:${column}${totalRow - 1}`);
     }
 
     const cell = worksheet.getCell(`${column}${firstItemRow}`);
@@ -811,6 +822,7 @@ export const generateAOQPDF = async (
     vertical: "middle",
     wrapText: true,
   };
+  worksheet.mergeCells(`I${firstItemRow}`, `I${totalRow}`);
 
   worksheet.getCell(`J${totalRow}`).value = "";
   worksheet.getCell(`K${totalRow}`).value = "";
@@ -820,8 +832,6 @@ export const generateAOQPDF = async (
   for (let col = 1; col <= 9; col++) {
     worksheet.getCell(totalRow, col).border = border;
   }
-
-  worksheet.getRow(totalRow).height = 25;
 
   // ============================================================
   // CERTIFICATION
