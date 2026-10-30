@@ -16,12 +16,10 @@ interface ItemDistributionActionsProps {
 }
 
 export const ItemDeliveredActions = ({
-  _data,
   pr_no,
 }: ItemDistributionActionsProps) => {
   const navigate = useNavigate()
 
-  console.log(_data)
   return (
     <>
       <TooltipProvider delayDuration={100} skipDelayDuration={200}>

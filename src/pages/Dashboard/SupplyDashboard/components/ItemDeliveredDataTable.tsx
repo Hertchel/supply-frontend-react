@@ -11,7 +11,6 @@ export const ItemDeliveredDataTable = () => {
   if (isLoading) return <Loading />;
 
   if (error) return <div>{error.message}</div>;
-  console.log(data);
 
   const purchaseRequestData: purchaseRequestType[] =
     data?.status === "success" ? data.data || [] : [];
@@ -24,7 +23,6 @@ export const ItemDeliveredDataTable = () => {
     purchaseRequestCompleted,
     "pr_no"
   );
-  console.log(sortedPurchaseRequestData);
 
   const flattenedPurchaseData = sortedPurchaseRequestData.map(
     (purchase_request) => ({
@@ -34,8 +32,6 @@ export const ItemDeliveredDataTable = () => {
       department: purchase_request.requisitioner_details.department,
     })
   );
-
-  console.log(flattenedPurchaseData);
 
   return (
     <>

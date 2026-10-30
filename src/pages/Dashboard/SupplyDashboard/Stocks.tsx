@@ -2,7 +2,10 @@ import {
   Package,
 } from "lucide-react";
 import Layout from "./components/Layout/SupplyDashboardLayout";
-import { useGetAllPurchaseOrder, useGetItemsDelivered } from "@/services/puchaseOrderServices";
+import {
+  useGetAllPurchaseOrder,
+  useGetAllItemsDeliveredFull,
+} from "@/services/puchaseOrderServices";
 import { DataTable } from "./components/data-table";
 import { inventoryColumns } from "./components/inventory-column";
 
@@ -10,7 +13,7 @@ import { inventoryColumns } from "./components/inventory-column";
 export default function Stocks() {
 
   const { data } = useGetAllPurchaseOrder()
-  const { data:items_delivered} = useGetItemsDelivered()
+  const { data: items_delivered } = useGetAllItemsDeliveredFull();
 
   console.log(data?.data)
   const itemDeliveredData = Array.isArray(items_delivered?.data) ? items_delivered.data : []
@@ -20,7 +23,7 @@ export default function Stocks() {
     po_no: item.inspection_details.po_details.po_no,
     item_description: item.item_details.item_quotation_details.item_details.item_description,
     unit: item.item_details.item_quotation_details.item_details.unit,
-    quantity: item.item_details.item_quotation_details.item_details.quantity,
+    quantity: Number(item.item_details.item_quotation_details.item_details.quantity),
     unit_cost: item.item_details.item_quotation_details.item_details.unit_cost,
   }));
   
