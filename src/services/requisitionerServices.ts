@@ -171,9 +171,8 @@ export const useAuthenticatedRequisitionerDashboard = (
     queryKey: ["authenticated-requisitioner-dashboard"],
     queryFn: getAuthenticatedRequisitionerDashboard,
     enabled,
-    refetchOnWindowFocus: false,
-    refetchOnReconnect: false,
-    refetchOnMount: false,
-    staleTime: Infinity,
+    refetchInterval: 5000,
+    refetchOnWindowFocus: true,
+    refetchOnReconnect: true,
   });
 };

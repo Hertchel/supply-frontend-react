@@ -1,8 +1,8 @@
 import { ColumnDef } from "@tanstack/react-table";
 import { DataTableColumnHeader } from "./data-table-column-header";
-import { _itemsDeliveredType } from "@/types/request/purchase-order";
+import type { InventoryDeliveredItem } from "@/services/puchaseOrderServices";
 
-export const inventoryColumns: ColumnDef<_itemsDeliveredType>[] = [
+export const inventoryColumns: ColumnDef<InventoryDeliveredItem>[] = [
   {
     accessorKey: "po_no",
     header: ({ column }) => (
@@ -73,10 +73,7 @@ export const inventoryColumns: ColumnDef<_itemsDeliveredType>[] = [
       />
     ),
     cell: ({ row }) => {
-      const supplierPrice =
-        row.original.item_details
-          .item_quotation_details
-          .unit_price;
+      const supplierPrice = row.original.unit_cost;
 
       return (
         <div className="flex space-x-2">

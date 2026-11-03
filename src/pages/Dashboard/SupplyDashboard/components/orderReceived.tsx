@@ -23,7 +23,7 @@ import {
   useUpdateItemsDelivered,
   useUpdatePurchaseOrderStatus,
 } from "@/services/puchaseOrderServices";
-
+import { useQueryClient } from "@tanstack/react-query";
 import { useMemo, useState, useEffect } from "react";
 import { v4 as uuidv4 } from "uuid";
 import { SupplierItemType } from "@/types/request/purchase-order";
@@ -54,8 +54,8 @@ export function OrderReceivedDialog({
   setIsDialogOpen,
 }: OrderReceivedDialogProps) {
   const [isLoading, setIsLoading] = useState<boolean>(false);
+  const queryClient = useQueryClient();
   const [receivedQuantities, setReceivedQuantities] = useState<Record<string, string>>({});
-  const [savedQuantities, setSavedQuantities] = useState<Record<string, number>>({});
   const [messageDialog, setMessageDialog] = useState<messageDialogProps>({
     open: false,
     message: "",
@@ -80,16 +80,20 @@ export function OrderReceivedDialog({
       return filteredItems && filteredItems[0].rfq_details.purchase_request;
   }, [filteredItems, isDialogOpen]);
 
-  const { data: deliveredItemsData } =
-    useGetItemsDeliveredInPurchaseRequest({
-      pr_no: pr_no?.toString(),
-    });
+  const {
+    data: deliveredItemsData,
+    isLoading: isDeliveredItemsLoading,
+    isFetching: isDeliveredItemsFetching,
+    isSuccess: isDeliveredItemsSuccess,
+  } = useGetItemsDeliveredInPurchaseRequest({
+    pr_no: pr_no?.toString(),
+  });
 
-  useEffect(() => {
-    const deliveredItems = deliveredItemsData?.data;
-    if (!isDialogOpen || !deliveredItems) return;
+  const savedQuantities = useMemo(() => {
+    const deliveredItems = deliveredItemsData?.data ?? [];
 
     const updatedSavedQuantities: Record<string, number> = {};
+
     filteredItems?.forEach((item) => {
       const savedQuantity = deliveredItems
         .filter(
@@ -105,11 +109,22 @@ export function OrderReceivedDialog({
 
       updatedSavedQuantities[item.supplier_item_no] = savedQuantity;
     });
-    setSavedQuantities(updatedSavedQuantities);
 
-    // Start each new receiving transaction empty.
-    setReceivedQuantities({});
-  }, [isDialogOpen, deliveredItemsData?.data, filteredItems]);
+    return updatedSavedQuantities;
+  }, [deliveredItemsData?.data, filteredItems]);
+
+  const isDeliveredItemsReady =
+    !!pr_no &&
+    isDeliveredItemsSuccess &&
+    !isDeliveredItemsLoading &&
+    !isDeliveredItemsFetching &&
+    Array.isArray(deliveredItemsData?.data);
+
+  useEffect(() => {
+    if (isDialogOpen) {
+      setReceivedQuantities({});
+    }
+  }, [isDialogOpen, pr_no]);
 
   const handleReceivedQuantityChange = (
     supplierItemNo: string,
@@ -146,6 +161,17 @@ export function OrderReceivedDialog({
   }) ?? false;
 
   const handleOrderReceived = async () => {
+    if (!isDeliveredItemsReady) {
+      setMessageDialog({
+        open: true,
+        message:
+          "Please wait until the previously received quantities have finished loading.",
+        title: "Loading Previous Deliveries",
+        type: "info",
+      });
+
+      return;
+    }
     const hasEmptyQuantity = filteredItems?.some((item) => {
       const supplierItemNo = item.supplier_item_no;
       const neededQuantity = Number(item.item_quotation_details.item_details.quantity);
@@ -215,8 +241,11 @@ export function OrderReceivedDialog({
 
     try {
       const inspectionResponse = await addInspectionReport(inspectionData);
-      const inspectionNo = inspectionResponse.data?.inspection_no;
+      if (inspectionResponse.status !== "success") {
+        throw new Error("Failed to create inspection report.");
+      }
 
+      const inspectionNo = inspectionResponse.data?.inspection_no;
       if (!inspectionNo) {
         throw new Error("Failed to create inspection report.");
       }
@@ -246,7 +275,7 @@ export function OrderReceivedDialog({
 
         const existingDelivery = deliveredItemsData?.data?.find(
           (delivered) =>
-            delivered.item_details?.supplier_item_no ===
+            delivered.item_details.supplier_item_no ===
             supplierItemNo
         );
 
@@ -273,6 +302,11 @@ export function OrderReceivedDialog({
           await addItemsDeliveredMutation(deliverData);
         }
       }
+
+            // Refresh delivered items after all delivery operations succeed.
+      await queryClient.invalidateQueries({
+        queryKey: ["items-delivered"],
+      });
 
       if (allItemsComplete) {
         await updatePOStatusMutation({
@@ -332,6 +366,15 @@ export function OrderReceivedDialog({
             </DialogTitle>
             <p>{po_no}</p>
           </DialogHeader>
+          {!isDeliveredItemsReady && (
+            <Alert>
+              <Loader2 className="h-4 w-4 animate-spin" />
+              <AlertTitle>Loading Previous Deliveries</AlertTitle>
+              <AlertDescription>
+                Please wait while we retrieve the previously received quantities.
+              </AlertDescription>
+            </Alert>
+          )}
           {items_.length === 0 ? (
             <Alert>
               <AlertCircle className="h-4 w-4" />
@@ -400,14 +443,14 @@ export function OrderReceivedDialog({
                                     }
                                     className="w-full rounded-md border border-input bg-background px-3 py-2 text-sm"
                                     placeholder="Enter quantity"
-                                    disabled={remainingQuantity === 0}
+                                    disabled={!isDeliveredItemsReady || remainingQuantity === 0}
                                   />
 
                                   <Button
                                     type="button"
                                     variant="outline"
                                     size="sm"
-                                    disabled={remainingQuantity === 0}
+                                    disabled={!isDeliveredItemsReady || remainingQuantity === 0}
                                     onClick={() =>
                                       handleReceivedQuantityChange(
                                         supplierItemNo,
@@ -444,7 +487,7 @@ export function OrderReceivedDialog({
                 </Button>
                 <Button
                   onClick={handleOrderReceived}
-                  disabled={isLoading || hasEmptyReceivedQuantity}
+                  disabled={isLoading || hasEmptyReceivedQuantity || !isDeliveredItemsReady}
                 >
                   {isLoading ? (
                     <Loader2 className="w-4 h-4 animate-spin mr-2" />

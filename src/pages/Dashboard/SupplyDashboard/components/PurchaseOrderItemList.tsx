@@ -22,7 +22,7 @@ import { Badge } from "@/components/ui/badge";
 import useStatusStore from "@/store";
 import Layout from "./Layout/SupplyDashboardLayout";
 import {
-  useGetItemsDelivered,
+  useGetItemsDeliveredInPurchaseRequest,
   useGetPurchaseOrder,
   useGetPurchaseOrderItem,
 } from "@/services/puchaseOrderServices";
@@ -168,14 +168,28 @@ export default function PurchaseOrderItemList() {
 }
 
 const ItemList = () => {
-  const { data, isLoading } = useGetItemsDelivered();
-  const itemDeliveredData = Array.isArray(data?.data) ? data.data : [];
+  const { pr_no, po_no } = useParams();
 
-  if (isLoading) return <Loading />;
+  const {
+    data,
+    isLoading,
+    isFetching,
+  } = useGetItemsDeliveredInPurchaseRequest({
+    pr_no,
+  });
+
+  const itemDeliveredData = Array.isArray(data?.data)
+    ? data.data.filter(
+        (item) => item.inspection_details?.po_details?.po_no === po_no
+      )
+    : [];
+
+  if (isLoading || isFetching) return <Loading />;
 
   return (
     <div className="border-none">
       <p className="font-bold">Items</p>
+
       <div className="grid grid-cols-6 gap-2 items-center border-b-2 py-4">
         <p className="text-base uppercase">Stock Property No.</p>
         <p className="text-base uppercase">Unit</p>
@@ -183,42 +197,54 @@ const ItemList = () => {
         <p className="text-base uppercase">Quantity</p>
         <p className="text-base uppercase">Unit Cost</p>
         <p className="text-base uppercase">Amount</p>
-        {/* <p className="text-base uppercase">Delivered Quantity</p> */}
       </div>
-      {itemDeliveredData?.length ? (
-        itemDeliveredData.map((item, index) => (
-          <div
-            key={item.inspection_details.po_details.po_no}
-            className="grid grid-cols-6 gap-2 items-center py-6 border-b-2"
-          >
-            <p className="text-sm">{index + 1}</p>
-            <p className="text-sm">
-              {item.item_details.item_quotation_details.item_details.unit}
-            </p>
-            <p className="text-sm">
-              {
-                item.item_details.item_quotation_details.item_details
-                  .item_description
-              }
-            </p>
-            <p className="text-sm">
-              {item.item_details.item_quotation_details.item_details.quantity}
-            </p>
-            <p className="text-sm">
-              {item.item_details.item_quotation_details.unit_price}
-            </p>
-            <p className="text-sm">
-              {Number(
-                item.item_details.item_quotation_details.item_details.quantity
-              ) * Number(item.item_details.item_quotation_details.unit_price)}
-            </p>
-            {/* <p className="text-sm">{item.quantity_delivered}</p> */}
-          </div>
-        ))
+
+      {itemDeliveredData.length > 0 ? (
+        itemDeliveredData.map((item) => {
+          const itemDetails =
+            item.item_details.item_quotation_details.item_details;
+
+          const unitPrice = Number(
+            item.item_details.item_quotation_details.unit_price
+          );
+
+          const quantity = Number(itemDetails.quantity);
+
+          return (
+            <div
+              key={item.delivery_id}
+              className="grid grid-cols-6 gap-2 items-center py-6 border-b-2"
+            >
+              <p className="text-sm">{itemDetails.stock_property_no}</p>
+
+              <p className="text-sm">{itemDetails.unit}</p>
+
+              <p className="text-sm">
+                {itemDetails.item_description}
+              </p>
+
+              <p className="text-sm">{itemDetails.quantity}</p>
+
+              <p className="text-sm">
+                {unitPrice.toFixed(2)}
+              </p>
+
+              <p className="text-sm">
+                {(quantity * unitPrice).toFixed(2)}
+              </p>
+            </div>
+          );
+        })
       ) : (
         <div className="w-full flex items-center flex-col">
-          <img src="/empty-box.svg" className="w-80 h-80" alt="Empty box" />
-          <p>It looks a bit empty here! Start by adding a new item.</p>
+          <img
+            src="/empty-box.svg"
+            className="w-80 h-80"
+            alt="Empty box"
+          />
+          <p>
+            It looks a bit empty here! Start by adding a new item.
+          </p>
         </div>
       )}
     </div>

@@ -1,29 +1,21 @@
+
 import { Loader2, Package } from "lucide-react";
 import Layout from "./components/Layout/SupplyDashboardLayout";
-import { useGetItemsDelivered } from "@/services/puchaseOrderServices";
+import { useGetInventoryDeliveredItems } from "@/services/puchaseOrderServices";
 import { DataTable } from "./components/data-table";
 import { inventoryColumns } from "./components/inventory-column";
 
 export default function ModernInventory() {
-  const { data: items_delivered, isLoading: itemsLoading } =
-    useGetItemsDelivered();
+  const {
+    data: items_delivered,
+    isLoading: itemsLoading,
+    isError,
+    error,
+  } = useGetInventoryDeliveredItems();
 
   const itemDeliveredData = Array.isArray(items_delivered?.data)
     ? items_delivered.data
     : [];
-
-
-  const flattenedItemDeliveredData = itemDeliveredData.map((item) => ({
-    ...item,
-    po_no: item.inspection_details.po_details.po_no,
-    item_description:
-      item.item_details.item_quotation_details.item_details.item_description,
-    unit: item.item_details.item_quotation_details.item_details.unit,
-    quantity: item.item_details.item_quantity,
-    unit_cost: item.item_details.item_cost,
-  }));
-
-  console.log(itemDeliveredData);
 
   return (
     <Layout>
@@ -36,9 +28,13 @@ export default function ModernInventory() {
         <div className="rounded-md">
           {itemsLoading ? (
             <Loader2 className="animate-spin" />
+          ) : isError ? (
+            <p className="text-red-500">
+              Failed to load inventory: {error.message}
+            </p>
           ) : (
             <DataTable
-              data={flattenedItemDeliveredData}
+              data={itemDeliveredData}
               columns={inventoryColumns}
             />
           )}

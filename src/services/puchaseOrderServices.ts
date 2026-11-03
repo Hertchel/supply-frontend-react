@@ -7,11 +7,12 @@ import {
   purchaseOrderType,
   InventoryCustodianSlipRequest,
   InventoryCustodianSlipResponse,
+   DeliveredItemsSummaryType,
 } from "@/types/request/purchase-order";
 import api from "@/api";
 import { handleError, handleSucess } from "@/utils/apiHelper";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
-import { purchaseOrderItemType_, purchaseOrdertype_ } from "@/types/response/purchase-order";
+import { purchaseOrderItemType_, purchaseOrdertype_,  } from "@/types/response/purchase-order";
 import { useMemo } from "react";
 import { AxiosError } from "axios";
 
@@ -92,6 +93,8 @@ export const usePurchaseOrderCancelledCount = () => {
   const cancelledCount = purchaseCancelled?.length;
   return { cancelledCount, isLoading };
 };
+
+
 
 export const addPurchaseOrder = async (
   data: purchaseOrderType
@@ -299,62 +302,110 @@ export const updateItemsDelivered = async ({
   }
 };
 
+
 export const useUpdateItemsDelivered = () => {
-  const queryClient = useQueryClient();
   return useMutation<
     ApiResponse<unknown>,
     Error,
-    { id: string; 
-      data: Partial<itemsDeliveredType> }
+    { id: string; data: Partial<itemsDeliveredType> }
   >({
     mutationFn: updateItemsDelivered,
-    mutationKey: ["inspection-reports"],
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["items-delivered"] });
-    },
+    mutationKey: ["items-delivered"],
   });
 };
 
+
 export const getItemsDelivered = async (): Promise<
+  ApiResponse<DeliveredItemsSummaryType[]>
+> => {
+  const response = await api.get<DeliveredItemsSummaryType[]>(
+    "api/items-delivered/"
+  );
+
+  return handleSucess(response);
+};
+
+export const useGetItemsDelivered = () => {
+  return useQuery<ApiResponse<DeliveredItemsSummaryType[]>, Error>({
+    queryFn: getItemsDelivered,
+    queryKey: ["items-delivered"],
+  });
+};
+
+export const getAllItemsDeliveredFull = async (): Promise<
   ApiResponse<_itemsDeliveredType[]>
 > => {
+  const response = await api.get<_itemsDeliveredType[]>(
+    "api/items-delivered/"
+  );
+
+  return handleSucess(response);
+};
+
+export const useGetAllItemsDeliveredFull = () => {
+  return useQuery<ApiResponse<_itemsDeliveredType[]>, Error>({
+    queryFn: getAllItemsDeliveredFull,
+    queryKey: ["items-delivered", "full"],
+  });
+};
+
+export type InventoryDeliveredItem = {
+  delivery_id: string;
+  po_no: string;
+  item_description: string;
+  unit: string;
+  quantity: number;
+  unit_cost: string | number;
+  quantity_delivered: number;
+};
+
+export const getInventoryDeliveredItems = async (): Promise<
+  ApiResponse<InventoryDeliveredItem[]>
+> => {
   try {
-    const response = await api.get<_itemsDeliveredType[]>(
-      "api/items-delivered/"
+    const response = await api.get<InventoryDeliveredItem[]>(
+      "api/items-delivered/inventory/"
     );
+
     return handleSucess(response);
   } catch (error) {
     return handleError(error);
   }
 };
 
-export const useGetItemsDelivered = () => {
-  return useQuery<ApiResponse<_itemsDeliveredType[]>, Error>({
-    queryFn: getItemsDelivered,
-    queryKey: ["items-delivered"],
+export const useGetInventoryDeliveredItems = () => {
+  return useQuery<ApiResponse<InventoryDeliveredItem[]>, Error>({
+    queryKey: ["inventory-delivered-items"],
+    queryFn: getInventoryDeliveredItems,
   });
 };
 
-export const GetItemsDeliveredInPurchaseRequest = async (filters: { pr_no?: string; }):Promise<ApiResponse<_itemsDeliveredType[]>> => {
-  try {
-    const params = new URLSearchParams();
+export const GetItemsDeliveredInPurchaseRequest = async (
+  filters: { pr_no?: string }
+): Promise<ApiResponse<_itemsDeliveredType[]>> => {
+  const params = new URLSearchParams();
 
-    if (filters.pr_no) params.append('pr_no', filters.pr_no);
-    console.log(params)
-    const response = await api.get("api/items-delivered/purchase-request/filter/", {params})
-    return handleSucess(response)
-  } catch (error) {
-    return handleError(error)
+  if (filters.pr_no) {
+    params.append("pr_no", filters.pr_no);
   }
-}
 
-export const useGetItemsDeliveredInPurchaseRequest = (filters: { pr_no?: string; }) => {
-  return useQuery({
+  const response = await api.get<_itemsDeliveredType[]>(
+    "api/items-delivered/purchase-request/filter/",
+    { params }
+  );
+
+  return handleSucess(response);
+};
+
+export const useGetItemsDeliveredInPurchaseRequest = (
+  filters: { pr_no?: string }
+) => {
+  return useQuery<ApiResponse<_itemsDeliveredType[]>>({
     queryKey: ["items-delivered", filters],
     queryFn: () => GetItemsDeliveredInPurchaseRequest(filters),
-    enabled: !!filters.pr_no, 
-  })
-} 
+    enabled: !!filters.pr_no,
+  });
+};
 
 export const useItemsDeliveredCount = () => {
   const { data } = useGetItemsDelivered();

@@ -18,6 +18,7 @@ import {
   Loader2,
   MapPinIcon,
   MoveHorizontal,
+  AlertCircle,
 } from "lucide-react";
 import { useEffect, useMemo, useState } from "react";
 import { Separator } from "@/components/ui/separator";
@@ -89,8 +90,15 @@ export const ItemDistributionList = () => {
 
   const isAlreadyDistributed = status === "Completed";
 
-  console.log(filteredItemsDeliveredData);
-  console.log("DELIVERED QUANTITY CHECK:");
+  const hasIncompleteItems = filteredItemsDeliveredData.some((item) => {
+    const received = Number(item.quantity_delivered || 0);
+
+    const required = Number(
+      item.item_details.item_quotation_details.item_details.quantity || 0
+    );
+
+    return received < required;
+  });
 
   filteredItemsDeliveredData.forEach((item) => {
     console.log({
@@ -109,7 +117,16 @@ export const ItemDistributionList = () => {
   };
 
   const handleDistributeClick = async () => {
+    // Prevent distribution if any item is incomplete
+    if (
+      hasIncompleteItems ||
+      filteredItemsDeliveredData.length === 0
+    ) {
+      return;
+    }
+
     await handleDistribute(pr_no!);
+
     if (isSuccess) {
       setMessageDialog({
         open: true,
@@ -166,21 +183,38 @@ export const ItemDistributionList = () => {
                       >
                         <Tooltip>
                           <TooltipTrigger asChild>
-                            <Button onClick={handleDistributeClick}>
-                              {isPendingDistribute ? (
-                                <Loader2 className="animate-spin" />
-                              ) : (
-                                "Distribute"
-                              )}
-                              <MoveHorizontal
-                                width={20}
-                                height={20}
-                                className="mx-2"
-                              />{" "}
-                            </Button>
+                            <span className="inline-flex cursor-not-allowed">
+                              <Button
+                                onClick={handleDistributeClick}
+                                disabled={
+                                  hasIncompleteItems ||
+                                  filteredItemsDeliveredData.length === 0 ||
+                                  isPendingDistribute
+                                }
+                              >
+                                {isPendingDistribute ? (
+                                  <Loader2 className="animate-spin" />
+                                ) : (
+                                  "Distribute"
+                                )}
+
+                                <MoveHorizontal
+                                  width={20}
+                                  height={20}
+                                  className="mx-2"
+                                />
+                              </Button>
+                            </span>
                           </TooltipTrigger>
+
                           <TooltipContent side="top">
-                            Click to distribute
+                            {hasIncompleteItems
+                              ? "Cannot distribute: Some items have incomplete received quantities."
+                              : filteredItemsDeliveredData.length === 0
+                                ? "Cannot distribute: No delivered items found."
+                                : isPendingDistribute
+                                  ? "Distribution is currently processing."
+                                  : "Click to distribute"}
                           </TooltipContent>
                         </Tooltip>
                       </TooltipProvider>
@@ -264,9 +298,43 @@ export const ItemDistributionList = () => {
                       }
                     </p>
                     <div className="flex items-center gap-2 text-gray-500">
-                      <span>
-                        {item.quantity_delivered}
-                      </span>
+                      {(() => {
+                        const received = Number(item.quantity_delivered || 0);
+
+                        const required = Number(
+                          item.item_details.item_quotation_details.item_details.quantity || 0
+                        );
+
+                        const lacking = Math.max(required - received, 0);
+                        const isIncomplete = received < required;
+
+                        return (
+                          <>
+                            <span>{received}</span>
+
+                            {isIncomplete && (
+                              <TooltipProvider>
+                                <Tooltip>
+                                  <TooltipTrigger asChild>
+                                    <span className="inline-flex cursor-help">
+                                      <AlertCircle
+                                        className="h-4 w-4 text-orange-500"
+                                      />
+                                    </span>
+                                  </TooltipTrigger>
+
+                                  <TooltipContent side="top">
+                                    <p>
+                                      Incomplete received quantity.
+                                      Still lacking {lacking} {lacking === 1 ? "unit" : "units"}.
+                                    </p>
+                                  </TooltipContent>
+                                </Tooltip>
+                              </TooltipProvider>
+                            )}
+                          </>
+                        );
+                      })()}
                     </div>
                     <p className="text-gray-500">
                       {item.item_details.item_quotation_details.unit_price}

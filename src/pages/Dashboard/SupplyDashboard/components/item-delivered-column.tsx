@@ -37,29 +37,24 @@ export const itemDeliveredColumns: ColumnDef<purchaseRequestType>[] = [
       }, [supplier_item?.data]);
 
       const itemsInPurchaseRequest = (pr_no: string) => {
-  return supplierItemData.filter((data) => {
+        return supplierItemData.filter((data) => {
 
-    const status =
-      data.supplier_details?.aoq_details?.pr_details?.status
-        ?.toLowerCase()
-        ?.trim();
+          const status =
+            data.supplier_details?.aoq_details?.pr_details?.status
+              ?.toLowerCase()
+              ?.trim();
 
-    return (
-      data.rfq_details.purchase_request === pr_no &&
-      [
-        "ready for distribution",
-        "completed",
-        "distributed",
-      ].includes(status)
-    );
-    
-  }).length;
-};
-
-      console.log(itemsInPurchaseRequest  )
-      console.log("ROW DATA:", row.original);
-console.log("PR NO:", row.getValue("pr_no"));
-
+          return (
+            data.rfq_details.purchase_request === pr_no &&
+            [
+              "ready for distribution",
+              "completed",
+              "distributed",
+            ].includes(status)
+          );
+          
+        }).length;
+      };
       const itemsCount = itemsInPurchaseRequest(row.getValue("pr_no"));
       return (
         <div className="w-[200px]">{itemsCount}</div>

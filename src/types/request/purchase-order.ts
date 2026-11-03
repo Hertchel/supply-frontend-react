@@ -198,6 +198,13 @@ export type _itemsDeliveredType = {
   is_partial: boolean;
 };
 
+export type DeliveredItemsSummaryType = {
+  delivery_id: string;
+  po_no: string;
+  supplier_item_no: string;
+  quantity_delivered: number;
+};
+  
 export type StockItemType = Omit<itemsDeliveredType, "id">;
 
 export type ICSItemRequest = {

@@ -60,7 +60,6 @@ export default function SupplyAOQ() {
 
   const isAllLoading =
     isPRLoading || isSupplierLoading || isSupplierItemLoading;
-  console.log(isAllLoading);
 
   const purchaseRequestData = useMemo(() => {
     return Array.isArray(purchase_request?.data) ? purchase_request.data : [];
@@ -73,8 +72,6 @@ export default function SupplyAOQ() {
   const supplierData = useMemo(() => {
     return Array.isArray(supplier?.data) ? supplier.data : [];
   }, [supplier]);
-
-  console.log(supplierData);
 
   const supplierItemData = useMemo(() => {
     return Array.isArray(supplier_item?.data) ? supplier_item.data : [];
@@ -95,27 +92,6 @@ export default function SupplyAOQ() {
         (item) => item.rfq_details?.purchase_request === pr_no
       );
 
-      console.log("=== DEBUG PR ===");
-      console.log("PR NO:", pr_no);
-      console.log(
-        "Selected supplier items:",
-        selectedItemsForPR.map((item) => ({
-          supplier: item.supplier_details?.supplier_no,
-          item_no: item.item_quotation_details?.item_details?.item_no,
-          description:
-            item.item_quotation_details?.item_details?.item_description,
-        }))
-      );
-
-      // Get all unique items that belong to this PR
-      const itemNos = [
-        ...new Set(
-          selectedItemsForPR.map(
-            (item) => item.item_quotation_details.item_details.item_no
-          )
-        ),
-      ];
-
       // A supplier is a winner if they were manually selected
       // for at least one item in the PR.
       const winningSupplierNos = [
@@ -125,28 +101,6 @@ export default function SupplyAOQ() {
             .filter((supplierNo): supplierNo is string => Boolean(supplierNo))
         ),
       ];
-
-      console.log("PR:", pr_no);
-      console.log("Selected Items:", selectedItemsForPR);
-      console.log("Items:", itemNos);
-      console.log("Winning Suppliers:", winningSupplierNos);
-      console.log(
-  "Winning Supplier Items:",
-  winningSupplierNos.map((supplierNo) => ({
-    supplierNo,
-    items: selectedItemsForPR
-      .filter(
-        (item) => item.supplier_details?.supplier_no === supplierNo
-      )
-      .map((item) => ({
-        itemNo: item.item_quotation_details?.item_details?.item_no,
-        description:
-          item.item_quotation_details?.item_details?.item_description,
-        quantity: item.item_quantity,
-      })),
-  }))
-);
-
       return supplierData.filter(
         (supplier) =>
           supplier.rfq_details?.purchase_request === pr_no &&
@@ -253,7 +207,6 @@ export default function SupplyAOQ() {
       const poNo = isMultipleSupplier ? poNoOfMultipleSupplier : pr_no;
       const totalAmount = calculateSupplierTotal(supplierNo, pr_no);
       const selectedSupplierItems = filterItemBySupplier(supplierNo, pr_no);
-      console.log("CREATING PURCHASE ORDER", poNo);
 
       try {
         await addPOMutation(
@@ -268,7 +221,6 @@ export default function SupplyAOQ() {
           {
             onSuccess: async (response: ApiResponse<purchaseOrderType>) => {
               if (response.status === "success") {
-                console.log("PO RESPONSE", response);
                 const po_no = response.data?.po_no;
                 const purchaseOrderItem = selectedSupplierItems.map((item) => {
                   return {
@@ -284,27 +236,20 @@ export default function SupplyAOQ() {
                 });
 
                 const results = await Promise.allSettled(
-  purchaseOrderItem.map(async (prItem) => {
+                  purchaseOrderItem.map(async (prItem) => {
 
-    console.log("SENDING PO ITEM", prItem);
+                  try {
+                    const result = await addPOItemMutation(prItem);
+                    console.log("PO ITEM SUCCESS", result);
+                    return result;
+                  } catch (error) {
+                    console.error("PO ITEM FAILED", error);
+                    throw error;
+                  }
+                })
+              );
 
-    try {
-      const result = await addPOItemMutation(prItem);
-
-      console.log("PO ITEM SUCCESS", result);
-
-      return result;
-
-    } catch (error) {
-
-      console.error("PO ITEM FAILED", error);
-
-      throw error;
-    }
-  })
-);
-
-console.log("ALL PO ITEM RESULTS", results);
+              console.log("ALL PO ITEM RESULTS", results);
                 setIsLoading(false);
 
                 setMessageDialog({
