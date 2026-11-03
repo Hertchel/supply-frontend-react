@@ -153,21 +153,15 @@ export const generateAOQPDF = async (
   // ============================================================
 
   worksheet.columns = [
-    { key: "no", width: 3.57 },
-    { key: "item", width: 34.43 },
-    { key: "quantity", width: 9.57 },
-    { key: "agencyPrice", width: 10.14 },
-
-    { key: "bidder1", width: 18.57 },
-    { key: "bidder2", width: 18.57 },
-    { key: "bidder3", width: 18.57 },
-
-    { key: "winningBidder", width: 35.71 },
-
-    { key: "supplier1", width: 16 },
-    { key: "supplier2", width: 16 },
-    { key: "supplier3", width: 16 },
-    { key: "supplier4", width: 16 },
+    { key: "A", width: 4.28 },
+    { key: "B", width: 35.14 },
+    { key: "C", width: 5.28 },
+    { key: "D", width: 5.85 },
+    { key: "E", width: 10.85 },
+    { key: "F", width: 19.28 },
+    { key: "G", width: 19.28 },
+    { key: "H", width: 19.28 },
+    { key: "I", width: 36.42 },
   ];
   // ============================================================
   // VERTICAL PAGE BREAK BETWEEN I AND J
@@ -234,6 +228,7 @@ export const generateAOQPDF = async (
   } as const;
 
   const moneyFormat = "₱#,##0.00";
+  const numberFormat = "#,##0.00";
 
   // ============================================================
   // TITLE
@@ -357,7 +352,6 @@ export const generateAOQPDF = async (
       break;
   }
 
-  //worksheet.getRow(2).height = Math.max(21, estimatedLines * 15);
   worksheet.getCell("C2").alignment = {
     horizontal: "left",
     vertical: "middle",
@@ -414,7 +408,7 @@ export const generateAOQPDF = async (
   worksheet.getRow(secondHeaderRow).height = 15.5;
 
   // Vertical merged headers
-  ["A", "B", "C", "D", "E", "I", "J", "K", "L", "M"].forEach((column) => {
+  ["A", "B", "E", "I", "J", "K", "L", "M"].forEach((column) => {
     worksheet.mergeCells(`${column}${headerRow}:${column}${secondHeaderRow}`);
   });
 
@@ -422,7 +416,7 @@ export const generateAOQPDF = async (
   worksheet.getCell(`A${headerRow}`).value = "No.";
   worksheet.getCell(`B${headerRow}`).value = "Items";
   worksheet.getCell(`C${headerRow}`).value = "Quantity";
-  worksheet.getCell(`D${headerRow}`).value = "Unit";
+  worksheet.mergeCells(`C${headerRow}:D${secondHeaderRow}`);
   worksheet.getCell(`E${headerRow}`).value = "Agency Price";
 
   worksheet.getCell(`F${headerRow}`).value = "BIDDER 1";
@@ -435,11 +429,6 @@ export const generateAOQPDF = async (
   worksheet.getCell(`F${secondHeaderRow}`).value = bidder1;
   worksheet.getCell(`G${secondHeaderRow}`).value = bidder2;
   worksheet.getCell(`H${secondHeaderRow}`).value = bidder3;
-
-  // Supplier summary headers
-  worksheet.getCell(`J${headerRow}`).value = bidder1;
-  worksheet.getCell(`K${headerRow}`).value = bidder2;
-  worksheet.getCell(`L${headerRow}`).value = bidder3;
 
   // Format headers
   for (let row = headerRow; row <= secondHeaderRow; row++) {
@@ -480,7 +469,9 @@ export const generateAOQPDF = async (
     const col = ["F", "G", "H"][index];
     const supplierNameWidth = worksheet.getColumn(col).width!;
 
-    const estimatedWidth = Math.ceil(bidder.length / (supplierNameWidth * 1.5));
+    const estimatedWidth = Math.ceil(
+      bidder.length / (supplierNameWidth * 1.25),
+    );
 
     highestEstimatedWidth = Math.max(highestEstimatedWidth, estimatedWidth);
 
@@ -501,32 +492,6 @@ export const generateAOQPDF = async (
     case 3:
       worksheet.getRow(secondHeaderRow).height = 43.5;
       break;
-  }
-
-  for (let row = headerRow; row <= secondHeaderRow; row++) {
-    for (let col = 10; col <= 13; col++) {
-      const cell = worksheet.getCell(row, col);
-
-      cell.fill = {
-        type: "pattern",
-        pattern: "solid",
-        fgColor: {
-          argb: GREEN,
-        },
-      };
-
-      cell.font = {
-        name: "Tahoma",
-        size: 9,
-        bold: true,
-      };
-
-      cell.alignment = {
-        horizontal: "center",
-        vertical: "middle",
-        wrapText: true,
-      };
-    }
   }
 
   // ============================================================
@@ -555,23 +520,6 @@ export const generateAOQPDF = async (
   };
 
   // ============================================================
-  // HELPER: SUPPLIER ITEM TOTAL
-  // ============================================================
-
-  /*const getQuotationAmount = (quotation: any) => {
-    if (quotation?.total_amount != null) {
-      return Number(quotation.total_amount);
-    }
-
-    const unitPrice = Number(quotation?.unit_price ?? 0);
-    const quantity = Number(
-      quotation?.quantity ?? quotation?.item_quantity ?? 1,
-    );
-
-    return unitPrice * quantity;
-  };*/
-
-  // ============================================================
   // ITEMS
   // ============================================================
 
@@ -585,8 +533,19 @@ export const generateAOQPDF = async (
     // Basic information
     worksheet.getCell(`A${rowNumber}`).value = index + 1;
 
-    worksheet.getCell(`B${rowNumber}`).value =
-      item.item_quotation_details?.item_details?.item_description ?? "";
+    const itemDescription = String(
+      item.item_quotation_details?.item_details?.item_description ?? "",
+    );
+
+    worksheet.getCell(`B${rowNumber}`).value = itemDescription;
+
+    // Estimate the number of lines based on column B width
+    const itemDescriptionWidth = worksheet.getColumn("B").width!;
+
+    const estimatedLines = Math.max(
+      1,
+      Math.ceil(itemDescription.length / (itemDescriptionWidth * 1.08)),
+    );
 
     worksheet.getCell(`C${rowNumber}`).value = item.item_quantity ?? "";
 
@@ -594,7 +553,7 @@ export const generateAOQPDF = async (
 
     worksheet.getCell(`E${rowNumber}`).value = Number(item.item_cost ?? 0);
 
-    worksheet.getCell(`E${rowNumber}`).numFmt = moneyFormat;
+    worksheet.getCell(`E${rowNumber}`).numFmt = numberFormat;
 
     // Find bidder quotations
     const bidder1Quotation = itemQuotations.find(
@@ -624,10 +583,6 @@ export const generateAOQPDF = async (
         ? Number(bidder3Quotation.total_amount)
         : "";
 
-    ["F", "G", "H"].forEach((column) => {
-      worksheet.getCell(`${column}${rowNumber}`).numFmt = moneyFormat;
-    });
-
     // Winning bidder
     worksheet.getCell(`I${rowNumber}`).value =
       item.rfq_details?.supplier_name ?? "";
@@ -637,17 +592,8 @@ export const generateAOQPDF = async (
       const cell = worksheet.getCell(rowNumber, col);
 
       cell.font = normalFont;
+
       cell.border = border;
-
-      cell.alignment = {
-        vertical: "middle",
-        wrapText: true,
-      };
-    }
-    for (let col = 10; col <= 13; col++) {
-      const cell = worksheet.getCell(rowNumber, col);
-
-      cell.font = normalFont;
 
       cell.alignment = {
         vertical: "middle",
@@ -670,6 +616,11 @@ export const generateAOQPDF = async (
       vertical: "middle",
     };
 
+    worksheet.getCell(`I${rowNumber}`).alignment = {
+      horizontal: "center",
+      vertical: "middle",
+    };
+
     ["E", "F", "G", "H"].forEach((column) => {
       worksheet.getCell(`${column}${rowNumber}`).alignment = {
         horizontal: "right",
@@ -677,13 +628,33 @@ export const generateAOQPDF = async (
       };
     });
 
-    worksheet.getCell(`I${rowNumber}`).alignment = {
-      horizontal: "center",
+    worksheet.getCell(`B${rowNumber}`).alignment = {
+      horizontal: "left",
       vertical: "middle",
       wrapText: true,
     };
 
-    worksheet.getRow(rowNumber).height = 45;
+    // Dynamic row height
+    switch (estimatedLines) {
+      case 1:
+        worksheet.getRow(rowNumber).height = 21;
+        break;
+      case 2:
+        worksheet.getRow(rowNumber).height = 25;
+        break;
+      case 3:
+        worksheet.getRow(rowNumber).height = 34;
+        break;
+      case 4:
+        worksheet.getRow(rowNumber).height = 42;
+        break;
+      case 5:
+        worksheet.getRow(rowNumber).height = 51.5;
+        break;
+      case 6:
+        worksheet.getRow(rowNumber).height = 62.5;
+        break;
+    }
   });
 
   // ============================================================
@@ -706,112 +677,52 @@ export const generateAOQPDF = async (
     const cell = worksheet.getCell(`${column}${firstItemRow}`);
 
     cell.value = total;
-    cell.numFmt = moneyFormat;
+    cell.numFmt = numberFormat;
     cell.font = normalFont;
     cell.alignment = {
-      horizontal: "center",
+      horizontal: "right",
       vertical: "middle",
     };
   });
-  //worksheet.mergeCells(`I${firstItemRow}:I${totalRow}`); // Merge winning bidder column for all items
-
-  /*worksheet.mergeCells(`A${totalRow}:I${totalRow}`);
-
-  worksheet.getCell(`A${totalRow}`).value = "";
-
-  worksheet.getCell(`A${totalRow}`).font = boldFont;
-
-  worksheet.getCell(`A${totalRow}`).alignment = {
-    horizontal: "right",
-    vertical: "middle",
-  };
-
-  // Bidder totals
-  ["F", "G", "H"].forEach((column) => {
+  bidderColumns.forEach(({ column, total }) => {
     const cell = worksheet.getCell(`${column}${totalRow}`);
-
-    cell.value = {
-      formula: `SUM(${column}${firstItemRow}:${column}${totalRow - 1})`,
-    };
-
-    cell.numFmt = moneyFormat;
+    cell.value = total;
+    cell.numFmt = numberFormat;
     cell.font = boldFont;
-
     cell.alignment = {
       horizontal: "right",
       vertical: "middle",
     };
   });
 
-  // Winning bidder total row
-  worksheet.getCell(`I${totalRow}`).value = lowestSupplierName;
-
-  worksheet.getCell(`I${totalRow}`).font = boldFont;
-
-  worksheet.getCell(`I${totalRow}`).alignment = {
-    horizontal: "center",
-    vertical: "middle",
-    wrapText: true,
-  };
-
-  for (let col = 1; col <= 9; col++) {
-    worksheet.getCell(totalRow, col).border = border;
+  for (let row = firstItemRow; row <= totalRow - 1; row++) {
+    for (let col = 1; col <= 8; col++) {
+      worksheet.getCell(row, col).font = {
+        ...worksheet.getCell(row, col).font,
+        size: 8,
+      };
+    }
   }
 
-  worksheet.getRow(totalRow).height = 25;
-
-  // ============================================================
-  // SUPPLIER TOTALS - J TO M
-  // ============================================================
-
-  const supplierNames = [bidder1, bidder2, bidder3, bidder4];
-
-  const supplierColumns = ["J", "K", "L", "M"];
-
-  supplierColumns.forEach((column, index) => {
-    const supplierName = supplierNames[index];
-
-    const supplierTotal = quotations
-      .filter((quotation) => quotation.supplier_name === supplierName)
-      .reduce((total, quotation) => total + getQuotationAmount(quotation), 0);
-
-    const cell = worksheet.getCell(`${column}${totalRow}`);
-
-    cell.value = supplierName ? supplierTotal : "";
-
-    cell.numFmt = moneyFormat;
-
-    cell.font = {
-      name: "Tahoma",
-      size: 9,
-      bold: true,
-      color: { argb: RED },
-    };
-
-    cell.alignment = {
-      horizontal: "right",
-      vertical: "middle",
-    };
-  });
-*/
   // ============================================================
   // LOWEST COMPLYING SUPPLIER
   // ============================================================
 
   worksheet.mergeCells(`A${totalRow}:E${totalRow}`);
+  worksheet.getRow(totalRow).height = 21;
+  worksheet.getRow(totalRow).font = {
+    name: "Tahoma",
+    size: 8,
+    bold: true,
+    italic: true,
+  };
 
   worksheet.getCell(`A${totalRow}`).value = "Lowest Complying Supplier";
-
-  worksheet.getCell(`A${totalRow}`).font = boldFont;
 
   worksheet.getCell(`A${totalRow}`).alignment = {
     horizontal: "right",
     vertical: "middle",
   };
-
-  worksheet.getCell(`F${totalRow}`).value = "";
-  worksheet.getCell(`G${totalRow}`).value = "";
-  worksheet.getCell(`H${totalRow}`).value = "";
 
   worksheet.getCell(`I${totalRow}`).value = lowestSupplierName;
 
@@ -823,11 +734,6 @@ export const generateAOQPDF = async (
     wrapText: true,
   };
   worksheet.mergeCells(`I${firstItemRow}`, `I${totalRow}`);
-
-  worksheet.getCell(`J${totalRow}`).value = "";
-  worksheet.getCell(`K${totalRow}`).value = "";
-  worksheet.getCell(`L${totalRow}`).value = "";
-  worksheet.getCell(`M${totalRow}`).value = "";
 
   for (let col = 1; col <= 9; col++) {
     worksheet.getCell(totalRow, col).border = border;
@@ -941,6 +847,26 @@ export const generateAOQPDF = async (
     data[0]?.supplier_details?.aoq_details?.pr_details?.campus_director_details
       ?.designation ?? "";
   worksheet.getCell(`H${bacStartRow + 11}`).alignment = centered;
+
+  // ============================================================
+  // Certification Lines Heights
+  // ============================================================
+
+  worksheet.getRow(totalRow + 1).height = 17;
+  worksheet.getRow(totalRow + 2).height = 11.25;
+  worksheet.getRow(totalRow + 3).height = 17;
+  worksheet.getRow(totalRow + 4).height = 11.25;
+  worksheet.getRow(totalRow + 5).height = 15.5;
+  worksheet.getRow(totalRow + 6).height = 11.25;
+  worksheet.getRow(totalRow + 7).height = 11.25;
+  worksheet.getRow(totalRow + 8).height = 14.5;
+  worksheet.getRow(totalRow + 9).height = 15;
+  worksheet.getRow(totalRow + 10).height = 13.25;
+  worksheet.getRow(totalRow + 11).height = 11.25;
+  worksheet.getRow(totalRow + 12).height = 7.5;
+  worksheet.getRow(totalRow + 13).height = 11.25;
+  worksheet.getRow(totalRow + 14).height = 13.25;
+  worksheet.getRow(totalRow + 15).height = 13.25;
 
   // ============================================================
   // FOOTER
