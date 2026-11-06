@@ -53,7 +53,6 @@ const Login = () => {
           navigate("/");
 
           toast({
-            title: "Success",
             description: successMessage,
           });
         },
