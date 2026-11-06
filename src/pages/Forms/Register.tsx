@@ -150,13 +150,13 @@ const Register = () => {
       <div className="min-w-0 space-y-1.5">
         <Label
           htmlFor={fieldName}
-          className="text-xs font-semibold text-slate-700 sm:text-sm"
+          className="text-xs font-semibold text-gray-800 sm:text-sm"
         >
           {label}
         </Label>
 
         <div className="relative">
-          <div className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400">
+          <div className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-500">
             {icon}
           </div>
 
@@ -180,9 +180,9 @@ const Register = () => {
                     : "off"
             }
             {...register(fieldName)}
-            className={`h-11 rounded-lg border-slate-200 bg-slate-50 pl-10 ${
+            className={`h-11 rounded-lg border-slate-200 bg-slate-100 pl-10 ${
               isPassword ? "pr-10" : "pr-3"
-            } text-sm placeholder:text-slate-400 transition-all focus-visible:border-[#A52A16] focus-visible:ring-[#A52A16]/20 ${
+            } text-sm placeholder:text-slate-500 transition-all focus-visible:border-orange-300 focus-visible:ring-orange-300/20 ${
               errors[fieldName] ? "border-red-400" : ""
             }`}
           />
@@ -190,7 +190,7 @@ const Register = () => {
           {isPassword && togglePassword && (
             <button
               type="button"
-              className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-400 transition-colors hover:text-slate-700"
+              className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-500 transition-colors hover:text-gray-800"
               onClick={togglePassword}
               aria-label={
                 passwordVisible ? "Hide password" : "Show password"
@@ -215,11 +215,11 @@ const Register = () => {
   };
 
   return (
-    <div className="flex min-h-screen items-center justify-center bg-slate-100 p-0 sm:p-5 lg:p-8">
-      <div className="flex min-h-screen w-full max-w-[1150px] overflow-hidden bg-white shadow-xl sm:min-h-[700px] sm:rounded-2xl lg:min-h-[740px]">
+    <div className="min-h-screen w-full bg-white">
+      <div className="flex min-h-screen w-full overflow-hidden bg-white">
 
         {/* LEFT PANEL */}
-        <div className="relative hidden w-[44%] flex-col justify-between overflow-hidden bg-[#762719] p-10 text-white lg:flex xl:p-12">
+        <div className="relative hidden min-h-screen w-[50%] flex-col justify-between overflow-hidden bg-orange-300 p-10 text-gray-800 lg:flex xl:p-14">
 
           {/* Background Image */}
           <div
@@ -229,12 +229,12 @@ const Register = () => {
             }}
           />
 
-          {/* Dark Red Overlay */}
-          <div className="absolute inset-0 bg-gradient-to-br from-[#672014]/95 via-[#8D2B19]/85 to-[#B64A20]/75" />
+          {/* Orange Overlay */}
+          <div className="absolute inset-0 bg-orange-300/85" />
 
           {/* Branding */}
           <div className="relative z-10 flex items-center gap-3">
-            <div className="flex h-12 w-12 items-center justify-center rounded-full bg-white/95 p-1.5 shadow-md">
+            <div className="flex h-12 w-12 items-center justify-center rounded-full bg-white p-1.5 shadow-md">
               <img
                 src="/CTU_new_logotransparent.svg"
                 alt="Cebu Technological University Logo"
@@ -243,10 +243,10 @@ const Register = () => {
             </div>
 
             <div>
-              <h1 className="text-xl font-bold tracking-tight">
+              <h1 className="text-xl font-bold tracking-tight text-gray-800">
                 CTU Supply Office
               </h1>
-              <p className="text-xs text-white/75">
+              <p className="text-xs text-gray-800">
                 Cebu Technological University
               </p>
             </div>
@@ -254,13 +254,13 @@ const Register = () => {
 
           {/* Main Introduction */}
           <div className="relative z-10 max-w-lg space-y-6">
-            <div className="inline-flex items-center gap-2 rounded-full border border-white/20 bg-white/15 px-4 py-2 text-xs font-semibold tracking-wide text-white backdrop-blur-sm">
+            <div className="inline-flex items-center gap-2 rounded-full border border-white bg-white px-4 py-2 text-xs font-semibold tracking-wide text-gray-800">
               <ShieldCheck className="h-4 w-4" />
               SECURE INSTITUTIONAL ACCESS
             </div>
 
             <div className="space-y-3">
-              <h2 className="text-4xl font-bold leading-tight tracking-tight xl:text-[44px]">
+              <h2 className="text-4xl font-bold leading-tight tracking-tight text-gray-800 xl:text-[44px]">
                 Join the
                 <br />
                 Supply Management
@@ -268,7 +268,7 @@ const Register = () => {
                 System.
               </h2>
 
-              <p className="max-w-md text-sm leading-7 text-white/80 xl:text-base">
+              <p className="max-w-md text-sm leading-7 text-gray-800 xl:text-base">
                 Create your institutional account to access procurement
                 workflows, inventory monitoring, purchase requests, and
                 supply distribution services.
@@ -277,32 +277,32 @@ const Register = () => {
           </div>
 
           {/* Footer */}
-          <div className="relative z-10 flex items-center justify-between border-t border-white/20 pt-5">
+          <div className="relative z-10 flex items-center justify-between border-t border-white pt-5">
             <div className="flex items-center gap-3">
               <img
                 src="/CTU_new_logotransparent.svg"
                 alt="CTU"
-                className="h-8 w-8 rounded-full bg-white/90 p-1 object-contain"
+                className="h-8 w-8 rounded-full bg-white p-1 object-contain"
               />
 
               <div>
-                <p className="text-xs font-semibold">
+                <p className="text-xs font-semibold text-gray-800">
                   Cebu Technological University
                 </p>
-                <p className="text-[10px] text-white/65">
+                <p className="text-[10px] text-gray-800">
                   Argao Campus
                 </p>
               </div>
             </div>
 
-            <p className="text-[10px] text-white/65">
+            <p className="text-[10px] text-gray-800">
               © {new Date().getFullYear()} CTU
             </p>
           </div>
         </div>
 
         {/* RIGHT PANEL */}
-        <div className="flex w-full flex-col justify-center px-6 py-8 sm:px-10 lg:w-[56%] lg:px-12 xl:px-14">
+        <div className="flex min-h-screen w-full flex-col justify-center px-6 py-10 sm:px-12 lg:w-[50%] lg:px-16 xl:px-24">
 
           {/* Mobile Branding */}
           <div className="mb-7 flex items-center justify-center gap-3 lg:hidden">
@@ -313,7 +313,7 @@ const Register = () => {
             />
 
             <div>
-              <h1 className="text-lg font-bold text-slate-800">
+              <h1 className="text-lg font-bold text-gray-800">
                 CTU Supply Office
               </h1>
               <p className="text-xs text-slate-500">
@@ -326,7 +326,7 @@ const Register = () => {
 
             {/* Heading */}
             <div className="mb-6 space-y-2">
-              <h2 className="text-3xl font-bold tracking-tight text-slate-800 sm:text-[34px]">
+              <h2 className="text-3xl font-bold tracking-tight text-gray-800 sm:text-[34px]">
                 Create Your Account
               </h2>
 
@@ -389,18 +389,18 @@ const Register = () => {
                 })}
 
                 <div className="min-w-0 space-y-1.5">
-                  <Label className="text-xs font-semibold text-slate-700 sm:text-sm">
+                  <Label className="text-xs font-semibold text-gray-800 sm:text-sm">
                     Account Role
                   </Label>
 
                   <Select onValueChange={handleRoleChange}>
                     <SelectTrigger
-                      className={`h-11 rounded-lg border-slate-200 bg-slate-50 text-sm focus:ring-[#A52A16]/20 ${
+                      className={`h-11 rounded-lg border-slate-200 bg-slate-100 text-sm focus:ring-orange-300/20 ${
                         errors.role ? "border-red-400" : ""
                       }`}
                     >
                       <div className="flex min-w-0 items-center gap-2">
-                        <BriefcaseBusiness className="h-[17px] w-[17px] shrink-0 text-slate-400" />
+                        <BriefcaseBusiness className="h-[17px] w-[17px] shrink-0 text-slate-500" />
                         <SelectValue placeholder="Select role" />
                       </div>
                     </SelectTrigger>
@@ -457,7 +457,7 @@ const Register = () => {
               <Button
                 type="submit"
                 disabled={isloading}
-                className="mt-3 h-12 w-full rounded-lg bg-[#922D1A] text-sm font-semibold text-white shadow-md shadow-[#922D1A]/20 transition-all hover:bg-[#752214] hover:shadow-lg disabled:opacity-70"
+                className="mt-3 h-12 w-full rounded-lg bg-orange-300 text-sm font-semibold text-white shadow-md transition-all hover:bg-orange-200 disabled:opacity-70"
               >
                 {isloading ? (
                   <>
@@ -479,7 +479,7 @@ const Register = () => {
                 Already have an account?{" "}
                 <Link
                   to="/"
-                  className="font-semibold text-[#96321F] hover:text-[#6F2115] hover:underline"
+                  className="font-semibold text-gray-800 hover:text-gray-800 hover:underline"
                 >
                   Sign In
                 </Link>
@@ -487,7 +487,7 @@ const Register = () => {
             </div>
 
             {/* Mobile Footer */}
-            <p className="mt-7 text-center text-xs text-slate-400 lg:hidden">
+            <p className="mt-7 text-center text-xs text-slate-500 lg:hidden">
               © {new Date().getFullYear()} Cebu Technological University
             </p>
           </div>

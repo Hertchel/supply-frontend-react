@@ -1,10 +1,32 @@
-/* eslint-disable react-hooks/rules-of-hooks */
+
 import { ColumnDef } from "@tanstack/react-table";
 import { DataTableColumnHeader } from "./data-table-column-header";
 import { purchaseRequestType } from "@/types/response/puchase-request";
 import { useGetAllSupplierItem } from "@/services/AbstractOfQuotationServices";
 import { useMemo } from "react";
 import { ItemDistributedActions } from "./item-distributed-action";
+
+// Separate component for counting supplier items
+const ItemsCountCell = ({ prNo }: { prNo: string }) => {
+  const { data: supplier_item } = useGetAllSupplierItem();
+
+  const supplierItemData = useMemo(() => {
+    return Array.isArray(supplier_item?.data)
+      ? supplier_item.data
+      : [];
+  }, [supplier_item?.data]);
+
+  const itemsCount = supplierItemData.filter((data) => {
+    return (
+      data != null &&
+      data.rfq_details?.purchase_request === prNo &&
+      data.supplier_details?.aoq_details?.pr_details?.status ===
+        "Completed"
+    );
+  }).length;
+
+  return <div className="w-[200px]">{itemsCount}</div>;
+};
 
 export const itemDistributedColumns: ColumnDef<purchaseRequestType>[] = [
   {
@@ -17,7 +39,9 @@ export const itemDistributedColumns: ColumnDef<purchaseRequestType>[] = [
         <div className="flex space-x-2">
           <span className="max-w-[300px] truncate font-medium">
             <div className="flex items-center">
-              <p className="font-thin text-sm">{row.getValue("pr_no")}</p>
+              <p className="font-thin text-sm">
+                {row.getValue("pr_no")}
+              </p>
             </div>
           </span>
         </div>
@@ -30,20 +54,10 @@ export const itemDistributedColumns: ColumnDef<purchaseRequestType>[] = [
       <DataTableColumnHeader column={column} title="ITEMS" />
     ),
     cell: ({ row }) => {
-      const { data: supplier_item } = useGetAllSupplierItem();
-
-      const supplierItemData = useMemo(() => {
-        return Array.isArray(supplier_item?.data) ? supplier_item.data : [];
-      }, [supplier_item?.data]);
-
-      const itemsInPurchaseRequest = (pr_no: string) => {
-        return supplierItemData.filter(
-          (data) => data.rfq_details.purchase_request === pr_no && data.supplier_details.aoq_details.pr_details.status === "Completed"
-        ).length;
-      };
-      const itemsCount = itemsInPurchaseRequest(row.getValue("pr_no"));
       return (
-        <div className="w-[200px]">{itemsCount}</div>
+        <ItemsCountCell
+          prNo={row.getValue<string>("pr_no")}
+        />
       );
     },
     enableSorting: false,
@@ -58,7 +72,9 @@ export const itemDistributedColumns: ColumnDef<purchaseRequestType>[] = [
       return (
         <div className="flex space-x-2">
           <span className="max-w-[500px] font-medium">
-            <p className="font-thin text-sm">{row.getValue("name")}</p>
+            <p className="font-thin text-sm">
+              {row.getValue("name")}
+            </p>
           </span>
         </div>
       );
