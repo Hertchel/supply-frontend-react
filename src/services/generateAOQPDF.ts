@@ -11,6 +11,20 @@ export const generateAOQPDF = async (
   const items = Array.isArray(data) ? data : [];
   const quotations = Array.isArray(quotationsForPR) ? quotationsForPR : [];
 
+  // Convert a 1-based Excel column number to its letter (1 = A, 27 = AA).
+  const getExcelColumnLetter = (columnNumber: number): string => {
+    let column = columnNumber;
+    let result = "";
+
+    while (column > 0) {
+      const remainder = (column - 1) % 26;
+      result = String.fromCharCode(65 + remainder) + result;
+      column = Math.floor((column - 1) / 26);
+    }
+
+    return result;
+  };
+
   if (items.length === 0) {
     console.error("No data available");
     return null;
@@ -38,15 +52,17 @@ export const generateAOQPDF = async (
     hour12: true,
   });
 
-  // Unique suppliers
-  // Get supplier name from the quotation data
+  // ============================================================
+  // DYNAMIC BIDDER PROCESSING
+  // ============================================================
+
   const getSupplierName = (quotation: any): string =>
     quotation?.supplier_details?.name ??
     quotation?.rfq_details?.supplier_name ??
     quotation?.supplier_name ??
     "";
 
-  // Get unique suppliers from all quotations for this PR
+  // Preserve the order in which each supplier first appears in the RFQ data.
   const uniqueBidders = quotations.filter((quotation, index, self) => {
     const supplierName = getSupplierName(quotation);
 
@@ -59,11 +75,32 @@ export const generateAOQPDF = async (
     );
   });
 
-  const bidder1 = uniqueBidders[0] ? getSupplierName(uniqueBidders[0]) : "";
-  const bidder2 = uniqueBidders[1] ? getSupplierName(uniqueBidders[1]) : "";
-  const bidder3 = uniqueBidders[2] ? getSupplierName(uniqueBidders[2]) : "";
+  // Bidder columns start at F (column 6). The winning bidder follows them.
+  const bidderColumns = uniqueBidders.map((quotation, index) => ({
+    name: getSupplierName(quotation),
+    columnIndex: 6 + index,
+    columnLetter: getExcelColumnLetter(6 + index),
+    total: 0,
+  }));
 
-  // Calculate each supplier's total quotation for the entire PR
+  const winningColumnIndex = 6 + bidderColumns.length;
+  const winningColumn = getExcelColumnLetter(winningColumnIndex);
+
+  // Keep at least columns A:I because the project information and BAC
+  // certification sections still use columns H and I.
+  const lastColumnIndex = Math.max(9, winningColumnIndex);
+  const lastColumnLetter = getExcelColumnLetter(lastColumnIndex);
+
+  let rightSideLabelLetter = "";
+  let rightSideValuesLetter = "";
+  if (bidderColumns.length === 3) {
+    rightSideLabelLetter = getExcelColumnLetter(lastColumnIndex - 1);
+    rightSideValuesLetter = getExcelColumnLetter(lastColumnIndex);
+  } else {
+    rightSideLabelLetter = getExcelColumnLetter(lastColumnIndex - 2);
+    rightSideValuesLetter = getExcelColumnLetter(lastColumnIndex - 1);
+  }
+
   const getSupplierTotal = (supplierName: string): number => {
     if (!supplierName) return 0;
 
@@ -75,9 +112,9 @@ export const generateAOQPDF = async (
       );
   };
 
-  const bidder1Total = getSupplierTotal(bidder1);
-  const bidder2Total = getSupplierTotal(bidder2);
-  const bidder3Total = getSupplierTotal(bidder3);
+  bidderColumns.forEach((bidder) => {
+    bidder.total = getSupplierTotal(bidder.name);
+  });
 
   // ============================================================
   // FIND LOWEST SUPPLIER
@@ -126,11 +163,11 @@ export const generateAOQPDF = async (
   // ============================================================
 
   worksheet.pageSetup = {
-    paperSize: 9,
+    paperSize: 5,
     orientation: "landscape",
 
-    fitToPage: false,
-    fitToWidth: 0,
+    fitToPage: true,
+    fitToWidth: 1,
     fitToHeight: 0,
 
     horizontalDpi: 300,
@@ -149,40 +186,37 @@ export const generateAOQPDF = async (
   worksheet.pageSetup.horizontalCentered = false;
 
   // ============================================================
-  // COLUMN WIDTHS - A TO M
+  // DYNAMIC COLUMN WIDTHS
   // ============================================================
 
-  worksheet.columns = [
-    { key: "A", width: 4.28 },
-    { key: "B", width: 35.14 },
-    { key: "C", width: 5.28 },
-    { key: "D", width: 5.85 },
-    { key: "E", width: 10.85 },
-    { key: "F", width: 19.28 },
-    { key: "G", width: 19.28 },
-    { key: "H", width: 19.28 },
-    { key: "I", width: 36.42 },
-  ];
-  // ============================================================
-  // VERTICAL PAGE BREAK BETWEEN I AND J
-  // ============================================================
-
-  const worksheetModel = worksheet.model as any;
-
-  worksheetModel.pageSetup = worksheetModel.pageSetup || {};
-
-  worksheetModel.pageSetup.fitToPage = false;
-
-  // Add vertical page break before column J
-  worksheetModel.pageBreaks = {
-    rowBreaks: [],
-    colBreaks: [
-      {
-        id: 10,
-        max: 16383,
-      },
-    ],
+  const fixedWidths: Record<number, number> = {
+    1: 4.28,
+    2: 35.14,
+    3: 5.28,
+    4: 5.85,
+    5: 10.85,
   };
+
+  worksheet.columns = Array.from({ length: lastColumnIndex }, (_, index) => {
+    const columnNumber = index + 1;
+    const bidder = bidderColumns.find(
+      (candidate) => candidate.columnIndex === columnNumber,
+    );
+
+    if (fixedWidths[columnNumber] !== undefined) {
+      return { width: fixedWidths[columnNumber] };
+    }
+
+    if (bidder) {
+      return { width: 19.28 };
+    }
+
+    if (columnNumber === winningColumnIndex) {
+      return { width: 36.42 };
+    }
+
+    return { width: 19.28 };
+  });
 
   // ============================================================
   // COLORS AND STYLES
@@ -234,7 +268,7 @@ export const generateAOQPDF = async (
   // TITLE
   // ============================================================
 
-  worksheet.mergeCells("A1:I1");
+  worksheet.mergeCells(`A1:${lastColumnLetter}1`);
 
   worksheet.getCell("A1").value = "ABSTRACT OF QUOTATIONS";
 
@@ -258,10 +292,10 @@ export const generateAOQPDF = async (
   // Information formatting
   for (let row = 2; row <= 6; row++) {
     const leftLabel = worksheet.getCell(`B${row}`);
-    const rightLabel = worksheet.getCell(`H${row}`);
+    const rightLabel = worksheet.getCell(`${rightSideLabelLetter}${row}`);
 
     const leftValue = worksheet.getCell(`C${row}`);
-    const rightValue = worksheet.getCell(`I${row}`);
+    const rightValue = worksheet.getCell(`${rightSideValuesLetter}${row}`);
 
     leftLabel.font = normalFont;
     rightLabel.font = normalFont;
@@ -282,13 +316,11 @@ export const generateAOQPDF = async (
     leftValue.alignment = {
       horizontal: "left",
       vertical: "middle",
-      wrapText: true,
     };
 
     rightValue.alignment = {
       horizontal: "left",
       vertical: "middle",
-      wrapText: true,
     };
     worksheet.getRow(row).height = 13.25;
   }
@@ -304,13 +336,13 @@ export const generateAOQPDF = async (
     bold: true,
   };
 
-  worksheet.getCell("H6").font = {
+  worksheet.getCell(`${rightSideLabelLetter}6`).font = {
     name: "Tahoma",
     size: 9,
     bold: true,
     color: { argb: BLUE },
   };
-  worksheet.getCell("I6").font = {
+  worksheet.getCell(`${rightSideValuesLetter}6`).font = {
     name: "Tahoma",
     size: 9,
     bold: true,
@@ -369,33 +401,35 @@ export const generateAOQPDF = async (
   worksheet.getCell("C6").numFmt = moneyFormat;
 
   // Merge left values
-  worksheet.mergeCells("C2:G2");
-  worksheet.mergeCells("C3:G3");
-  worksheet.mergeCells("C4:G4");
-  worksheet.mergeCells("C5:G5");
-  worksheet.mergeCells("C6:G6");
+  worksheet.mergeCells(`C2:G2`);
+  worksheet.mergeCells(`C3:G3`);
+  worksheet.mergeCells(`C4:G4`);
+  worksheet.mergeCells(`C5:G5`);
+  worksheet.mergeCells(`C6:G6`);
 
   // Right side
-  worksheet.getCell("H2").value = "# of Sheets:";
-  worksheet.getCell("H2").alignment = {
+  worksheet.getCell(`${rightSideLabelLetter}2`).value = "# of Sheets:";
+  worksheet.getCell(`${rightSideLabelLetter}2`).alignment = {
     horizontal: "right",
     vertical: "bottom",
   };
-  worksheet.getCell("H3").value = "Award Resolution No.:";
-  worksheet.getCell("H4").value = "Date & Time:";
-  worksheet.getCell("H5").value = "Mode of Procurement:";
-  worksheet.getCell("H6").value = "PR/Control No.:";
+  worksheet.getCell(`${rightSideLabelLetter}3`).value = "Award Resolution No.:";
+  worksheet.getCell(`${rightSideLabelLetter}4`).value = "Date & Time:";
+  worksheet.getCell(`${rightSideLabelLetter}5`).value = "Mode of Procurement:";
+  worksheet.getCell(`${rightSideLabelLetter}6`).value = "PR/Control No.:";
 
-  worksheet.getCell("I2").value = 1;
-  worksheet.getCell("I2").alignment = {
+  //worksheet.getCell(`${rightSideValuesLetter}2`).value = 1;
+  worksheet.getCell(`${rightSideValuesLetter}2`).alignment = {
     horizontal: "left",
     vertical: "bottom",
   };
-  worksheet.getCell("I3").value = "N/A";
-  worksheet.getCell("I4").value = dateTime;
-  worksheet.getCell("I5").value = "34-Small Value Procurement";
+  worksheet.getCell(`${rightSideValuesLetter}3`).value = "N/A";
+  worksheet.getCell(`${rightSideValuesLetter}4`).value = dateTime;
+  worksheet.getCell(`${rightSideValuesLetter}5`).value =
+    "34-Small Value Procurement";
 
-  worksheet.getCell("I6").value = prDetails?.pr_no ?? "";
+  worksheet.getCell(`${rightSideValuesLetter}6`).value = prDetails?.pr_no ?? "";
+
   worksheet.getRow(7).height = 7.5;
 
   // ============================================================
@@ -407,40 +441,38 @@ export const generateAOQPDF = async (
   worksheet.getRow(headerRow).height = 15.5;
   worksheet.getRow(secondHeaderRow).height = 15.5;
 
-  // Vertical merged headers
-  ["A", "B", "E", "I", "J", "K", "L", "M"].forEach((column) => {
+  // Fixed vertically merged headers.
+  ["A", "B", "E", winningColumn].forEach((column) => {
     worksheet.mergeCells(`${column}${headerRow}:${column}${secondHeaderRow}`);
   });
 
-  // Main headers
+  // Quantity spans columns C and D.
+  worksheet.mergeCells(`C${headerRow}:D${secondHeaderRow}`);
+
   worksheet.getCell(`A${headerRow}`).value = "No.";
   worksheet.getCell(`B${headerRow}`).value = "Items";
   worksheet.getCell(`C${headerRow}`).value = "Quantity";
-  worksheet.mergeCells(`C${headerRow}:D${secondHeaderRow}`);
   worksheet.getCell(`E${headerRow}`).value = "Agency Price";
 
-  worksheet.getCell(`F${headerRow}`).value = "BIDDER 1";
-  worksheet.getCell(`G${headerRow}`).value = "BIDDER 2";
-  worksheet.getCell(`H${headerRow}`).value = "BIDDER 3";
+  // Create one bidder header for every unique supplier in the RFQ.
+  bidderColumns.forEach((bidder, index) => {
+    worksheet.getCell(`${bidder.columnLetter}${headerRow}`).value =
+      `BIDDER ${index + 1}`;
+    worksheet.getCell(`${bidder.columnLetter}${secondHeaderRow}`).value =
+      bidder.name;
+  });
 
-  worksheet.getCell(`I${headerRow}`).value = "WINNING BIDDER";
+  worksheet.getCell(`${winningColumn}${headerRow}`).value = "WINNING BIDDER";
 
-  // Bidder names
-  worksheet.getCell(`F${secondHeaderRow}`).value = bidder1;
-  worksheet.getCell(`G${secondHeaderRow}`).value = bidder2;
-  worksheet.getCell(`H${secondHeaderRow}`).value = bidder3;
-
-  // Format headers
+  // Format all table header cells, including every generated bidder column.
   for (let row = headerRow; row <= secondHeaderRow; row++) {
-    for (let col = 1; col <= 9; col++) {
+    for (let col = 1; col <= winningColumnIndex; col++) {
       const cell = worksheet.getCell(row, col);
 
       cell.fill = {
         type: "pattern",
         pattern: "solid",
-        fgColor: {
-          argb: GREEN,
-        },
+        fgColor: { argb: GREEN },
       };
 
       cell.font = {
@@ -458,41 +490,37 @@ export const generateAOQPDF = async (
       cell.border = border;
     }
   }
+
   worksheet.getRow(headerRow).font = {
     name: "Tahoma",
     size: 10,
     bold: true,
   };
 
-  let highestEstimatedWidth = 0;
-  [bidder1, bidder2, bidder3].forEach((bidder, index) => {
-    const col = ["F", "G", "H"][index];
-    const supplierNameWidth = worksheet.getColumn(col).width!;
+  // Estimate the row height needed for the longest supplier name.
+  let highestEstimatedWidth = 1;
+
+  bidderColumns.forEach((bidder) => {
+    const supplierNameWidth =
+      worksheet.getColumn(bidder.columnIndex).width ?? 19.28;
 
     const estimatedWidth = Math.ceil(
-      bidder.length / (supplierNameWidth * 1.25),
+      bidder.name.length / (supplierNameWidth * 1.25),
     );
 
     highestEstimatedWidth = Math.max(highestEstimatedWidth, estimatedWidth);
 
-    worksheet.getCell(`${col}${secondHeaderRow}`).font = {
+    worksheet.getCell(`${bidder.columnLetter}${secondHeaderRow}`).font = {
       name: "Tahoma",
       size: 8,
       bold: true,
     };
   });
 
-  switch (highestEstimatedWidth) {
-    case 1:
-      worksheet.getRow(secondHeaderRow).height = 21;
-      break;
-    case 2:
-      worksheet.getRow(secondHeaderRow).height = 32.25;
-      break;
-    case 3:
-      worksheet.getRow(secondHeaderRow).height = 43.5;
-      break;
-  }
+  worksheet.getRow(secondHeaderRow).height = Math.max(
+    21,
+    highestEstimatedWidth * 11.25,
+  );
 
   // ============================================================
   // HELPER: FIND QUOTATIONS FOR AN ITEM
@@ -555,40 +583,27 @@ export const generateAOQPDF = async (
 
     worksheet.getCell(`E${rowNumber}`).numFmt = numberFormat;
 
-    // Find bidder quotations
-    const bidder1Quotation = itemQuotations.find(
-      (quotation) => getSupplierName(quotation) === bidder1,
-    );
+    // ============================================================
+    // DYNAMIC BIDDER QUOTATIONS
+    // ============================================================
 
-    const bidder2Quotation = itemQuotations.find(
-      (quotation) => getSupplierName(quotation) === bidder2,
-    );
+    bidderColumns.forEach((bidder) => {
+      const bidderQuotation = itemQuotations.find(
+        (quotation) => getSupplierName(quotation) === bidder.name,
+      );
 
-    const bidder3Quotation = itemQuotations.find(
-      (quotation) => getSupplierName(quotation) === bidder3,
-    );
-    // Bidder prices
-    worksheet.getCell(`F${rowNumber}`).value =
-      bidder1Quotation?.total_amount != null
-        ? Number(bidder1Quotation.total_amount)
-        : "";
-
-    worksheet.getCell(`G${rowNumber}`).value =
-      bidder2Quotation?.total_amount != null
-        ? Number(bidder2Quotation.total_amount)
-        : "";
-
-    worksheet.getCell(`H${rowNumber}`).value =
-      bidder3Quotation?.total_amount != null
-        ? Number(bidder3Quotation.total_amount)
-        : "";
+      worksheet.getCell(`${bidder.columnLetter}${rowNumber}`).value =
+        bidderQuotation?.total_amount != null
+          ? Number(bidderQuotation.total_amount)
+          : "";
+    });
 
     // Winning bidder
-    worksheet.getCell(`I${rowNumber}`).value =
+    worksheet.getCell(`${winningColumn}${rowNumber}`).value =
       item.rfq_details?.supplier_name ?? "";
 
     // Format all item cells
-    for (let col = 1; col <= 9; col++) {
+    for (let col = 1; col <= winningColumnIndex; col++) {
       const cell = worksheet.getCell(rowNumber, col);
 
       cell.font = normalFont;
@@ -616,17 +631,19 @@ export const generateAOQPDF = async (
       vertical: "middle",
     };
 
-    worksheet.getCell(`I${rowNumber}`).alignment = {
+    worksheet.getCell(`${winningColumn}${rowNumber}`).alignment = {
       horizontal: "center",
       vertical: "middle",
     };
 
-    ["E", "F", "G", "H"].forEach((column) => {
-      worksheet.getCell(`${column}${rowNumber}`).alignment = {
-        horizontal: "right",
-        vertical: "middle",
-      };
-    });
+    ["E", ...bidderColumns.map((bidder) => bidder.columnLetter)].forEach(
+      (column) => {
+        worksheet.getCell(`${column}${rowNumber}`).alignment = {
+          horizontal: "right",
+          vertical: "middle",
+        };
+      },
+    );
 
     worksheet.getCell(`B${rowNumber}`).alignment = {
       horizontal: "left",
@@ -661,42 +678,38 @@ export const generateAOQPDF = async (
   // TOTAL QUOTATION ROW
   // ============================================================
 
-  const totalRow = firstItemRow + items.length; //12
-  // Merge each bidder column vertically and display the supplier's PR total
-  const bidderColumns = [
-    { column: "F", total: bidder1Total },
-    { column: "G", total: bidder2Total },
-    { column: "H", total: bidder3Total },
-  ];
+  const totalRow = firstItemRow + items.length;
 
-  bidderColumns.forEach(({ column, total }) => {
+  // Display each supplier's RFQ total in its own bidder column.
+  bidderColumns.forEach((bidder) => {
+    const column = bidder.columnLetter;
+
     if (totalRow > firstItemRow + 1) {
       worksheet.mergeCells(`${column}${firstItemRow}:${column}${totalRow - 1}`);
     }
 
-    const cell = worksheet.getCell(`${column}${firstItemRow}`);
-
-    cell.value = total;
-    cell.numFmt = numberFormat;
-    cell.font = normalFont;
-    cell.alignment = {
+    const itemCell = worksheet.getCell(`${column}${firstItemRow}`);
+    itemCell.value = bidder.total;
+    itemCell.numFmt = numberFormat;
+    itemCell.font = normalFont;
+    itemCell.alignment = {
       horizontal: "right",
       vertical: "middle",
     };
-  });
-  bidderColumns.forEach(({ column, total }) => {
-    const cell = worksheet.getCell(`${column}${totalRow}`);
-    cell.value = total;
-    cell.numFmt = numberFormat;
-    cell.font = boldFont;
-    cell.alignment = {
+
+    const totalCell = worksheet.getCell(`${column}${totalRow}`);
+    totalCell.value = bidder.total;
+    totalCell.numFmt = numberFormat;
+    totalCell.font = boldFont;
+    totalCell.alignment = {
       horizontal: "right",
       vertical: "middle",
     };
   });
 
+  // Reduce font size for item rows across the complete dynamic table.
   for (let row = firstItemRow; row <= totalRow - 1; row++) {
-    for (let col = 1; col <= 8; col++) {
+    for (let col = 1; col <= winningColumnIndex; col++) {
       worksheet.getCell(row, col).font = {
         ...worksheet.getCell(row, col).font,
         size: 8,
@@ -718,24 +731,28 @@ export const generateAOQPDF = async (
   };
 
   worksheet.getCell(`A${totalRow}`).value = "Lowest Complying Supplier";
-
   worksheet.getCell(`A${totalRow}`).alignment = {
     horizontal: "right",
     vertical: "middle",
   };
 
-  worksheet.getCell(`I${totalRow}`).value = lowestSupplierName;
+  // Winning bidder column moves after the final bidder column.
+  worksheet.mergeCells(
+    `${winningColumn}${firstItemRow}:${winningColumn}${totalRow}`,
+  );
 
-  worksheet.getCell(`I${totalRow}`).font = boldFont;
-
-  worksheet.getCell(`I${totalRow}`).alignment = {
+  const lowestSupplierCell = worksheet.getCell(
+    `${winningColumn}${firstItemRow}`,
+  );
+  lowestSupplierCell.value = lowestSupplierName;
+  lowestSupplierCell.font = boldFont;
+  lowestSupplierCell.alignment = {
     horizontal: "center",
     vertical: "middle",
     wrapText: true,
   };
-  worksheet.mergeCells(`I${firstItemRow}`, `I${totalRow}`);
 
-  for (let col = 1; col <= 9; col++) {
+  for (let col = 1; col <= winningColumnIndex; col++) {
     worksheet.getCell(totalRow, col).border = border;
   }
 
@@ -763,8 +780,11 @@ export const generateAOQPDF = async (
   const formatName = (name?: string) => {
     if (!name) return "";
 
-    const [lastName, firstMiddle] = name.split(",").map((part) => part.trim());
+    const nameParts = name.split(",").map((part) => part.trim());
 
+    if (nameParts.length < 2) return name;
+
+    const [lastName, firstMiddle = ""] = nameParts;
     const parts = firstMiddle.split(" ").filter(Boolean);
 
     const firstName = parts[0] ?? "";
@@ -772,81 +792,101 @@ export const generateAOQPDF = async (
 
     return `${firstName} ${middleInitial ? middleInitial.replace(/\b([A-Za-z])\b/, "$1.") + " " : ""}${lastName}`;
   };
-  const bacStartRow = certificationRow + 2; //16
 
+  const bacStartRow = certificationRow + 2;
+
+  // Dynamic BAC committee positions
+  const bacColumn1 = "B";
+  const bacColumn2 = "F";
+  const bacColumn3 = "D";
+
+  // Dynamic right-side signatory positions
+  const signatoryColumn = rightSideValuesLetter;
+
+  // BAC heading
   worksheet.getCell(`A${bacStartRow}`).value = "Bids and Awards Committee:";
   worksheet.getCell(`A${bacStartRow}`).font = normalFont;
 
-  const bac_member0 = formatName(bac_members[0]?.name);
-  worksheet.getCell(`B${bacStartRow + 2}`).value = bac_member0;
-  worksheet.getCell(`B${bacStartRow + 2}`).font = boldFont;
-  worksheet.getCell(`B${bacStartRow + 2}`).alignment = centered;
+  // Helper function for BAC member formatting
+  const setBACMember = (
+    memberIndex: number,
+    column: string,
+    rowOffset: number,
+  ) => {
+    const member = bac_members[memberIndex];
 
-  worksheet.getCell(`B${bacStartRow + 3}`).value =
-    bac_members[0].position ?? bac_members[0].designation ?? "";
-  worksheet.getCell(`B${bacStartRow + 3}`).alignment = centered;
+    const nameCell = worksheet.getCell(`${column}${bacStartRow + rowOffset}`);
+    const positionCell = worksheet.getCell(
+      `${column}${bacStartRow + rowOffset + 1}`,
+    );
 
-  const bac_member1 = formatName(bac_members[1]?.name);
-  worksheet.getCell(`E${bacStartRow + 2}`).value = bac_member1;
-  worksheet.getCell(`E${bacStartRow + 2}`).font = boldFont;
-  worksheet.getCell(`E${bacStartRow + 2}`).alignment = centered;
+    nameCell.value = formatName(member?.name);
+    nameCell.font = boldFont;
+    nameCell.alignment = centered;
 
-  worksheet.getCell(`E${bacStartRow + 3}`).value =
-    bac_members[1].position ?? bac_members[1].designation ?? "";
-  worksheet.getCell(`E${bacStartRow + 3}`).alignment = centered;
-  const bac_member2 = formatName(bac_members[2]?.name);
-  worksheet.getCell(`B${bacStartRow + 6}`).value = bac_member2;
-  worksheet.getCell(`B${bacStartRow + 6}`).font = boldFont;
-  worksheet.getCell(`B${bacStartRow + 6}`).alignment = centered;
+    positionCell.value = member?.position ?? member?.designation ?? "";
+    positionCell.alignment = centered;
+  };
 
-  worksheet.getCell(`B${bacStartRow + 7}`).value =
-    bac_members[2].position ?? bac_members[2].designation ?? "";
-  worksheet.getCell(`B${bacStartRow + 7}`).alignment = centered;
+  // First row of BAC members
+  setBACMember(0, bacColumn1, 2);
+  setBACMember(1, bacColumn2, 2);
 
-  const bac_member3 = formatName(bac_members[3]?.name);
-  worksheet.getCell(`E${bacStartRow + 6}`).value = bac_member3;
-  worksheet.getCell(`E${bacStartRow + 6}`).font = boldFont;
-  worksheet.getCell(`E${bacStartRow + 6}`).alignment = centered;
+  // Second row of BAC members
+  setBACMember(2, bacColumn1, 6);
+  setBACMember(4, bacColumn2, 6);
 
-  worksheet.getCell(`E${bacStartRow + 7}`).value =
-    bac_members[3].position ?? bac_members[3].designation ?? "";
-  worksheet.getCell(`E${bacStartRow + 7}`).alignment = centered;
+  // Fifth member (centered)
+  setBACMember(3, bacColumn3, 10);
 
-  const bac_member4 = formatName(bac_members[4]?.name);
-  worksheet.getCell(`C${bacStartRow + 10}`).value = bac_member4;
-  worksheet.getCell(`C${bacStartRow + 10}`).font = boldFont;
-  worksheet.getCell(`C${bacStartRow + 10}`).alignment = centered;
+  // Conforme
+  worksheet.getCell(`${rightSideLabelLetter}${bacStartRow + 2}`).value =
+    "conforme:";
+  worksheet.getCell(`${rightSideLabelLetter}${bacStartRow + 2}`).alignment = {
+    horizontal: "right",
+  };
 
-  worksheet.getCell(`C${bacStartRow + 11}`).value =
-    bac_members[4].position ?? bac_members[4].designation ?? "";
-  worksheet.getCell(`C${bacStartRow + 11}`).alignment = centered;
+  // End-user and Campus Director
+  const signatoryRows = [
+    {
+      row: bacStartRow + 3,
+      value: endUser,
+      bold: true,
+    },
+    {
+      row: bacStartRow + 4,
+      value: "end-user",
+      bold: false,
+    },
+    {
+      row: bacStartRow + 10,
+      value: prDetails?.campus_director_details?.name ?? "",
+      bold: true,
+    },
+    {
+      row: bacStartRow + 11,
+      value: prDetails?.campus_director_details?.designation ?? "",
+      bold: false,
+    },
+  ];
 
-  worksheet.getCell(`G${bacStartRow + 2}`).value = "conforme:";
-  worksheet.getCell(`G${bacStartRow + 2}`).alignment = centered;
+  // Merge signatory cells dynamically
+  signatoryRows.forEach(({ row, value, bold }) => {
+    if (signatoryColumn !== lastColumnLetter) {
+      worksheet.mergeCells(
+        `${signatoryColumn}${row}:${lastColumnLetter}${row}`,
+      );
+    }
 
-  //merge cells for end-user and campus director
-  worksheet.mergeCells(`H${bacStartRow + 3}:I${bacStartRow + 3}`);
-  worksheet.mergeCells(`H${bacStartRow + 4}:I${bacStartRow + 4}`);
-  worksheet.mergeCells(`H${bacStartRow + 10}:I${bacStartRow + 10}`);
-  worksheet.mergeCells(`H${bacStartRow + 11}:I${bacStartRow + 11}`);
+    const cell = worksheet.getCell(`${signatoryColumn}${row}`);
 
-  worksheet.getCell(`H${bacStartRow + 3}`).value = endUser;
-  worksheet.getCell(`H${bacStartRow + 3}`).font = boldFont;
-  worksheet.getCell(`H${bacStartRow + 3}`).alignment = centered;
+    cell.value = value;
+    cell.alignment = centered;
 
-  worksheet.getCell(`H${bacStartRow + 4}`).value = "end-user";
-  worksheet.getCell(`H${bacStartRow + 4}`).alignment = centered;
-
-  worksheet.getCell(`H${bacStartRow + 10}`).value =
-    data[0]?.supplier_details?.aoq_details?.pr_details?.campus_director_details
-      .name ?? "";
-  worksheet.getCell(`H${bacStartRow + 10}`).font = boldFont;
-  worksheet.getCell(`H${bacStartRow + 10}`).alignment = centered;
-
-  worksheet.getCell(`H${bacStartRow + 11}`).value =
-    data[0]?.supplier_details?.aoq_details?.pr_details?.campus_director_details
-      ?.designation ?? "";
-  worksheet.getCell(`H${bacStartRow + 11}`).alignment = centered;
+    if (bold) {
+      cell.font = boldFont;
+    }
+  });
 
   // ============================================================
   // Certification Lines Heights
@@ -872,14 +912,72 @@ export const generateAOQPDF = async (
   // FOOTER
   // ============================================================
 
-  worksheet.headerFooter.oddFooter = "&RPage &P of &N";
+  worksheet.headerFooter.oddFooter = "&RPage &G &P of &N";
 
   // ============================================================
   // PRINT AREA
   // ============================================================
   const lastPrintRow = bacStartRow + 11;
 
-  worksheet.pageSetup.printArea = `A1:I${lastPrintRow}`;
+  worksheet.pageSetup.printArea = `A1:${lastColumnLetter}${lastPrintRow}`;
+
+  // ============================================================
+  // ESTIMATE NUMBER OF PRINTED PAGES
+  // ============================================================
+
+  // Legal paper in landscape orientation (inches)
+  const PAPER_WIDTH = 14;
+  const PAPER_HEIGHT = 8.5;
+
+  // Convert inches to points (1 inch = 72 points)
+  const POINTS_PER_INCH = 72;
+
+  // Get page margins
+  const margins = worksheet.pageSetup.margins!;
+
+  // Calculate printable dimensions
+  const printableWidth =
+    (PAPER_WIDTH - margins.left - margins.right) * POINTS_PER_INCH;
+
+  const printableHeight =
+    (PAPER_HEIGHT - margins.top - margins.bottom) * POINTS_PER_INCH;
+
+  // Calculate total worksheet width in points.
+  // Excel column width is approximately 7 pixels + 5 pixels.
+  const totalColumnWidth = worksheet.columns.reduce((total, column) => {
+    const width = column.width ?? 8.43;
+
+    const columnWidthInPoints = Math.floor(width * 7 + 5) * 0.75;
+
+    return total + columnWidthInPoints;
+  }, 0);
+
+  // Calculate horizontal scaling based on fitToWidth: 1
+  const horizontalScale = Math.min(1, printableWidth / totalColumnWidth);
+
+  // Calculate total row height within the print area
+  let totalRowHeight = 0;
+
+  for (let row = 1; row <= lastPrintRow; row++) {
+    totalRowHeight +=
+      worksheet.getRow(row).height ??
+      worksheet.properties.defaultRowHeight ??
+      15;
+  }
+
+  // Apply horizontal scaling to the total vertical height
+  const scaledTotalHeight = totalRowHeight * horizontalScale;
+
+  // Estimate the number of vertical pages
+  const estimatedPages = Math.max(
+    1,
+    Math.ceil(scaledTotalHeight / printableHeight),
+  );
+
+  // Update # of Sheets
+  worksheet.getCell(`${rightSideValuesLetter}2`).value = estimatedPages;
+
+  console.log("Estimated printed pages:", estimatedPages);
 
   // ============================================================
   // GENERATE XLSX
