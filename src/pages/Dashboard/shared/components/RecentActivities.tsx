@@ -91,10 +91,7 @@ export const RecentActivities = () => {
           );
 
         case "admin":
-          return (
-            model === "customuser" &&
-            ["added", "updated", "deleted"].includes(activityType)
-          );
+          return true;
 
         default:
           return false;
@@ -126,6 +123,17 @@ export const RecentActivities = () => {
           return "Updated an account";
         case "deleted":
           return "Deleted an account";
+        case "registered":
+          return "Registered an account";
+
+        case "logged in":
+          return "Logged in";
+
+        case "logged out":
+          return "Logged out";
+
+        case "activated":
+          return "Activated an account";
       }
     }
 

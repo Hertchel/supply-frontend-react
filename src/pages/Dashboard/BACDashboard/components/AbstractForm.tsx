@@ -83,6 +83,13 @@ interface Quotation {
   items: SelectedItems[];
 }
 
+interface TiedLowestItem {
+  item_no: string;
+  item_description: string;
+  unit: string;
+  lowest_price: number;
+  bidders: itemQuotationResponseType[];
+}
 interface messageDialogProps {
   open: boolean;
   message: string;
@@ -105,10 +112,10 @@ export const AbstractForm: React.FC<AbstractFormProps> = ({
   const [rfqNo, setRfqNo] = useState<string | null>(null);
   const [selectedSupplier, setSelectedSupplier] = useState<string | null>(null);
   const [quotations, setQuotations] = useState<Quotation[]>([]);
-  const [editableQuotation, setEditableQuotation] = useState<
-    itemQuotationResponseType[]
-  >([]);
-
+  const [editableQuotation, setEditableQuotation] = useState<itemQuotationResponseType[]>([]);
+  const [isLowestPriceDialogOpen, setIsLowestPriceDialogOpen] = useState(false);
+  const [tiedLowestItems, setTiedLowestItems] = useState<TiedLowestItem[]>([]);
+  const [tieSelections, setTieSelections] = useState<Record<string, string>>({});
   const { pr_no } = useParams();
 
   //use the purchase request no from params if the purchase request number from props is undefined
@@ -278,6 +285,166 @@ export const AbstractForm: React.FC<AbstractFormProps> = ({
           : q
       );
     });
+  };
+
+  const createSelectedItem = (
+    item: itemQuotationResponseType,
+  ): SelectedItems => ({
+    rfq_no: item.rfq,
+    item_quote_no: item.item_quotation_no,
+    item_no: item.item_details.item_no,
+    item_quantity: Number(item.item_details.quantity),
+    item_cost: Number(item.item_details.unit_cost),
+    total_amount:
+      Number(item.item_details.quantity) * Number(item.unit_price),
+  });
+
+  const handleSelectLowestPrice = () => {
+    // Only compare quotations belonging to this purchase request.
+    const validRfqNumbers = new Set(
+      quotations_.map((quotation) => quotation.rfq_no),
+    );
+
+    const relevantItems = _items.filter((item) =>
+      validRfqNumbers.has(item.rfq),
+    );
+
+    // Group quotations by purchase request item.
+    const groupedItems = new Map<string, itemQuotationResponseType[]>();
+
+    relevantItems.forEach((item) => {
+      const itemNo = item.item_details.item_no;
+
+      if (!groupedItems.has(itemNo)) {
+        groupedItems.set(itemNo, []);
+      }
+
+      groupedItems.get(itemNo)!.push(item);
+    });
+
+    const uniqueLowestItems: itemQuotationResponseType[] = [];
+    const tiedItems: TiedLowestItem[] = [];
+
+    groupedItems.forEach((bidders, itemNo) => {
+      // Do not change items already assigned to another supplier.
+      const alreadySelected = quotations.some((quotation) =>
+        quotation.items.some((selected) => selected.item_no === itemNo),
+      );
+
+      if (alreadySelected) return;
+
+      const lowestPrice = Math.min(
+        ...bidders.map((bidder) => Number(bidder.unit_price)),
+      );
+
+      const lowestBidders = bidders.filter(
+        (bidder) => Number(bidder.unit_price) === lowestPrice,
+      );
+
+      if (lowestBidders.length === 1) {
+        uniqueLowestItems.push(lowestBidders[0]);
+      } else {
+        tiedItems.push({
+          item_no: itemNo,
+          item_description: lowestBidders[0].item_details.item_description,
+          unit: lowestBidders[0].item_details.unit,
+          lowest_price: lowestPrice,
+          bidders: lowestBidders,
+        });
+      }
+    });
+
+    // Automatically select items with a unique lowest price.
+    setQuotations((previous) => {
+      const updated = [...previous];
+
+      uniqueLowestItems.forEach((item) => {
+        const existingSupplier = updated.find(
+          (quotation) => quotation.rfq_no === item.rfq,
+        );
+
+        const selectedItem = createSelectedItem(item);
+
+        if (existingSupplier) {
+          updated[updated.indexOf(existingSupplier)] = {
+            ...existingSupplier,
+            items: [...existingSupplier.items, selectedItem],
+          };
+        } else {
+          updated.push({
+            rfq_no: item.rfq,
+            items: [selectedItem],
+          });
+        }
+      });
+
+      return updated;
+    });
+
+    // Open one dialog containing all tied items.
+    if (tiedItems.length > 0) {
+      setTiedLowestItems(tiedItems);
+      setTieSelections({});
+      setIsLowestPriceDialogOpen(true);
+    }
+  };
+
+  const handleConfirmLowestPrice = () => {
+    // Require a bidder selection for every tied item.
+    if (
+      tiedLowestItems.some(
+        (item) => !tieSelections[item.item_no],
+      )
+    ) {
+      return;
+    }
+
+    setQuotations((previous) => {
+      const updated = [...previous];
+
+      tiedLowestItems.forEach((tiedItem) => {
+        // Do not overwrite an item selected while the dialog was open.
+        const alreadySelected = updated.some((quotation) =>
+          quotation.items.some(
+            (selected) => selected.item_no === tiedItem.item_no,
+          ),
+        );
+
+        if (alreadySelected) return;
+
+        const selectedBidder = tiedItem.bidders.find(
+          (bidder) =>
+            bidder.item_quotation_no ===
+            tieSelections[tiedItem.item_no],
+        );
+
+        if (!selectedBidder) return;
+
+        const selectedItem = createSelectedItem(selectedBidder);
+
+        const existingSupplier = updated.find(
+          (quotation) => quotation.rfq_no === selectedBidder.rfq,
+        );
+
+        if (existingSupplier) {
+          updated[updated.indexOf(existingSupplier)] = {
+            ...existingSupplier,
+            items: [...existingSupplier.items, selectedItem],
+          };
+        } else {
+          updated.push({
+            rfq_no: selectedBidder.rfq,
+            items: [selectedItem],
+          });
+        }
+      });
+
+      return updated;
+    });
+
+    setIsLowestPriceDialogOpen(false);
+    setTiedLowestItems([]);
+    setTieSelections({});
   };
 
   const isItemSelected = (item_no: string) => {
@@ -547,8 +714,20 @@ export const AbstractForm: React.FC<AbstractFormProps> = ({
                   </CardTitle>
                 </CardHeader>
                 <CardContent className="">
-                  <div className="flex justify-between">
-                    <p className="text-xl">Items</p>
+                  <div className="flex justify-between items-center">
+                    <div className="flex items-center gap-3">
+                      <p className="text-xl">Items</p>
+
+                      <Button
+                        type="button"
+                        size="sm"
+                        variant="outline"
+                        onClick={handleSelectLowestPrice}
+                        disabled={item_loading || _items.length === 0}
+                      >
+                        Select Lowest Price
+                      </Button>
+                    </div>
 
                     <TooltipProvider delayDuration={100}>
                       <Tooltip>
@@ -585,7 +764,7 @@ export const AbstractForm: React.FC<AbstractFormProps> = ({
                         />
 
                         <p className="text-sm font-medium">
-                          {allItemsSelected ? "Deselect " : "Select All"}
+                          {allItemsSelected ? "Deselect" : "Select All"}
                         </p>
                       </div>
                     </div>
@@ -724,13 +903,127 @@ export const AbstractForm: React.FC<AbstractFormProps> = ({
                       {isLoading ? (
                         <Loader2 className="animate-spin" />
                       ) : (
-                        <p className="text-base">Submit Quotation</p>
+                        <p className="text-base">Create AOQ</p>
                       )}
                     </Button>
                   </div>
                 </CardFooter>
               </Card>
             </form>
+          </div>
+        </DialogContent>
+      </Dialog>
+
+      <Dialog
+        open={isLowestPriceDialogOpen}
+        onOpenChange={setIsLowestPriceDialogOpen}
+      >
+        <DialogContent className="max-w-2xl max-h-[80vh] overflow-y-auto">
+          <DialogHeader>
+            <DialogTitle className="text-xl">
+              Lowest Price Tie
+            </DialogTitle>
+          </DialogHeader>
+
+          <p className="text-sm text-gray-500">
+            Multiple bidders submitted the same lowest price for the
+            following items. Select one bidder for each item.
+          </p>
+
+          <div className="space-y-5">
+            {tiedLowestItems.map((item) => (
+              <div
+                key={item.item_no}
+                className="border rounded-lg p-4 space-y-3"
+              >
+                <div>
+                  <p className="font-semibold">
+                    {item.item_description}
+                  </p>
+
+                  <p className="text-sm text-gray-500">
+                    {item.unit} · Item No: {item.item_no}
+                  </p>
+
+                  <p className="text-sm font-medium text-green-600 mt-1">
+                    Lowest Price: ₱{item.lowest_price.toLocaleString()}
+                  </p>
+                </div>
+
+                <div className="space-y-2">
+                  {item.bidders.map((bidder) => {
+                    const supplierName =
+                      quotations_.find(
+                        (quotation) => quotation.rfq_no === bidder.rfq,
+                      )?.supplier_name ?? "Unknown Supplier";
+
+                    const isSelected =
+                      tieSelections[item.item_no] ===
+                      bidder.item_quotation_no;
+
+                    return (
+                      <button
+                        key={bidder.item_quotation_no}
+                        type="button"
+                        onClick={() =>
+                          setTieSelections((previous) => ({
+                            ...previous,
+                            [item.item_no]: bidder.item_quotation_no,
+                          }))
+                        }
+                        className={`w-full text-left border rounded-md p-3 transition-colors ${
+                          isSelected
+                            ? "border-green-500 bg-green-50"
+                            : "hover:bg-gray-50"
+                        }`}
+                      >
+                        <div className="flex justify-between items-center">
+                          <div>
+                            <p className="font-medium">
+                              {supplierName}
+                            </p>
+
+                            <p className="text-sm text-gray-500">
+                              RFQ: {bidder.rfq}
+                            </p>
+                          </div>
+
+                          <div className="flex items-center gap-2">
+                            <span className="font-semibold">
+                              ₱{Number(bidder.unit_price).toLocaleString()}
+                            </span>
+
+                            {isSelected && (
+                              <CheckCircledIcon className="text-green-600" />
+                            )}
+                          </div>
+                        </div>
+                      </button>
+                    );
+                  })}
+                </div>
+              </div>
+            ))}
+          </div>
+
+          <div className="flex justify-end gap-2 pt-4">
+            <Button
+              type="button"
+              variant="outline"
+              onClick={() => setIsLowestPriceDialogOpen(false)}
+            >
+              Cancel
+            </Button>
+
+            <Button
+              type="button"
+              onClick={handleConfirmLowestPrice}
+              disabled={tiedLowestItems.some(
+                (item) => !tieSelections[item.item_no],
+              )}
+            >
+              Confirm Selection
+            </Button>
           </div>
         </DialogContent>
       </Dialog>

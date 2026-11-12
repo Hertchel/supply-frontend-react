@@ -359,6 +359,8 @@ export type InventoryDeliveredItem = {
   quantity_delivered: number;
 };
 
+export type RequisitionerInventoryItem = InventoryDeliveredItem;
+
 export const getInventoryDeliveredItems = async (): Promise<
   ApiResponse<InventoryDeliveredItem[]>
 > => {
@@ -377,6 +379,27 @@ export const useGetInventoryDeliveredItems = () => {
   return useQuery<ApiResponse<InventoryDeliveredItem[]>, Error>({
     queryKey: ["inventory-delivered-items"],
     queryFn: getInventoryDeliveredItems,
+  });
+};
+
+export const getRequisitionerInventory = async (): Promise<
+  ApiResponse<RequisitionerInventoryItem[]>
+> => {
+  try {
+    const response = await api.get<RequisitionerInventoryItem[]>(
+      "api/requisitioner/inventory/"
+    );
+
+    return handleSucess(response);
+  } catch (error) {
+    return handleError(error);
+  }
+};
+
+export const useGetRequisitionerInventory = () => {
+  return useQuery<ApiResponse<RequisitionerInventoryItem[]>, Error>({
+    queryKey: ["requisitioner-inventory"],
+    queryFn: getRequisitionerInventory,
   });
 };
 

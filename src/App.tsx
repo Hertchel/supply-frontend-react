@@ -42,6 +42,7 @@ import { ItemDistributionList } from "./pages/Dashboard/SupplyDashboard/componen
 import RequisitionerDashboard from "./pages/Dashboard/ReqDashboard/RequisitionerDashboard";
 import ReqPurchaseRequest from "./pages/Dashboard/ReqDashboard/ReqPurchaseRequest";
 import ReqPurchaseRequestView from "./pages/Dashboard/ReqDashboard/ReqPurchaseRequestView";
+import ReqInventory from "./pages/Dashboard/ReqDashboard/ReqInventory";
 
 import AIDashboard from "./pages/Dashboard/SupplyDashboard/AIDashboard";
 import Office from "./pages/Dashboard/SupplyDashboard/Office/Office";
@@ -59,10 +60,7 @@ const App = () => {
           <Route path="/verify-reset-otp"element={<VerifyResetOTP />}/>
           <Route path="/logout" element={<Logout />} />
           <Route path="/register" element={<RegisterAndLogout />} />
-          <Route
-              path="/requisitioner/:token"
-              element={<RequisitionerDashboard />}
-            />
+          <Route path="/requisitioner/:token" element={<RequisitionerDashboard />}/>
           <Route path="*" element={<NotFound />} />
 
           <Route
@@ -157,26 +155,11 @@ const App = () => {
             <Route path="BACmembers" element={<BACmember />} />
           </Route>
 
-          <Route
-            path="/requisitioner/*"
-            element={
-              <ProtectedRoutes
-                allowedRoles={["Requisitioner"]}
-              />
-            }
-          >
-            <Route
-              path="dashboard"
-              element={<RequisitionerDashboard />}
-            />
-            <Route
-              path="purchase-request"
-              element={<ReqPurchaseRequest />}
-            />
-            <Route
-              path="purchase-request/:pr_no"
-              element={<ReqPurchaseRequestView />}
-            />
+          <Route path="/requisitioner/*" element={<ProtectedRoutes allowedRoles={["Requisitioner"]}/>}>
+            <Route path="dashboard" element={<RequisitionerDashboard />}/>
+            <Route path="purchase-request" element={<ReqPurchaseRequest />}/>
+            <Route path="purchase-request/:pr_no" element={<ReqPurchaseRequestView />}/>
+            <Route path="inventory" element={<ReqInventory />}/>
           </Route>
 
         </Routes>

@@ -1,7 +1,9 @@
+
 import {
   ClipboardPenLine,
   LayoutGrid,
-} from "lucide-react"
+  Package,
+} from "lucide-react";
 
 import {
   SidebarGroup,
@@ -9,8 +11,9 @@ import {
   SidebarMenu,
   SidebarMenuButton,
   SidebarMenuItem,
-} from "@/components/ui/sidebar"
-import { Link } from "react-router-dom";
+} from "@/components/ui/sidebar";
+
+import { Link, useLocation } from "react-router-dom";
 
 const dashboard = [
   {
@@ -28,48 +31,72 @@ const procurement = [
   },
 ];
 
-
+const inventory = [
+  {
+    title: "Inventory",
+    url: "/requisitioner/inventory",
+    icon: Package,
+  },
+];
 
 export function ReqSidebarItem() {
+  const location = useLocation();
 
   return (
-    <SidebarGroup className="">
+    <SidebarGroup>
+      <SidebarGroupLabel>Analytics</SidebarGroupLabel>
+      <SidebarMenu>
+        {dashboard.map((item) => (
+          <SidebarMenuItem key={item.title}>
+            <SidebarMenuButton
+              asChild
+              className="px-4 py-6"
+              isActive={location.pathname === item.url}
+            >
+              <Link to={item.url}>
+                <item.icon />
+                <span>{item.title}</span>
+              </Link>
+            </SidebarMenuButton>
+          </SidebarMenuItem>
+        ))}
+      </SidebarMenu>
 
-  <SidebarGroupLabel>Analytics</SidebarGroupLabel>
-  <SidebarMenu>
-    {dashboard.map((item) => (
-      <SidebarMenuItem key={item.title}>
-        <SidebarMenuButton
-          asChild
-          className="px-4 py-6"
-          isActive={location.pathname === item.url}
-        >
-          <Link to={item.url}>
-            <item.icon />
-            <span>{item.title}</span>
-          </Link>
-        </SidebarMenuButton>
-      </SidebarMenuItem>
-    ))}
-  </SidebarMenu>
+      <SidebarGroupLabel>Procurement</SidebarGroupLabel>
+      <SidebarMenu>
+        {procurement.map((item) => (
+          <SidebarMenuItem key={item.title}>
+            <SidebarMenuButton
+              asChild
+              className="px-4 py-6"
+              isActive={location.pathname === item.url}
+            >
+              <Link to={item.url}>
+                <item.icon />
+                <span>{item.title}</span>
+              </Link>
+            </SidebarMenuButton>
+          </SidebarMenuItem>
+        ))}
+      </SidebarMenu>
 
-  <SidebarGroupLabel>Procurement</SidebarGroupLabel>
-  <SidebarMenu>
-    {procurement.map((item) => (
-      <SidebarMenuItem key={item.title}>
-        <SidebarMenuButton
-          asChild
-          className="px-4 py-6"
-          isActive={location.pathname === item.url}
-        >
-          <Link to={item.url}>
-            <item.icon />
-            <span>{item.title}</span>
-          </Link>
-        </SidebarMenuButton>
-      </SidebarMenuItem>
-    ))}
-  </SidebarMenu>
-</SidebarGroup>
-  )
+      <SidebarGroupLabel>Inventory</SidebarGroupLabel>
+      <SidebarMenu>
+        {inventory.map((item) => (
+          <SidebarMenuItem key={item.title}>
+            <SidebarMenuButton
+              asChild
+              className="px-4 py-6"
+              isActive={location.pathname === item.url}
+            >
+              <Link to={item.url}>
+                <item.icon />
+                <span>{item.title}</span>
+              </Link>
+            </SidebarMenuButton>
+          </SidebarMenuItem>
+        ))}
+      </SidebarMenu>
+    </SidebarGroup>
+  );
 }
