@@ -9,6 +9,7 @@ import { purchaseRequestType } from "@/types/response/puchase-request";
 import { abstractType_ } from "@/types/response/abstract-of-quotation";
 import { FileText } from "lucide-react";
 import { generateRISPDF } from "@/utils/generateRISPDF";
+import { generatePARPDF } from "@/utils/generatePARPDF";
 import { useGetItemsDeliveredInPurchaseRequest } from "@/services/puchaseOrderServices";
 import { useMemo, useState } from "react";
 import GenerateICSPDFDialog from "./ItemDistributeDialog";
@@ -45,6 +46,19 @@ export const ItemDistributedActions = ({
     const url = await generateRISPDF(itemsDeliveredData, user);
     window.open(url, "_blank");
   };
+
+  const handleGeneratePARPDF = async () => {
+    try {
+      const url = await generatePARPDF(itemsDeliveredData, user);
+      window.open(url, "_blank");
+    } catch (error) {
+      alert(
+        error instanceof Error
+          ? error.message
+          : "Failed to generate PAR PDF.",
+      );
+    }
+  };
   return (
     <>
       <TooltipProvider delayDuration={100} skipDelayDuration={200}>
@@ -71,6 +85,21 @@ export const ItemDistributedActions = ({
             </Button>
           </TooltipTrigger>
           <TooltipContent side="top">Click to Generate RIS PDF</TooltipContent>
+        </Tooltip>
+
+        <Tooltip>
+          <TooltipTrigger asChild>
+            <Button
+              className="bg-green-200 hover:bg-green-300"
+              onClick={handleGeneratePARPDF}
+            >
+              <FileText width={20} height={20} className="mx-2" />
+              PAR PDF
+            </Button>
+          </TooltipTrigger>
+          <TooltipContent side="top">
+            Click to Generate PAR PDF
+          </TooltipContent>
         </Tooltip>
       </TooltipProvider>
       <GenerateICSPDFDialog

@@ -357,7 +357,9 @@ export type InventoryDeliveredItem = {
   quantity: number;
   unit_cost: string | number;
   quantity_delivered: number;
+  date_received: string | Date;
 };
+
 
 export type RequisitionerInventoryItem = InventoryDeliveredItem;
 

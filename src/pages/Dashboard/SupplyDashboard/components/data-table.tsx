@@ -1,4 +1,5 @@
 import * as React from "react";
+import { ReactNode } from "react";
 import {
   ColumnDef,
   ColumnFiltersState,
@@ -29,11 +30,15 @@ import { DataTableToolbar } from "./data-table-toolbar";
 interface DataTableProps<TData, TValue> {
   columns: ColumnDef<TData, TValue>[];
   data: TData[];
+  toolbarContent?: ReactNode;
+  getRowTotal?: (row: TData) => number;
 }
 
 export function DataTable<TData, TValue>({
   columns,
   data,
+  toolbarContent,
+  getRowTotal,
 }: DataTableProps<TData, TValue>) {
   const [rowSelection, setRowSelection] = React.useState({});
   const [columnVisibility, setColumnVisibility] =
@@ -69,10 +74,18 @@ export function DataTable<TData, TValue>({
     getFacetedRowModel: getFacetedRowModel(),
     getFacetedUniqueValues: getFacetedUniqueValues(),
   });
+  const totalValue = getRowTotal
+  ? table
+      .getFilteredRowModel()
+      .rows.reduce(
+        (total, row) => total + getRowTotal(row.original),
+        0,
+      )
+  : undefined;
 
   return (
     <div className="space-y-4">
-      <DataTableToolbar table={table} />
+      <DataTableToolbar table={table} toolbarContent={toolbarContent} totalValue={totalValue} />
       <div className="rounded-md border bg-slate-100 p-4">
         <Table className="table-auto">
           <TableHeader>
