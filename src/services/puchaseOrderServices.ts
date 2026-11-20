@@ -257,10 +257,33 @@ export const addItemsDelivered = async (
 
 export const createInventoryCustodianSlip = async (
   data: InventoryCustodianSlipRequest
-) => {
+): Promise<ApiResponse<InventoryCustodianSlipResponse>> => {
   try {
     const response = await api.post<InventoryCustodianSlipResponse>(
       "api/inventory-custodian-slips/create/",
+      data
+    );
+
+    return handleSucess(response);
+  } catch (error) {
+    handleError(error);
+    throw error;
+  }
+};
+
+export type GeneratePropertyTagsRequest = {
+  items: {
+    delivery_id: string;
+    location: string;
+  }[];
+};
+
+export const generatePropertyTags = async (
+  data: GeneratePropertyTagsRequest
+) => {
+  try {
+    const response = await api.post(
+      "api/items-delivered/generate-property-tags/",
       data
     );
 

@@ -224,4 +224,11 @@ export type InventoryCustodianSlipResponse = {
   created_by: number;
   date_issued: Date;
   created_at: Date;
+  items: {
+    id: number;
+    quantity: number;
+    delivered_item_details: {
+      delivery_id: string;
+    };
+  }[];
 };

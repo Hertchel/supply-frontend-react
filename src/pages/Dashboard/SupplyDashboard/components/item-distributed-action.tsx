@@ -69,10 +69,10 @@ export const ItemDistributedActions = ({
               onClick={() => setIsDialogOpen(true)}
             >
               <FileText width={20} height={20} className="mx-2" />ICS
-              PDF
+              PDF & PT
             </Button>
           </TooltipTrigger>
-          <TooltipContent side="top">Click to Generate ICS PDF</TooltipContent>
+          <TooltipContent side="top">Click to Generate ICS PDF & Property Tags</TooltipContent>
         </Tooltip>
         <Tooltip>
           <TooltipTrigger asChild>
