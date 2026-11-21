@@ -4,137 +4,271 @@ import {
 } from "@/types/response/request-for-quotation";
 import { PDFDocument, PDFFont, PDFPage, StandardFonts, rgb } from "pdf-lib";
 
+const TABLE_CONFIG = {
+  startY: 502,
+  bottomY: 306,
+  fontSize: 11,
+  lineHeight: 13,
+  padding: 4,
+  minRowHeight: 14,
+};
+
+const wrapText = (
+  text: string,
+  font: PDFFont,
+  fontSize: number,
+  maxWidth: number,
+): string[] => {
+  const words = String(text || "-").split(/\s+/);
+  const lines: string[] = [];
+  let currentLine = "";
+
+  for (const word of words) {
+    const testLine = currentLine
+      ? `${currentLine} ${word}`
+      : word;
+
+    if (font.widthOfTextAtSize(testLine, fontSize) <= maxWidth) {
+      currentLine = testLine;
+    } else {
+      if (currentLine) {
+        lines.push(currentLine);
+        currentLine = word;
+      } else {
+        // Handle a single word wider than the column.
+        let part = "";
+
+        for (const character of word) {
+          const testPart = part + character;
+
+          if (
+            font.widthOfTextAtSize(testPart, fontSize) <= maxWidth
+          ) {
+            part = testPart;
+          } else {
+            if (part) lines.push(part);
+            part = character;
+          }
+        }
+
+        currentLine = part;
+      }
+    }
+  }
+
+  if (currentLine) lines.push(currentLine);
+
+  return lines.length ? lines : [""];
+};
+
+const drawWrappedCell = (
+  page: PDFPage,
+  lines: string[],
+  x: number,
+  rowTop: number,
+  rowHeight: number,
+  width: number,
+  font: PDFFont,
+  fontSize: number,
+  align: "left" | "center" | "right" = "left",
+) => {
+  const textHeight = lines.length * TABLE_CONFIG.lineHeight;
+
+  const startY =
+    rowTop -
+    (rowHeight - textHeight) / 2 -
+    fontSize;
+
+  lines.forEach((line, index) => {
+    const lineWidth = font.widthOfTextAtSize(line, fontSize);
+
+    let textX = x + TABLE_CONFIG.padding;
+
+    if (align === "center") {
+      textX = x + (width - lineWidth) / 2;
+    } else if (align === "right") {
+      textX = x + width - lineWidth - TABLE_CONFIG.padding;
+    }
+
+    page.drawText(line, {
+      x: textX,
+      y: startY - index * TABLE_CONFIG.lineHeight,
+      size: fontSize,
+      font,
+    });
+  });
+};
+
+const drawSingleLineCell = (
+  page: PDFPage,
+  text: string,
+  x: number,
+  rowTop: number,
+  rowHeight: number,
+  width: number,
+  font: PDFFont,
+  fontSize: number,
+  align: "left" | "center" | "right" = "left",
+) => {
+  let adjustedSize = fontSize;
+
+  const availableWidth = width - TABLE_CONFIG.padding * 2;
+
+  // Reduce font size until the text fits.
+  while (
+    font.widthOfTextAtSize(text, adjustedSize) > availableWidth &&
+    adjustedSize > 6
+  ) {
+    adjustedSize -= 0.5;
+  }
+
+  const textWidth = font.widthOfTextAtSize(text, adjustedSize);
+
+  let textX = x + TABLE_CONFIG.padding;
+
+  if (align === "center") {
+    textX = x + (width - textWidth) / 2;
+  } else if (align === "right") {
+    textX = x + width - textWidth - TABLE_CONFIG.padding;
+  }
+
+  page.drawText(text, {
+    x: textX,
+    y: rowTop - rowHeight / 2 - adjustedSize / 2,
+    size: adjustedSize,
+    font,
+  });
+};
+
 export const generateRFQPDF = async (
   item: itemQuotationResponseType[],
   rfq: quotationResponseType,
 ) => {
   const pdfDoc = await PDFDocument.create();
-  console.log(rfq);
 
-  const timesBoldFont = await pdfDoc.embedFont(StandardFonts.TimesRomanBold);
-  const timesRomanFont = await pdfDoc.embedFont(StandardFonts.TimesRoman);
+  const timesBoldFont = await pdfDoc.embedFont(
+    StandardFonts.TimesRomanBold,
+  );
+
+  const timesRomanFont = await pdfDoc.embedFont(
+    StandardFonts.TimesRoman,
+  );
+
   const timesRomanItalicFont = await pdfDoc.embedFont(
     StandardFonts.TimesRomanItalic,
   );
-  // text upper
-  const itemperpage = 15;
-  const pages = Math.ceil(item.length / itemperpage);
-  for (let pageIndex = 0; pageIndex < pages; pageIndex++) {
-    const page = pdfDoc.addPage([615.12, 936]);
-    const pageItems = item.slice(
-      pageIndex * itemperpage,
-      (pageIndex + 1) * itemperpage,
+
+  const columnPositions = [
+    30.52,  // Table left
+    60,     // Item number / description
+    301,    // Description / quantity
+    327,    // Quantity / unit
+    360,    // Unit / brand
+    450,    // Brand / ABC
+    490,    // ABC / supplier price
+    584.5,  // Table right
+  ];
+
+  const preparedItems = item.map((entry, index) => {
+    const description = wrapText(
+      entry.item_details.item_description || "",
+      timesRomanFont,
+      11,
+      241 - TABLE_CONFIG.padding * 2,
     );
-    pageItems.forEach((entry, index) => {
-      const yPosition1 = 505 - index * 14.3;
-      console.log("ENTRY DATA:", entry);
 
-      // Safely handle itemnum
-      const itemnumtext = index !== undefined ? (index + 1).toString() : "-";
-      const itemnumwidth = timesRomanFont.widthOfTextAtSize(itemnumtext, 11);
-      const itemnumplace = (5 + 85) / 2;
-      page.drawText(itemnumtext, {
-        x: itemnumplace - itemnumwidth / 2,
-        y: yPosition1,
-        size: 11,
-        font: timesRomanFont,
-      });
+    const quantity = wrapText(
+      String(entry.item_details.quantity ?? "-"),
+      timesRomanFont,
+      11,
+      26 - TABLE_CONFIG.padding * 2,
+    );
 
-      page.drawText(entry.item_details.item_description || "", {
-        x: 63,
-        y: yPosition1,
-        size: 11,
-        font: timesRomanFont,
-      });
+    const unit = wrapText(
+      entry.item_details.unit || "-",
+      timesRomanFont,
+      11,
+      33 - TABLE_CONFIG.padding * 2,
+    );
 
-      // Safely handle qty
-      const quantitytext =
-        entry.item_details.quantity !== undefined
-          ? entry.item_details.quantity.toString()
-          : "-";
-      const quantitywidth = timesRomanFont.widthOfTextAtSize(quantitytext, 11);
-      const quantityplace = (301 + 327) / 2;
-      page.drawText(quantitytext, {
-        x: quantityplace - quantitywidth / 2,
-        y: yPosition1,
-        size: 11,
-        font: timesRomanFont,
-      });
+    const brand = wrapText(
+      entry.brand_model || "-",
+      timesRomanFont,
+      10,
+      90 - TABLE_CONFIG.padding * 2,
+    );
 
-      // Safely handle unit
-      const unittext = entry.item_details.unit || "-";
-      const unitwidth = timesRomanFont.widthOfTextAtSize(unittext, 11);
-      const unitplace = (327 + 360) / 2;
-      page.drawText(unittext, {
-        x: unitplace - unitwidth / 2,
-        y: yPosition1,
-        size: 11,
-        font: timesRomanFont,
-      });
-      // Safely handle brand/model
-      const brandText = entry.brand_model || "-";
+    const abcValue = Number(entry.item_details.unit_cost ?? 0);
 
-      const brandWidth = timesRomanFont.widthOfTextAtSize(
-        brandText,
-        10,
-      );
+    const abc = new Intl.NumberFormat("en-US", {
+      minimumFractionDigits: 2,
+      maximumFractionDigits: 2,
+    }).format(abcValue);
 
-      const brandPlace = (360 + 450) / 2;
+    const supplierPriceValue = Number(entry.unit_price ?? 0);
 
-      page.drawText(brandText, {
-        x: brandPlace - brandWidth / 2,
-        y: yPosition1,
-        size: 10,
-        font: timesRomanFont,
-      });
+    const supplierPrice = new Intl.NumberFormat("en-US", {
+      minimumFractionDigits: 2,
+      maximumFractionDigits: 2,
+    }).format(supplierPriceValue);
 
-      // Safely handle ABC with formatting
-      const ABCValue =
-        entry.item_details.unit_cost !== undefined
-          ? entry.item_details.unit_cost
-          : 0;
-      const ABCFormatted = new Intl.NumberFormat("en-US", {
-        minimumFractionDigits: 2,
-        maximumFractionDigits: 2,
-      }).format(Number(ABCValue));
-      const ABCWidth = timesRomanFont.widthOfTextAtSize(ABCFormatted, 10);
-      const ABCPlace = 485;
-      page.drawText(ABCFormatted, {
-        x: ABCPlace - ABCWidth,
-        y: yPosition1,
-        size: 10,
-        font: timesRomanFont,
-      });
-      // Supplier quotation price
-      const supplierPriceValue =
-        entry.unit_price !== undefined
-          ? entry.unit_price
-          : 0;
+    const maxLines = Math.max(
+      description.length,
+      quantity.length,
+      unit.length,
+      brand.length,
+      1,
+    );
 
-      const supplierPriceFormatted = new Intl.NumberFormat("en-US", {
-        minimumFractionDigits: 2,
-        maximumFractionDigits: 2,
-      }).format(Number(supplierPriceValue));
+    const rowHeight = Math.max(
+      TABLE_CONFIG.minRowHeight,
+      maxLines * TABLE_CONFIG.lineHeight +
+        TABLE_CONFIG.padding * 2,
+    );
 
-      const supplierPriceWidth =
-        timesRomanFont.widthOfTextAtSize(
-          supplierPriceFormatted,
-          10,
-        );
+    return {
+      itemNumber: String(index + 1),
+      description,
+      quantity,
+      unit,
+      brand,
+      abc,
+      supplierPrice,
+      rowHeight,
+    };
+  });
 
-      const supplierPricePlace = 579;
+  // Divide items into pages based on actual row heights.
+  const pageGroups: typeof preparedItems[] = [];
+  let currentPage: typeof preparedItems = [];
+  let usedHeight = 0;
 
-      page.drawText(supplierPriceFormatted, {
-        x: supplierPricePlace - supplierPriceWidth,
-        y: yPosition1,
-        size: 10,
-        font: timesRomanFont,
-      });
+  const availableHeight =
+    TABLE_CONFIG.startY - TABLE_CONFIG.bottomY;
 
-    });
+  for (const preparedItem of preparedItems) {
+    if (
+      currentPage.length > 0 &&
+      usedHeight + preparedItem.rowHeight > availableHeight
+    ) {
+      pageGroups.push(currentPage);
+      currentPage = [];
+      usedHeight = 0;
+    }
 
-   
+    currentPage.push(preparedItem);
+    usedHeight += preparedItem.rowHeight;
+  }
 
+  if (currentPage.length > 0) {
+    pageGroups.push(currentPage);
+  }
+
+  // Create and draw each PDF page.
+  for (const pageItems of pageGroups) {
+    const page = pdfDoc.addPage([615.12, 936]);
+
+    // Draw the existing RFQ header and footer.
     await textandlines(
       pdfDoc,
       page,
@@ -143,14 +277,173 @@ export const generateRFQPDF = async (
       timesRomanItalicFont,
       rfq,
     );
+
+    let currentY = TABLE_CONFIG.startY;
+
+    // Draw each dynamically sized row.
+    for (const row of pageItems) {
+      const rowTop = currentY;
+      const rowBottom = rowTop - row.rowHeight;
+
+      // Item number
+      drawWrappedCell(
+        page,
+        [row.itemNumber],
+        columnPositions[0],
+        rowTop,
+        row.rowHeight,
+        columnPositions[1] - columnPositions[0],
+        timesRomanFont,
+        11,
+        "center",
+      );
+
+      // Item description
+      drawWrappedCell(
+        page,
+        row.description,
+        columnPositions[1],
+        rowTop,
+        row.rowHeight,
+        columnPositions[2] - columnPositions[1],
+        timesRomanFont,
+        11,
+      );
+
+      // Quantity
+      // Quantity - single line, automatically adjusts font size.
+      drawSingleLineCell(
+        page,
+        row.quantity.join(" "),
+        columnPositions[2],
+        rowTop,
+        row.rowHeight,
+        columnPositions[3] - columnPositions[2],
+        timesRomanFont,
+        11,
+        "center",
+      );
+
+      // Unit
+      drawWrappedCell(
+        page,
+        row.unit,
+        columnPositions[3],
+        rowTop,
+        row.rowHeight,
+        columnPositions[4] - columnPositions[3],
+        timesRomanFont,
+        11,
+        "center",
+      );
+
+      // Brand / Model
+      drawWrappedCell(
+        page,
+        row.brand,
+        columnPositions[4],
+        rowTop,
+        row.rowHeight,
+        columnPositions[5] - columnPositions[4],
+        timesRomanFont,
+        10,
+        "center",
+      );
+
+      // ABC / Unit Cost
+      // Unit Cost - single line, automatically adjusts font size.
+      drawSingleLineCell(
+        page,
+        row.abc,
+        columnPositions[5],
+        rowTop,
+        row.rowHeight,
+        columnPositions[6] - columnPositions[5],
+        timesRomanFont,
+        10,
+        "right",
+      );
+
+      // Supplier quotation price
+      // Supplier Price - single line, automatically adjusts font size.
+      drawSingleLineCell(
+        page,
+        row.supplierPrice,
+        columnPositions[6],
+        rowTop,
+        row.rowHeight,
+        columnPositions[7] - columnPositions[6],
+        timesRomanFont,
+        10,
+        "right",
+      );
+
+      // Draw the bottom border of this row.
+      page.drawLine({
+        start: { x: columnPositions[0], y: rowBottom },
+        end: { x: columnPositions[7], y: rowBottom },
+        thickness: 1,
+        color: rgb(0, 0, 0),
+      });
+
+      currentY = rowBottom;
+    }
+
+    // Continue normal horizontal row lines through unused table space.
+    const NORMAL_ROW_HEIGHT = 14;
+
+    while (currentY - NORMAL_ROW_HEIGHT > TABLE_CONFIG.bottomY) {
+      currentY -= NORMAL_ROW_HEIGHT;
+
+      page.drawLine({
+        start: { x: columnPositions[0], y: currentY },
+        end: { x: columnPositions[7], y: currentY },
+        thickness: 1,
+        color: rgb(0, 0, 0),
+      });
+    }
+
+    // The final bottom border is always fixed.
+    page.drawLine({
+      start: {
+        x: columnPositions[0],
+        y: TABLE_CONFIG.bottomY,
+      },
+      end: {
+        x: columnPositions[7],
+        y: TABLE_CONFIG.bottomY,
+      },
+      thickness: 1,
+      color: rgb(0, 0, 0),
+    });
+
+    const tableBottom = TABLE_CONFIG.bottomY;
+
+    // Draw table's vertical borders.
+    for (const x of columnPositions) {
+      page.drawLine({
+        start: {
+          x,
+          y: x === 327 ? 527.5 : 555.5,
+        },
+        end: {
+          x,
+          y: tableBottom,
+        },
+        thickness: 1,
+        color: rgb(0, 0, 0),
+      });
+    }
   }
+
   const pdfBytes = await pdfDoc.save();
   const fixedBuffer = new Uint8Array(pdfBytes).buffer;
-  const blob = new Blob([fixedBuffer], { type: "application/pdf" });
-  //const blob = new Blob([pdfBytes], { type: "application/pdf" });
-  const url = URL.createObjectURL(blob);
 
-  return url; // Return the URL for preview/download
+  const blob = new Blob([fixedBuffer], {
+    type: "application/pdf",
+  });
+
+  return URL.createObjectURL(blob);
 };
 
 const textandlines = async (
@@ -356,6 +649,25 @@ const textandlines = async (
     font: timesRomanFont,
     color: rgb(0, 0, 0.9),
   });
+  // Fixed horizontal lines for the table header and item section.
+const fixedHeaderLines = [555, 527, 502];
+
+fixedHeaderLines.forEach((y) => {
+  page.drawLine({
+    start: { x: 30.52, y },
+    end: { x: 584.5, y },
+    thickness: 1,
+    color: rgb(0, 0, 0),
+  });
+});
+
+// Fixed bottom border of the table.
+page.drawLine({
+  start: { x: 30.52, y: 306 },
+  end: { x: 584.5, y: 306 },
+  thickness: 1,
+  color: rgb(0, 0, 0),
+});
   page.drawText("Unit", {
     x: 460,
     y: 545,
@@ -382,13 +694,17 @@ const textandlines = async (
     color: rgb(0, 0, 0.9),
   });
   //text lower
-  page.drawText("Delivery Period: 15 Days Upon Confirming PO", {
-    x: 55,
-    y: 291,
-    size: 11,
-    font: timesRomanFont,
-    color: rgb(0, 0, 0.9),
-  });
+  const deliveryPeriod = rfq.pr_details?.delivery_period_days;
+  page.drawText(
+    `Delivery Period: ${deliveryPeriod ?? "Not specified"} Days Upon Confirming PO`,
+    {
+      x: 55,
+      y: 291,
+      size: 11,
+      font: timesRomanFont,
+      color: rgb(0, 0, 0.9),
+    }
+  );
   
   page.drawText("Warranty:", {
     x: 55,
@@ -531,113 +847,6 @@ const textandlines = async (
     color: rgb(0, 0, 0),
   });
   page.drawText("Date", { x: 440, y: 36, size: 11, font: timesRomanFont });
-
-  //Horizontal Line
-
-  page.drawLine({
-    start: { x: 30.52, y: 555 },
-    end: { x: 585, y: 555 },
-    thickness: 1,
-    color: rgb(0, 0, 0),
-  });
-
-  page.drawLine({
-    start: { x: 30.52, y: 527 },
-    end: { x: 585, y: 527 },
-    thickness: 1,
-    color: rgb(0, 0, 0),
-  });
-
-  page.drawLine({
-    start: { x: 30.52, y: 502 },
-    end: { x: 585, y: 502 },
-    thickness: 1,
-    color: rgb(0, 0, 0),
-  });
-  page.drawLine({
-    start: { x: 30.52, y: 488 },
-    end: { x: 585, y: 488 },
-    thickness: 1,
-    color: rgb(0, 0, 0),
-  });
-  page.drawLine({
-    start: { x: 30.52, y: 474 },
-    end: { x: 585, y: 474 },
-    thickness: 1,
-    color: rgb(0, 0, 0),
-  });
-  page.drawLine({
-    start: { x: 30.52, y: 460 },
-    end: { x: 585, y: 460 },
-    thickness: 1,
-    color: rgb(0, 0, 0),
-  });
-  page.drawLine({
-    start: { x: 30.52, y: 446 },
-    end: { x: 585, y: 446 },
-    thickness: 1,
-    color: rgb(0, 0, 0),
-  });
-  page.drawLine({
-    start: { x: 30.52, y: 432 },
-    end: { x: 585, y: 432 },
-    thickness: 1,
-    color: rgb(0, 0, 0),
-  });
-  page.drawLine({
-    start: { x: 30.52, y: 418 },
-    end: { x: 585, y: 418 },
-    thickness: 1,
-    color: rgb(0, 0, 0),
-  });
-  page.drawLine({
-    start: { x: 30.52, y: 404 },
-    end: { x: 585, y: 404 },
-    thickness: 1,
-    color: rgb(0, 0, 0),
-  });
-  page.drawLine({
-    start: { x: 30.52, y: 390 },
-    end: { x: 585, y: 390 },
-    thickness: 1,
-    color: rgb(0, 0, 0),
-  });
-  page.drawLine({
-    start: { x: 30.52, y: 376 },
-    end: { x: 585, y: 376 },
-    thickness: 1,
-    color: rgb(0, 0, 0),
-  });
-  page.drawLine({
-    start: { x: 30.52, y: 362 },
-    end: { x: 585, y: 362 },
-    thickness: 1,
-    color: rgb(0, 0, 0),
-  });
-  page.drawLine({
-    start: { x: 30.52, y: 348 },
-    end: { x: 585, y: 348 },
-    thickness: 1,
-    color: rgb(0, 0, 0),
-  });
-  page.drawLine({
-    start: { x: 30.52, y: 334 },
-    end: { x: 585, y: 334 },
-    thickness: 1,
-    color: rgb(0, 0, 0),
-  });
-  page.drawLine({
-    start: { x: 30.52, y: 320 },
-    end: { x: 585, y: 320 },
-    thickness: 1,
-    color: rgb(0, 0, 0),
-  });
-  page.drawLine({
-    start: { x: 30.52, y: 306 },
-    end: { x: 585, y: 306 },
-    thickness: 1,
-    color: rgb(0, 0, 0),
-  });
 
   //Vertical Line
   page.drawLine({

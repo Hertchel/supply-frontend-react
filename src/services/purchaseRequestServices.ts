@@ -231,16 +231,23 @@ export const deletePurchaseRequest = async (pr_no: string) => {
 export const updatePurchaseRequestStatus = async ({
   pr_no,
   status,
+  delivery_period_days,
 }: {
   pr_no: string;
   status: PurchaseRequestStatus;
+  delivery_period_days?: number;
 }) => {
   try {
     const response = await api.patch(
       `api/purchase-request/${pr_no}/update-status/`,
-      { status }
+      {
+        status,
+        ...(delivery_period_days !== undefined && {
+          delivery_period_days,
+        }),
+      }
     );
-    console.log(response);
+
     return handleSucess(response);
   } catch (error) {
     console.log(error);
@@ -254,11 +261,15 @@ export const useUpdatePurchaseRequestStatus = () => {
 
   const mutation = useMutation<
     ApiResponse<unknown>,
-    Error,
-    { pr_no: string; status: PurchaseRequestStatus }
+      Error,
+      {
+        pr_no: string;
+        status: PurchaseRequestStatus;
+        delivery_period_days?: number;
+      }
   >({
-    mutationFn: ({ pr_no, status }) =>
-      updatePurchaseRequestStatus({ pr_no, status }),
+    mutationFn: (variables) =>
+      updatePurchaseRequestStatus(variables),
     onMutate: () => {
       setIsPending(true);
     },

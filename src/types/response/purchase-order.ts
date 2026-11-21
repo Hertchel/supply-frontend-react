@@ -32,6 +32,11 @@ export type purchaseOrderItemType_  = {
   pr_details: {
     mode_of_procurement: string
     fund_cluster?: string;
+    delivery_period_days: number | null;
+    campus_director_details?: {
+      name: string;
+      designation: string;
+    };
   }
   supplier_item_details: {
     item_cost: string

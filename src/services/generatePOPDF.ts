@@ -299,7 +299,27 @@ const textandlines = async (
     color: rgb(0, 0, 0),
   });
   page.drawText("Address:", { x: 40, y: 775, size: 11, font: timesRomanFont });
-  page.drawText(purchaseOrderData.supplier_item_details.rfq_details.supplier_address, { x: 90, y: 775, size: 11, font: timesRomanFont });
+  const supplierAddress =
+    purchaseOrderData.supplier_item_details.rfq_details.supplier_address || "";
+
+  const addressMaxWidth = 281;
+  let addressFontSize = 11;
+
+  // Reduce font size until the address fits the available width
+  while (
+    timesRomanFont.widthOfTextAtSize(supplierAddress, addressFontSize) >
+      addressMaxWidth &&
+    addressFontSize > 6
+  ) {
+    addressFontSize -= 0.5;
+  }
+
+  page.drawText(supplierAddress, {
+    x: 90,
+    y: 775,
+    size: addressFontSize,
+    font: timesRomanFont,
+  });
   page.drawLine({
     start: { x: 85, y: 772 },
     end: { x: 371, y: 772 },
@@ -378,6 +398,36 @@ const textandlines = async (
     size: 11,
     font: timesRomanFont,
   });
+
+  const placeOfDelivery =
+    "CTU-ARGAO Campus - Lamacan, Argao, Cebu";
+
+  const placeDeliveryMaxWidth = 173;
+  let placeDeliveryFontSize = 9;
+
+  while (
+    timesRomanFont.widthOfTextAtSize(
+      placeOfDelivery,
+      placeDeliveryFontSize
+    ) > placeDeliveryMaxWidth &&
+    placeDeliveryFontSize > 6
+  ) {
+    placeDeliveryFontSize -= 0.5;
+  }
+
+  page.drawText(placeOfDelivery, {
+    x: 125,
+    y: 705,
+    size: placeDeliveryFontSize,
+    font: timesRomanFont,
+  });
+
+  page.drawLine({
+    start: { x: 125, y: 702 },
+    end: { x: 298, y: 702 },
+    thickness: 1,
+    color: rgb(0, 0, 0),
+  });
   page.drawLine({
     start: { x: 125, y: 702 },
     end: { x: 298, y: 702 },
@@ -385,11 +435,27 @@ const textandlines = async (
     color: rgb(0, 0, 0),
   });
   page.drawText("Date of Delivery:", {
-    x: 40,
-    y: 692,
-    size: 11,
-    font: timesRomanFont,
-  });
+  x: 40,
+  y: 692,
+  size: 11,
+  font: timesRomanFont,
+});
+
+const deliveryPeriodDays =
+  purchaseOrderData.pr_details.delivery_period_days;
+
+  page.drawText(
+    deliveryPeriodDays
+      ? `${deliveryPeriodDays} Days Upon Confirming PO`
+      : "Not specified",
+    {
+      x: 125,
+      y: 692,
+      size: 9,
+      font: timesRomanFont,
+    }
+  );
+
   page.drawLine({
     start: { x: 125, y: 690 },
     end: { x: 298, y: 690 },
@@ -413,6 +479,36 @@ const textandlines = async (
     y: 692,
     size: 11,
     font: timesRomanFont,
+  });
+
+  const paymentTerm =
+    "90 days after Inspection and Acceptance of delivery";
+
+  const paymentTermMaxWidth = 115;
+  let paymentTermFontSize = 8;
+
+  while (
+    timesRomanFont.widthOfTextAtSize(
+      paymentTerm,
+      paymentTermFontSize
+    ) > paymentTermMaxWidth &&
+    paymentTermFontSize > 5
+  ) {
+    paymentTermFontSize -= 0.5;
+  }
+
+  page.drawText(paymentTerm, {
+    x: 445,
+    y: 692,
+    size: paymentTermFontSize,
+    font: timesRomanFont,
+  });
+
+  page.drawLine({
+    start: { x: 445, y: 690 },
+    end: { x: 560, y: 690 },
+    thickness: 1,
+    color: rgb(0, 0, 0),
   });
   page.drawLine({
     start: { x: 445, y: 690 },
@@ -455,24 +551,54 @@ const textandlines = async (
     size: 10,
     font: timesRomanFont,
   });
+  // Supplier printed name
+  const supplierName =
+    purchaseOrderData.supplier_item_details.rfq_details.supplier_name || "";
+
+  const supplierNameWidth =
+    timesRomanFont.widthOfTextAtSize(supplierName, 10);
+
+  page.drawText(supplierName, {
+    x: 215 - supplierNameWidth / 2,
+    y: 235,
+    size: 10,
+    font: timesRomanFont,
+  });
+
   page.drawLine({
     start: { x: 120, y: 230 },
     end: { x: 310, y: 230 },
     thickness: 0.5,
     color: rgb(0, 0, 0),
   });
+
   page.drawText("Signature over Printed Name of Supplier", {
     x: 130,
     y: 220,
     size: 10,
     font: timesRomanFont,
   });
+  // Campus Director printed name
+  const campusDirectorName =
+    purchaseOrderData.pr_details.campus_director_details?.name || "";
+
+  const campusDirectorNameWidth =
+    timesRomanFont.widthOfTextAtSize(campusDirectorName, 10);
+
+  page.drawText(campusDirectorName, {
+    x: 465 - campusDirectorNameWidth / 2,
+    y: 235,
+    size: 10,
+    font: timesRomanFont,
+  });
+
   page.drawLine({
     start: { x: 370, y: 230 },
     end: { x: 560, y: 230 },
     thickness: 0.5,
     color: rgb(0, 0, 0),
   });
+
   page.drawText("Signature over Printed Name of Authorized", {
     x: 380,
     y: 220,
@@ -531,11 +657,47 @@ const textandlines = async (
     thickness: 0.5,
     color: rgb(0, 0, 0),
   });
+
   page.drawLine({
     start: { x: 115, y: 132 },
     end: { x: 280, y: 132 },
     thickness: 0.5,
     color: rgb(0, 0, 0),
+  });
+
+  // Chief Accountant printed name
+  const chiefAccountantName = "CLAUDINE ANN R. OYANGOREN";
+
+  const chiefAccountantNameWidth =
+    timesRomanFont.widthOfTextAtSize(chiefAccountantName, 9);
+
+  page.drawText(chiefAccountantName, {
+    x: 205 - chiefAccountantNameWidth / 2,
+    y: 108,
+    size: 9,
+    font: timesBoldFont,
+  });
+
+  // Chief Accountant signature line
+  page.drawLine({
+    start: { x: 90, y: 104 },
+    end: { x: 320, y: 104 },
+    thickness: 0.5,
+    color: rgb(0, 0, 0),
+  });
+
+  // Chief Accountant designation
+  const accountantLabel =
+    "Signature over Printed Name of Chief Accountant/Head of Accounting Division/Unit";
+
+  const accountantLabelWidth =
+    timesRomanFont.widthOfTextAtSize(accountantLabel, 7);
+
+  page.drawText(accountantLabel, {
+    x: 205 - accountantLabelWidth / 2,
+    y: 89,
+    size: 7,
+    font: timesRomanFont,
   });
   page.drawText("ORS/BURS No. :", {
     x: 378,

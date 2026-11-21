@@ -1,6 +1,10 @@
 export type quotationResponseType = {
   rfq_no: string;
   purchase_request: string;
+  pr_details?: {
+    pr_no: string;
+    delivery_period_days: number | null;
+  };
   supplier_name: string;
   items: string;
   supplier_address: string;
