@@ -75,31 +75,40 @@ export const generateAOQPDF = async (
     );
   });
 
-  // Bidder columns start at F (column 6). The winning bidder follows them.
-  const bidderColumns = uniqueBidders.map((quotation, index) => ({
-    name: getSupplierName(quotation),
-    columnIndex: 6 + index,
-    columnLetter: getExcelColumnLetter(6 + index),
-    total: 0,
-  }));
+  // Bidder layout starts at F (column 6).
+  // 1 bidder: merge 3 columns (F:H).
+  // 2 bidders: merge 2 columns per bidder (F:G and H:I).
+  // 3+ bidders: use one column per bidder.
+  // 0 bidders: do not create a bidder column; the winning bidder starts at F.
+  const bidderCount = uniqueBidders.length;
+  const bidderSpan = bidderCount === 1 ? 3 : bidderCount === 2 ? 2 : 1;
+  const bidderColumns = uniqueBidders.map((quotation, index) => {
+    const startColumnIndex = 6 + index * bidderSpan;
+    const endColumnIndex = startColumnIndex + bidderSpan - 1;
 
-  const winningColumnIndex = 6 + bidderColumns.length;
+    return {
+      name: getSupplierName(quotation),
+      columnIndex: startColumnIndex,
+      endColumnIndex,
+      columnLetter: getExcelColumnLetter(startColumnIndex),
+      endColumnLetter: getExcelColumnLetter(endColumnIndex),
+      total: 0,
+    };
+  });
+
+  const winningColumnIndex =
+    bidderCount === 0 ? 6 : 6 + bidderCount * bidderSpan;
   const winningColumn = getExcelColumnLetter(winningColumnIndex);
 
-  // Keep at least columns A:I because the project information and BAC
-  // certification sections still use columns H and I.
+  // Keep the project-information and signatory area at least through column I.
   const lastColumnIndex = Math.max(9, winningColumnIndex);
   const lastColumnLetter = getExcelColumnLetter(lastColumnIndex);
 
-  let rightSideLabelLetter = "";
-  let rightSideValuesLetter = "";
-  if (bidderColumns.length === 3) {
-    rightSideLabelLetter = getExcelColumnLetter(lastColumnIndex - 1);
-    rightSideValuesLetter = getExcelColumnLetter(lastColumnIndex);
-  } else {
-    rightSideLabelLetter = getExcelColumnLetter(lastColumnIndex - 2);
-    rightSideValuesLetter = getExcelColumnLetter(lastColumnIndex - 1);
-  }
+  // The right-side labels and values always occupy the final two columns.
+  // These rows are above the quotation table, so they do not conflict with
+  // bidder cells that happen to use the same columns below.
+  const rightSideLabelLetter = getExcelColumnLetter(lastColumnIndex - 1);
+  const rightSideValuesLetter = lastColumnLetter;
 
   const getSupplierTotal = (supplierName: string): number => {
     if (!supplierName) return 0;
@@ -197,18 +206,25 @@ export const generateAOQPDF = async (
     5: 10.85,
   };
 
+  // Keep bidder grid cells at the original three-bidder width.
+  // A single bidder spans 3 cells; two bidders span 2 cells each.
+  const ORIGINAL_BIDDER_WIDTH = 19.28;
+
   worksheet.columns = Array.from({ length: lastColumnIndex }, (_, index) => {
     const columnNumber = index + 1;
-    const bidder = bidderColumns.find(
-      (candidate) => candidate.columnIndex === columnNumber,
-    );
 
     if (fixedWidths[columnNumber] !== undefined) {
       return { width: fixedWidths[columnNumber] };
     }
 
-    if (bidder) {
-      return { width: 19.28 };
+    if (
+      bidderColumns.some(
+        (bidder) =>
+          columnNumber >= bidder.columnIndex &&
+          columnNumber <= bidder.endColumnIndex,
+      )
+    ) {
+      return { width: ORIGINAL_BIDDER_WIDTH };
     }
 
     if (columnNumber === winningColumnIndex) {
@@ -454,8 +470,17 @@ export const generateAOQPDF = async (
   worksheet.getCell(`C${headerRow}`).value = "Quantity";
   worksheet.getCell(`E${headerRow}`).value = "Agency Price";
 
-  // Create one bidder header for every unique supplier in the RFQ.
+  // Create a header for each bidder and merge its allocated column span.
   bidderColumns.forEach((bidder, index) => {
+    if (bidder.endColumnIndex > bidder.columnIndex) {
+      worksheet.mergeCells(
+        `${bidder.columnLetter}${headerRow}:${bidder.endColumnLetter}${headerRow}`,
+      );
+      worksheet.mergeCells(
+        `${bidder.columnLetter}${secondHeaderRow}:${bidder.endColumnLetter}${secondHeaderRow}`,
+      );
+    }
+
     worksheet.getCell(`${bidder.columnLetter}${headerRow}`).value =
       `BIDDER ${index + 1}`;
     worksheet.getCell(`${bidder.columnLetter}${secondHeaderRow}`).value =
@@ -501,8 +526,14 @@ export const generateAOQPDF = async (
   let highestEstimatedWidth = 1;
 
   bidderColumns.forEach((bidder) => {
-    const supplierNameWidth =
-      worksheet.getColumn(bidder.columnIndex).width ?? 19.28;
+    let supplierNameWidth = 0;
+    for (
+      let columnIndex = bidder.columnIndex;
+      columnIndex <= bidder.endColumnIndex;
+      columnIndex++
+    ) {
+      supplierNameWidth += worksheet.getColumn(columnIndex).width ?? 19.28;
+    }
 
     const estimatedWidth = Math.ceil(
       bidder.name.length / (supplierNameWidth * 1.25),
@@ -588,14 +619,24 @@ export const generateAOQPDF = async (
     // ============================================================
 
     bidderColumns.forEach((bidder) => {
+      if (bidder.endColumnIndex > bidder.columnIndex) {
+        worksheet.mergeCells(
+          `${bidder.columnLetter}${rowNumber}:${bidder.endColumnLetter}${rowNumber}`,
+        );
+      }
+
       const bidderQuotation = itemQuotations.find(
         (quotation) => getSupplierName(quotation) === bidder.name,
       );
 
-      worksheet.getCell(`${bidder.columnLetter}${rowNumber}`).value =
+      const bidderCell = worksheet.getCell(
+        `${bidder.columnLetter}${rowNumber}`,
+      );
+      bidderCell.value =
         bidderQuotation?.total_amount != null
           ? Number(bidderQuotation.total_amount)
           : "";
+      bidderCell.numFmt = numberFormat;
     });
 
     // Winning bidder
@@ -680,24 +721,16 @@ export const generateAOQPDF = async (
 
   const totalRow = firstItemRow + items.length;
 
-  // Display each supplier's RFQ total in its own bidder column.
+  // Display each supplier's RFQ total in the total row.
+  // Keep item rows unmerged vertically so every item's quotation remains visible.
   bidderColumns.forEach((bidder) => {
-    const column = bidder.columnLetter;
-
-    if (totalRow > firstItemRow + 1) {
-      worksheet.mergeCells(`${column}${firstItemRow}:${column}${totalRow - 1}`);
+    if (bidder.endColumnIndex > bidder.columnIndex) {
+      worksheet.mergeCells(
+        `${bidder.columnLetter}${totalRow}:${bidder.endColumnLetter}${totalRow}`,
+      );
     }
 
-    const itemCell = worksheet.getCell(`${column}${firstItemRow}`);
-    itemCell.value = bidder.total;
-    itemCell.numFmt = numberFormat;
-    itemCell.font = normalFont;
-    itemCell.alignment = {
-      horizontal: "right",
-      vertical: "middle",
-    };
-
-    const totalCell = worksheet.getCell(`${column}${totalRow}`);
+    const totalCell = worksheet.getCell(`${bidder.columnLetter}${totalRow}`);
     totalCell.value = bidder.total;
     totalCell.numFmt = numberFormat;
     totalCell.font = boldFont;
@@ -705,6 +738,13 @@ export const generateAOQPDF = async (
       horizontal: "right",
       vertical: "middle",
     };
+    for (
+      let columnIndex = bidder.columnIndex;
+      columnIndex <= bidder.endColumnIndex;
+      columnIndex++
+    ) {
+      worksheet.getCell(totalRow, columnIndex).border = border;
+    }
   });
 
   // Reduce font size for item rows across the complete dynamic table.
@@ -795,10 +835,18 @@ export const generateAOQPDF = async (
 
   const bacStartRow = certificationRow + 2;
 
-  // Dynamic BAC committee positions
-  const bacColumn1 = "B";
-  const bacColumn2 = "F";
-  const bacColumn3 = "D";
+  // Spread BAC member name blocks across the actual worksheet width.
+  // The left position remains B; the right and center positions expand with
+  // the bidder layout so they do not stay fixed when bidder count changes.
+  const bacLeftColumnIndex = 2;
+  const bacRightColumnIndex = Math.max(6, lastColumnIndex - 3);
+  const bacCenterColumnIndex = Math.round(
+    (bacLeftColumnIndex + bacRightColumnIndex) / 2,
+  );
+
+  const bacColumn1 = getExcelColumnLetter(bacLeftColumnIndex);
+  const bacColumn2 = getExcelColumnLetter(bacRightColumnIndex);
+  const bacColumn3 = getExcelColumnLetter(bacCenterColumnIndex);
 
   // Dynamic right-side signatory positions
   const signatoryColumn = rightSideValuesLetter;
