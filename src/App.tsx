@@ -43,7 +43,7 @@ import RequisitionerDashboard from "./pages/Dashboard/ReqDashboard/Requisitioner
 import ReqPurchaseRequest from "./pages/Dashboard/ReqDashboard/ReqPurchaseRequest";
 import ReqPurchaseRequestView from "./pages/Dashboard/ReqDashboard/ReqPurchaseRequestView";
 import ReqInventory from "./pages/Dashboard/ReqDashboard/ReqInventory";
-
+import ReqProperty from "./pages/Dashboard/ReqDashboard/ReqProperty";
 import AIDashboard from "./pages/Dashboard/SupplyDashboard/AIDashboard";
 import Office from "./pages/Dashboard/SupplyDashboard/Office/Office";
 
@@ -160,6 +160,7 @@ const App = () => {
             <Route path="purchase-request" element={<ReqPurchaseRequest />}/>
             <Route path="purchase-request/:pr_no" element={<ReqPurchaseRequestView />}/>
             <Route path="inventory" element={<ReqInventory />}/>
+            <Route path="property" element={<ReqProperty />} />
           </Route>
 
         </Routes>

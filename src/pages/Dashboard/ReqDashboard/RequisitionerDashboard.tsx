@@ -19,6 +19,23 @@ const RequisitionerDashboard = () => {
 const dashboardData = data?.data;
 const [isEditDialogOpen, setIsEditDialogOpen] = useState(false);
 const [hasShownProfileModal, setHasShownProfileModal] = useState(false);
+const [searchQuery, setSearchQuery] = useState("");
+const filteredPurchaseRequests =
+  dashboardData?.purchase_requests?.filter((pr: any) => {
+    const query = searchQuery.toLowerCase().trim();
+
+    if (!query) return true;
+
+    return (
+      pr.pr_no?.toLowerCase().includes(query) ||
+      pr.status?.toLowerCase().includes(query) ||
+      pr.supplier_name?.toLowerCase().includes(query) ||
+      pr.winning_bidder?.toLowerCase().includes(query) ||
+      pr.items?.some((item: any) =>
+        item.item_description?.toLowerCase().includes(query)
+      )
+    );
+  }) || [];
 useEffect(() => {
     if (!dashboardData?.requisitioner || hasShownProfileModal) return;
 
@@ -145,12 +162,83 @@ useEffect(() => {
       </Button>
 
     </div>
+    {/* SEARCH BAR */}
+
+    <div className="bg-white rounded-2xl shadow-md border border-orange-200 p-4">
+
+      <div className="relative">
+
+        <input
+          type="text"
+          value={searchQuery}
+          onChange={(e) => setSearchQuery(e.target.value)}
+          placeholder="Search PR number, status, supplier, or item..."
+          className="
+            w-full
+            border
+            border-gray-300
+            rounded-xl
+            py-3
+            pl-11
+            pr-10
+            text-sm
+            outline-none
+            transition
+            focus:ring-2
+            focus:ring-orange-300
+            focus:border-orange-400
+          "
+        />
+
+        {/* SEARCH ICON */}
+
+        <svg
+          xmlns="http://www.w3.org/2000/svg"
+          className="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-gray-400"
+          fill="none"
+          viewBox="0 0 24 24"
+          stroke="currentColor"
+          strokeWidth={2}
+        >
+          <circle cx="11" cy="11" r="8" />
+          <path strokeLinecap="round" d="m21 21-4.35-4.35" />
+        </svg>
+
+        {/* CLEAR BUTTON */}
+
+        {searchQuery && (
+          <button
+            type="button"
+            onClick={() => setSearchQuery("")}
+            className="
+              absolute
+              right-4
+              top-1/2
+              -translate-y-1/2
+              text-gray-400
+              hover:text-orange-600
+              font-semibold
+            "
+          >
+            ✕
+          </button>
+        )}
+
+      </div>
+
+      <p className="text-xs text-gray-500 mt-2">
+        Showing {filteredPurchaseRequests.length} of{" "}
+        {dashboardData?.purchase_requests?.length || 0} purchase requests
+      </p>
+
+    </div>
 
     {/* PURCHASE REQUESTS */}
 
     <div className="grid gap-6">
 
-      {dashboardData?.purchase_requests?.map((pr: any) => (
+      {filteredPurchaseRequests.length > 0 ? (
+        filteredPurchaseRequests.map((pr: any) => (
 
         <div
           key={pr.pr_no}
@@ -374,7 +462,38 @@ useEffect(() => {
 
         </div>
 
-      ))}
+        ))
+          ) : (
+            <div className="
+              bg-white
+              border
+              border-orange-200
+              rounded-2xl
+              p-10
+              text-center
+              shadow-sm
+            ">
+              <p className="text-gray-700 font-semibold">
+                No purchase requests found
+              </p>
+
+              <p className="text-sm text-gray-400 mt-1">
+                {searchQuery
+                  ? "Try searching with a different keyword."
+                  : "You don't have any purchase requests yet."}
+              </p>
+
+              {searchQuery && (
+                <Button
+                  variant="outline"
+                  onClick={() => setSearchQuery("")}
+                  className="mt-4 border-orange-300 text-orange-700 hover:bg-orange-50"
+                >
+                  Clear Search
+                </Button>
+              )}
+            </div>
+          )}
 
     </div>
 

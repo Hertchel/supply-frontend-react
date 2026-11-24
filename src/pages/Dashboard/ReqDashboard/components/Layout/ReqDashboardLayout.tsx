@@ -21,8 +21,10 @@ export default function Layout({ children }: { children: React.ReactNode }) {
             <p className="text-xl font-bold">Hello, {user?.first_name}</p>
           </div>
         </header>
-        <main className="flex p-10">
-          {children}
+        <main className="flex w-full min-w-0 flex-1 p-6 md:p-8">
+          <div className="w-full min-w-0 flex-1">
+            {children}
+          </div>
         </main>
       </SidebarInset>
     </SidebarProvider>

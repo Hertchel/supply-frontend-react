@@ -1,5 +1,4 @@
 import ExcelJS from "exceljs";
-
 import { supplierItemType_ } from "@/types/response/abstract-of-quotation";
 import { BACmemberType } from "@/types/request/BACmember";
 
@@ -30,16 +29,10 @@ export const generateAOQPDF = async (
     return null;
   }
 
-  // ============================================================
   // DATA PROCESSING
-  // ============================================================
-
   const firstItem = items[0];
-
   const prDetails = firstItem?.supplier_details?.aoq_details?.pr_details;
-
   const endUser = prDetails?.requisitioner_details?.name ?? "";
-
   const now = new Date();
 
   const dateTime = now.toLocaleString("en-PH", {
@@ -52,10 +45,7 @@ export const generateAOQPDF = async (
     hour12: true,
   });
 
-  // ============================================================
   // DYNAMIC BIDDER PROCESSING
-  // ============================================================
-
   const getSupplierName = (quotation: any): string =>
     quotation?.supplier_details?.name ??
     quotation?.rfq_details?.supplier_name ??
@@ -116,10 +106,7 @@ export const generateAOQPDF = async (
     bidder.total = getSupplierTotal(bidder.name);
   });
 
-  // ============================================================
   // FIND LOWEST SUPPLIER
-  // ============================================================
-
   const lowestSupplier = items.reduce((lowest, current) => {
     const currentPrice = Number(
       current.item_quotation_details?.unit_price ?? 0,
@@ -136,19 +123,14 @@ export const generateAOQPDF = async (
     lowestSupplier?.item_quotation_details?.unit_price ?? 0,
   );*/
 
-  // ============================================================
-  // APPROVED BUDGET
-  // ============================================================
 
+  // APPROVED BUDGET
   const approvedBudget = items.reduce(
     (total, item) => total + Number(item.total_amount || 0),
     0,
   );
 
-  // ============================================================
   // CREATE WORKBOOK
-  // ============================================================
-
   const workbook = new ExcelJS.Workbook();
 
   workbook.creator = "CTU Procurement System";
@@ -158,10 +140,7 @@ export const generateAOQPDF = async (
 
   const worksheet = workbook.addWorksheet("Abstract of Quotations");
 
-  // ============================================================
   // PAGE SETUP
-  // ============================================================
-
   worksheet.pageSetup = {
     paperSize: 5,
     orientation: "landscape",
@@ -185,10 +164,7 @@ export const generateAOQPDF = async (
   worksheet.properties.defaultRowHeight = 11.25;
   worksheet.pageSetup.horizontalCentered = false;
 
-  // ============================================================
   // DYNAMIC COLUMN WIDTHS
-  // ============================================================
-
   const fixedWidths: Record<number, number> = {
     1: 4.28,
     2: 35.14,
@@ -218,10 +194,7 @@ export const generateAOQPDF = async (
     return { width: 19.28 };
   });
 
-  // ============================================================
   // COLORS AND STYLES
-  // ============================================================
-
   const GREEN = "C6EFCE";
   const BLACK = "000000";
   //const RED = "FF0000";
@@ -266,7 +239,6 @@ export const generateAOQPDF = async (
 
   // ============================================================
   // TITLE
-  // ============================================================
 
   worksheet.mergeCells(`A1:${lastColumnLetter}1`);
 
@@ -285,10 +257,7 @@ export const generateAOQPDF = async (
 
   worksheet.getRow(1).height = 18;
 
-  // ============================================================
   // PROJECT INFORMATION
-  // ============================================================
-
   // Information formatting
   for (let row = 2; row <= 6; row++) {
     const leftLabel = worksheet.getCell(`B${row}`);
@@ -429,13 +398,9 @@ export const generateAOQPDF = async (
     "34-Small Value Procurement";
 
   worksheet.getCell(`${rightSideValuesLetter}6`).value = prDetails?.pr_no ?? "";
-
   worksheet.getRow(7).height = 7.5;
 
-  // ============================================================
   // TABLE HEADER
-  // ============================================================
-
   const headerRow = 8;
   const secondHeaderRow = 9;
   worksheet.getRow(headerRow).height = 15.5;
@@ -522,10 +487,7 @@ export const generateAOQPDF = async (
     highestEstimatedWidth * 11.25,
   );
 
-  // ============================================================
   // HELPER: FIND QUOTATIONS FOR AN ITEM
-  // ============================================================
-
   const getItemQuotations = (item: supplierItemType_) => {
     const itemNo = item.item_quotation_details?.item_details?.item_no;
 
@@ -547,12 +509,8 @@ export const generateAOQPDF = async (
     });
   };
 
-  // ============================================================
   // ITEMS
-  // ============================================================
-
   const firstItemRow = 10;
-
   items.forEach((item, index) => {
     const rowNumber = firstItemRow + index;
 
@@ -576,17 +534,11 @@ export const generateAOQPDF = async (
     );
 
     worksheet.getCell(`C${rowNumber}`).value = item.item_quantity ?? "";
-
     worksheet.getCell(`D${rowNumber}`).value = "unit";
-
     worksheet.getCell(`E${rowNumber}`).value = Number(item.item_cost ?? 0);
-
     worksheet.getCell(`E${rowNumber}`).numFmt = numberFormat;
 
-    // ============================================================
     // DYNAMIC BIDDER QUOTATIONS
-    // ============================================================
-
     bidderColumns.forEach((bidder) => {
       const bidderQuotation = itemQuotations.find(
         (quotation) => getSupplierName(quotation) === bidder.name,
@@ -674,10 +626,7 @@ export const generateAOQPDF = async (
     }
   });
 
-  // ============================================================
   // TOTAL QUOTATION ROW
-  // ============================================================
-
   const totalRow = firstItemRow + items.length;
 
   // Display each supplier's RFQ total in its own bidder column.
@@ -717,10 +666,7 @@ export const generateAOQPDF = async (
     }
   }
 
-  // ============================================================
   // LOWEST COMPLYING SUPPLIER
-  // ============================================================
-
   worksheet.mergeCells(`A${totalRow}:E${totalRow}`);
   worksheet.getRow(totalRow).height = 21;
   worksheet.getRow(totalRow).font = {
@@ -756,10 +702,7 @@ export const generateAOQPDF = async (
     worksheet.getCell(totalRow, col).border = border;
   }
 
-  // ============================================================
   // CERTIFICATION
-  // ============================================================
-
   const certificationRow = totalRow + 2; //14
 
   worksheet.getCell(`B${certificationRow}`).value =
@@ -772,10 +715,7 @@ export const generateAOQPDF = async (
     vertical: "bottom",
   };
 
-  // ============================================================
   // BAC MEMBERS
-  // ============================================================
-
   //NAME FORMAT TO FIRST MIDDLE INITIAL LAST
   const formatName = (name?: string) => {
     if (!name) return "";
@@ -888,10 +828,7 @@ export const generateAOQPDF = async (
     }
   });
 
-  // ============================================================
   // Certification Lines Heights
-  // ============================================================
-
   worksheet.getRow(totalRow + 1).height = 17;
   worksheet.getRow(totalRow + 2).height = 11.25;
   worksheet.getRow(totalRow + 3).height = 17;
@@ -908,23 +845,15 @@ export const generateAOQPDF = async (
   worksheet.getRow(totalRow + 14).height = 13.25;
   worksheet.getRow(totalRow + 15).height = 13.25;
 
-  // ============================================================
   // FOOTER
-  // ============================================================
-
   worksheet.headerFooter.oddFooter = "&RPage &G &P of &N";
 
-  // ============================================================
   // PRINT AREA
-  // ============================================================
   const lastPrintRow = bacStartRow + 11;
 
   worksheet.pageSetup.printArea = `A1:${lastColumnLetter}${lastPrintRow}`;
 
-  // ============================================================
   // ESTIMATE NUMBER OF PRINTED PAGES
-  // ============================================================
-
   // Legal paper in landscape orientation (inches)
   const PAPER_WIDTH = 14;
   const PAPER_HEIGHT = 8.5;
@@ -979,10 +908,7 @@ export const generateAOQPDF = async (
 
   console.log("Estimated printed pages:", estimatedPages);
 
-  // ============================================================
   // GENERATE XLSX
-  // ============================================================
-
   const buffer = await workbook.xlsx.writeBuffer();
 
   const blob = new Blob([buffer], {
@@ -990,19 +916,12 @@ export const generateAOQPDF = async (
   });
 
   const url = URL.createObjectURL(blob);
-
   const link = document.createElement("a");
-
   link.href = url;
-
   link.download = "Abstract_of_Quotations.xlsx";
-
   document.body.appendChild(link);
-
   link.click();
-
   document.body.removeChild(link);
-
   URL.revokeObjectURL(url);
 
   return true;

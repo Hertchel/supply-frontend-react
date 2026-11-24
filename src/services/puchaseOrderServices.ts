@@ -445,6 +445,27 @@ export const GetItemsDeliveredInPurchaseRequest = async (
   return handleSucess(response);
 };
 
+export const getRequisitionerPropertyItems = async (): Promise<
+  ApiResponse<_itemsDeliveredType[]>
+> => {
+  try {
+    const response = await api.get<_itemsDeliveredType[]>(
+      "api/requisitioner/property/"
+    );
+
+    return handleSucess(response);
+  } catch (error) {
+    return handleError(error);
+  }
+};
+
+export const useGetRequisitionerPropertyItems = () => {
+  return useQuery<ApiResponse<_itemsDeliveredType[]>, Error>({
+    queryKey: ["requisitioner-property-items"],
+    queryFn: getRequisitionerPropertyItems,
+  });
+};
+
 export const useGetItemsDeliveredInPurchaseRequest = (
   filters: { pr_no?: string }
 ) => {

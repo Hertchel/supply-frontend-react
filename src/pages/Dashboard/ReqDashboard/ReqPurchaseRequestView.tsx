@@ -9,6 +9,7 @@ import {
 import {
   usePurchaseRequestList,
 } from "@/services/purchaseRequestServices";
+import { Checkbox } from "@/components/ui/checkbox";
 import { Button } from "@/components/ui/button";
 import { Label } from "@/components/ui/label";
 import { Separator } from "@/components/ui/separator";
@@ -26,7 +27,7 @@ import {
   TooltipContent,
 } from "@/components/ui/tooltip";
 import { TrashIcon, Pencil1Icon } from "@radix-ui/react-icons";
-import { useMutation, useQueryClient } from "@tanstack/react-query";
+import { useQueryClient } from "@tanstack/react-query";
 import PurchaseRequestForm from "../SupplyDashboard/components/PurchaseRequestForm";
 import { itemType } from "@/types/response/item";
 import { useEffect } from "react";
@@ -293,6 +294,7 @@ const ItemList = ({ sortedItems }: { sortedItems: itemType[] }) => {
   const [selectedItemNo, setSelectedItemNo] = useState<string | null>(null);
   const [isEditDialogOpen, setIsEditDialogOpen] = useState<boolean>(false);
   const [isPPMPDialogOpen, setIsPPMPDialogOpen] = useState<boolean>(false);
+  const [selectedItems, setSelectedItems] = useState<string[]>([]);
 
   const [importResult, setImportResult] = useState<{
     open: boolean;
@@ -310,20 +312,76 @@ const ItemList = ({ sortedItems }: { sortedItems: itemType[] }) => {
   const queryClient = useQueryClient();
   const { status } = useStatusStore();
 
-  const deleteItemMutation = useMutation({
-    mutationFn: deleteItem,
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["items"] });
-      toast.success("Successfully Deleted!", {
-        description: "The Purchase Request sucessfully deleted.",
-      });
-    },
-  });
-
   const actionDisabled = RESTRICTED_ACTION_STATUS.includes(status!);
 
-  const handleItemDelete = () => {
-    deleteItemMutation.mutate(selectedItemNo!);
+  const toggleItemSelection = (itemNo: string) => {
+    setSelectedItems((current) =>
+      current.includes(itemNo)
+        ? current.filter((id) => id !== itemNo)
+        : [...current, itemNo]
+    );
+  };
+
+  const allItemsSelected =
+    sortedItems.length > 0 &&
+    selectedItems.length === sortedItems.length;
+
+  const toggleSelectAll = () => {
+    if (allItemsSelected) {
+      setSelectedItems([]);
+    } else {
+      setSelectedItems(
+        sortedItems.map((item) => item.item_no)
+      );
+    }
+  };
+
+  const handleItemDelete = async () => {
+    if (!selectedItemNo) return;
+
+    try {
+      await deleteItem(selectedItemNo);
+
+      await queryClient.invalidateQueries({
+        queryKey: ["items"],
+      });
+
+      toast.success("Successfully Deleted!", {
+        description: "The item was successfully deleted.",
+      });
+
+      setSelectedItemNo(null);
+      setIsDialogOpen(false);
+    } catch (error) {
+      console.error("DELETE ITEM ERROR:", error);
+
+      toast.error("Failed to delete item.");
+    }
+  };
+
+  const handleBulkDelete = async () => {
+    if (selectedItems.length === 0) return;
+
+    try {
+      await Promise.all(
+        selectedItems.map((itemNo) => deleteItem(itemNo))
+      );
+
+      await queryClient.invalidateQueries({
+        queryKey: ["items"],
+      });
+
+      toast.success("Successfully Deleted!", {
+        description: `${selectedItems.length} items were successfully deleted.`,
+      });
+
+      setSelectedItems([]);
+      setIsDialogOpen(false);
+    } catch (error) {
+      console.error("BULK DELETE ERROR:", error);
+
+      toast.error("Failed to delete selected items.");
+    }
   };
 
   const handlePPMPImport = async (ppmpItems: PPMPItem[]) => {
@@ -442,8 +500,31 @@ const ItemList = ({ sortedItems }: { sortedItems: itemType[] }) => {
           Import from PPMP
         </Button>
       </div>
-      <p className="font-bold pt-5">Items</p>
-      <div className="grid grid-cols-7 gap-2 mb-4 items-center border-b-2 py-4">
+      <div className="flex justify-between items-center pt-5 mb-4">
+        <div className="flex items-center justify-between mb-3">
+          <p className="font-bold">Items</p>
+
+          {selectedItems.length > 0 && (
+            <Button
+              type="button"
+              variant="destructive"
+              disabled={actionDisabled}
+              onClick={() => setIsDialogOpen(true)}
+            >
+              <TrashIcon className="mr-2 h-4 w-4" />
+              Delete Selected ({selectedItems.length})
+            </Button>
+          )}
+        </div>
+      </div>
+      <div className="grid grid-cols-8 gap-2 mb-4 items-center border-b-2 py-4">
+        <Label className="text-base">
+          <Checkbox
+            checked={allItemsSelected}
+            onCheckedChange={toggleSelectAll}
+            disabled={actionDisabled}
+          />
+        </Label>
         <Label className="text-base">Stock Property No.</Label>
         <Label className="text-base">Unit</Label>
         <Label className="text-base">Description</Label>
@@ -451,13 +532,22 @@ const ItemList = ({ sortedItems }: { sortedItems: itemType[] }) => {
         <Label className="text-base">Unit Cost</Label>
         <Label className="text-base">Total Cost</Label>
         <Label className="text-base">Actions</Label>
+
       </div>
       {sortedItems?.length ? (
         sortedItems.map((item) => (
           <div
             key={item.item_no}
-            className="grid grid-cols-7 gap-2 mb-4 items-center p-2  border-b-2"
+            className="grid grid-cols-8 gap-2 mb-4 items-center p-2 border-b-2"
           >
+            <Checkbox
+              checked={selectedItems.includes(item.item_no)}
+              onCheckedChange={() =>
+                toggleItemSelection(item.item_no)
+              }
+              disabled={actionDisabled}
+            />
+
             <Label>{item.stock_property_no}</Label>
             <Label>{item.unit}</Label>
             <Label>{item.item_description}</Label>
@@ -498,9 +588,10 @@ const ItemList = ({ sortedItems }: { sortedItems: itemType[] }) => {
                       <Button
                         disabled={actionDisabled}
                         onClick={() => {
-                          setIsDialogOpen(true);
-                          setSelectedItemNo(item.item_no);
-                        }}
+                            setSelectedItems([]);
+                            setSelectedItemNo(item.item_no);
+                            setIsDialogOpen(true);
+                          }}
                         variant="ghost"
                         className="flex h-8 w-8 p-0 data-[state=open]:bg-muted hover:rounded-full text-orange-400 hover:bg-red-400 hover:text-gray-100"
                       >
@@ -526,8 +617,16 @@ const ItemList = ({ sortedItems }: { sortedItems: itemType[] }) => {
         </div>
       )}
       <DeleteDialog
-        onDeleteClick={handleItemDelete}
-        message="Item"
+        onDeleteClick={
+          selectedItems.length > 0
+            ? handleBulkDelete
+            : handleItemDelete
+        }
+        message={
+          selectedItems.length > 0
+            ? `${selectedItems.length} Items`
+            : "Item"
+        }
         isDialogOpen={isDialogOpen}
         setIsDialogOpen={setIsDialogOpen}
       />

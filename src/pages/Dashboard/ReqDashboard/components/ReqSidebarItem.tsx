@@ -3,6 +3,7 @@ import {
   ClipboardPenLine,
   LayoutGrid,
   Package,
+  Tags,
 } from "lucide-react";
 
 import {
@@ -36,6 +37,14 @@ const inventory = [
     title: "Inventory",
     url: "/requisitioner/inventory",
     icon: Package,
+  },
+];
+
+const property = [
+  {
+    title: "Property",
+    url: "/requisitioner/property",
+    icon: Tags,
   },
 ];
 
@@ -88,6 +97,23 @@ export function ReqSidebarItem() {
               asChild
               className="px-4 py-6"
               isActive={location.pathname === item.url}
+            >
+              <Link to={item.url}>
+                <item.icon />
+                <span>{item.title}</span>
+              </Link>
+            </SidebarMenuButton>
+          </SidebarMenuItem>
+        ))}
+      </SidebarMenu>
+
+      <SidebarMenu>
+        {property.map((item) => (
+          <SidebarMenuItem key={item.title}>
+            <SidebarMenuButton
+              asChild
+              className="px-4 py-6"
+              isActive={location.pathname.startsWith(item.url)}
             >
               <Link to={item.url}>
                 <item.icon />
